@@ -1,0 +1,10 @@
+parse.test:	Total	334	Passed	327	Skipped	7	Failed	0
+Number of tests skipped for each constraint:
+	2	emptyTest
+	1	exprSubstExpected
+	2	exprSubstSingleParen
+	2	memory
+
+real	0m7.221s
+user	0m6.589s
+sys	0m0.122s

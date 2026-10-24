@@ -1,0 +1,3 @@
+all.tcl:	Total	1064	Passed	1032	Skipped	32	Failed	0
+MEMACTIVE lines: 45433
+rc=0

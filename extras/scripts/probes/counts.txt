@@ -1,0 +1,16 @@
+| `generic/tclParse.c` | 137 | 81 | 16 | 234 | 0 |
+| `generic/tclCompile.c` | 14 | 5 | 3 | 22 | 0 |
+| `generic/tcl.h` | 1 | 12 | 0 | 13 | 0 |
+| `generic/tclCompCmdsSZ.c` | 5 | 0 | 0 | 5 | 0 |
+| `generic/tclTest.c` | 3 | 0 | 0 | 3 | 0 |
+| `generic/tclCompExpr.c` | 2 | 0 | 0 | 2 | 1 |
+| **Source subtotal** | **162** | **98** | **19** | **279** | **1** |
+| `tests/parse.test` | 302 | 30 | 18 | 350 | 1 |
+| `tests/compile.test` | 126 | 3 | 1 | 130 | 0 |
+| `tests/parseOld.test` | 6 | 2 | 0 | 8 | 1 |
+| **Test subtotal** | **434** | **35** | **19** | **488** | **2** |
+| `doc/Tcl.n` | 22 | n/a | 0 | 22 | 0 |
+| `doc/ParseCmd.3` | 12 | n/a | 0 | 12 | 0 |
+| **Doc subtotal** | **34** | **n/a** | **0** | **34** | **0** |
+| **Total** | **630** | **133** | **38** | **801** | **3** |
+tclParse share: 234 of 279

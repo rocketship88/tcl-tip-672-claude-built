@@ -1,0 +1,99 @@
+
+# --- Scanner details: where the body of "$((...))" ends -------------------
+
+test parse-22.60 {expression substitution: nested braces are counted} {
+    set v $(([llength {a {b )} c}]))
+} 3
+test parse-22.61 {expression substitution: escaped brace inside braces} {
+    set v $(([string length {\} )}]))
+} 4
+test parse-22.62 {expression substitution: escaped quote inside quotes} {
+    set v $(([string length "a\")"]))
+} 3
+test parse-22.63 {expression substitution: bracket inside quotes} {
+    set v $(([string length "[string length ")"]x"]))
+} 2
+test parse-22.64 {expression substitution: close paren inside a bracket} {
+    set v $(([string index a) 0] eq "a"))
+} 1
+test parse-22.65 {expression substitution: nested brackets with a close paren} {
+    set v $(([string length [string index a) 0]]))
+} 1
+test parse-22.66 {expression substitution: escaped close bracket inside brackets} {
+    set v $(([string length a\]b]))
+} 3
+test parse-22.67 {expression substitution: unterminated body} -body {
+    set bad {}
+    foreach s [list "\$((\{abc))" "\$((\"abc))" "\$((\[foo))" "\$((1+2\\" \
+	    "\$((\"a\[b))" "\$((\"a\\\"))"] {
+	set r [list [catch {subst $s} msg] $msg]
+	if {$r ne {1 {missing )}}} {lappend bad [list $s $r]}
+    }
+    set bad
+} -result {}
+test parse-22.68 {expression substitution: backslash skips a close paren} {
+    list [catch {subst {$((1\)+2))}} msg] $msg
+} {1 {invalid character "\"
+in expression "(1\)+2)"}}
+test parse-22.69 {expression substitution: incomplete script (info complete)} {
+    list [info complete {puts $((1+2)}] [info complete {puts $((1+2))}] \
+	[info complete "puts \$((\{a))"] [info complete "puts \$((\{a\}))"]
+} {0 1 0 1}
+
+# --- The substitution when the word is NOT compiled to bytecode -------------
+# "subst $var" and testevalex (Tcl_EvalEx) go through TclSubstTokens;
+# a literal "subst {...}" or "catch {...}" would be compiled instead.
+
+test parse-22.70 {expression substitution: runtime subst, text on both sides} {
+    set s {a$((1+1))b$((2+2))c}
+    subst $s
+} a2b4c
+test parse-22.71 {expression substitution: runtime subst, last token} {
+    set s {x=$((6*7))}
+    subst $s
+} x=42
+test parse-22.72 {expression substitution: runtime subst, repeated} {
+    set s {$((1+1))$((2+2))$((3+3))}
+    list [subst $s] [subst $s]
+} {246 246}
+test parse-22.73 {expression substitution: uncompiled word (Tcl_EvalEx)} testevalex {
+    list [testevalex {set v a$((1+1))b}] [testevalex {set w "x$((2*3))y$((1+1))"}]
+} {a2b x6y2}
+test parse-22.74 {expression substitution: uncompiled, error} testevalex {
+    list [catch {testevalex {set v a$((1+))b}} msg] $msg
+} {1 {missing operand at _@_
+in expression "(1+_@_)"}}
+test parse-22.75 {expression substitution == [expr {(...)}] when NOT compiled} -constraints testevalex -body {
+    set bad {}
+    set x 4
+    foreach body {
+	{1+2} {2*3+1} {1/0} {1+} {int(7.9)} {[string length abc]+1}
+	{[return -code break]} {[return -code error boom]} {[return -code continue]}
+	{[return -code 7 x]} {1 ? "y" : "n"} {1,2} {$x*2} {$nosuchvar} {[error oops]}
+	{"a$x"}
+    } {
+	set new "set x 4; set v \$(($body))"
+	set ref "set x 4; set v \[expr {($body)}\]"
+	set r1 [list [catch {testevalex $new} m1] $m1]
+	set r2 [list [catch {testevalex $ref} m2] $m2]
+	if {$r1 ne $r2} {lappend bad [list evalex $body $r1 $r2]}
+	# the same text through the runtime "subst" command
+	set r1 [list [catch {subst "\$(($body))"} m1] $m1]
+	set r2 [list [catch {subst "\[expr {($body)}\]"} m2] $m2]
+	if {$r1 ne $r2} {lappend bad [list subst $body $r1 $r2]}
+    }
+    set bad
+} -result {}
+
+# --- Optional: check the build really uses the spelling we expect -------------
+# The tests above adapt themselves to whichever spelling the build uses, so they
+# cannot notice if the build uses the *wrong* one. When the environment
+# variable TCL_TEST_EXPR_SUBST_PARENS is set to 1 or 2, check against it.
+
+testConstraint exprSubstExpected [info exists ::env(TCL_TEST_EXPR_SUBST_PARENS)]
+test parse-22.99 {expression substitution: build uses the expected spelling} \
+    -constraints exprSubstExpected -body {
+    set expectSingle [expr {$::env(TCL_TEST_EXPR_SUBST_PARENS) == 1}]
+    list [expr {$expectSingle == [testConstraint exprSubstSingleParen]}] \
+	[catch {subst {$((1+2))}} r] $r
+} -result {1 0 3}

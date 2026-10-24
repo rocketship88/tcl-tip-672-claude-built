@@ -1,0 +1,6 @@
+all.tcl:	Total	1064	Passed	1043	Skipped	21	Failed	0
+==11310== HEAP SUMMARY:
+==11310==   total heap usage: 1,716,467 allocs, 1,716,452 frees, 204,607,066 bytes allocated
+==11310== 48 bytes in 1 blocks are definitely lost in loss record 13 of 15
+==11310==    definitely lost: 48 bytes in 1 blocks
+==11310== ERROR SUMMARY: 1 errors from 1 contexts (suppressed: 0 from 0)

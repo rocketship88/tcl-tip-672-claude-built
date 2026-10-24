@@ -1,0 +1,160 @@
+# Expression substitution: $((expr)) means [expr {expr}] wherever a $
+# substitution is recognised. The body is handed to the expression parser as
+# one unsubstituted word, so nothing in it is substituted twice.
+# (When built with TCL_EXPR_SUBST_PARENS=1, "$(expr)" means the same thing.)
+
+test parse-22.1 {expression substitution: token structure} testparser {
+    testparser {puts $((1+2))} 0
+} {- {puts $((1+2))} 2 simple puts 1 text puts 0 word {$((1+2))} 2 exprsubst {$((1+2))} 1 text (1+2) 0 {}}
+test parse-22.2 {expression substitution: inside a quoted word} testparser {
+    testparser {x "a$((1+2)*3)b"} 0
+} {- {x "a$((1+2)*3)b"} 2 simple x 1 text x 0 word {"a$((1+2)*3)b"} 4 text a 0 exprsubst {$((1+2)*3)} 1 text (1+2)*3 0 text b 0 {}}
+test parse-22.3 {expression substitution: extra parentheses are part of the body} testparser {
+    testparser {$(((1+2)*3))} 0
+} {- {$(((1+2)*3))} 1 word {$(((1+2)*3))} 2 exprsubst {$(((1+2)*3))} 1 text ((1+2)*3) 0 {}}
+test parse-22.4 {expression substitution: Tcl_ParseVarName} testparsevarname {
+    testparsevarname {$((1+(2*3)))z} 20 0
+} {- {} 0 exprsubst {$((1+(2*3)))} 1 text (1+(2*3)) 0 z}
+test parse-22.5 {expression substitution: Tcl_ParseVar result stays valid} testparsevar {
+    lindex [testparsevar {$((7*6))z}] 0
+} 42
+test parse-22.6 {expression substitution: body is not substituted by the parser} testparser {
+    testparser {$(($x [y] \n))} 0
+} {- {$(($x [y] \n))} 1 word {$(($x [y] \n))} 2 exprsubst {$(($x [y] \n))} 1 text {($x [y] \n)} 0 {}}
+
+test parse-22.10 {expression substitution: bare word} {
+    set v $((1+2))
+} 3
+test parse-22.11 {expression substitution: inside quotes} {
+    set v "n=$((3*4))!"
+} n=12!
+test parse-22.12 {expression substitution: several in one word} {
+    set v a$((1+1))b$((2+2))c
+} a2b4c
+test parse-22.13 {expression substitution: extra parentheses} {
+    set v $(((1+2)*3))
+} 9
+test parse-22.14 {expression substitution: variables are substituted by expr} {
+    set x 5
+    set v $(($x*2))
+} 10
+test parse-22.15 {expression substitution: the body is not substituted first} {
+    # If the word parser substituted $x first this would be the (erroneous)
+    # command [llength a b].
+    set x {a b}
+    set v $(([llength $x]))
+} 2
+test parse-22.16 {expression substitution: no double substitution} {
+    # The *value* of a variable inside the body is never substituted again.
+    set cnt 0
+    set s {[incr cnt]}
+    list $(([string length $s])) $cnt
+} {10 0}
+test parse-22.17 {expression substitution: close paren inside braces} {
+    set v $(([llength {a b )}]))
+} 3
+test parse-22.18 {expression substitution: close paren inside quotes} {
+    set v $(([string length ")"]))
+} 1
+test parse-22.19 {expression substitution: close paren inside a script} {
+    set v $(([string length [string trim " ) "]]))
+} 1
+test parse-22.20 {expression substitution: nested} {
+    set v $(($((1+1))+1))
+} 3
+test parse-22.21 {expression substitution: as an array index} {
+    array set a {2 two}
+    set v $a($((1+1)))
+} two
+test parse-22.22 {expression substitution: in bracketed command} {
+    list $((1+1)) $((2+2))
+} {2 4}
+test parse-22.23 {expression substitution: in subst} {
+    subst {r=$((6*7))}
+} r=42
+test parse-22.24 {expression substitution: in an expression} {
+    expr {$((2+3))*2}
+} 10
+test parse-22.25 {expression substitution: in an if condition} {
+    if {$((1+1)) == 2} {set v yes} else {set v no}
+} yes
+test parse-22.26 {expression substitution: expansion} {
+    list {*}$((1+1)) b
+} {2 b}
+test parse-22.27 {expression substitution: result is not forced to a string} {
+    set v $((1/3.0))
+} 0.3333333333333333
+test parse-22.28 {expression substitution: in a compiled procedure} {
+    proc p {n} {return "<$(($n+1))>"}
+    p 4
+} <5>
+test parse-22.29 {expression substitution: line numbers are tracked} {
+    proc p {} {
+	set x 1
+	set y [catch {
+	    set v ok
+	    set v $((1+))
+	} m opts]
+	dict get $opts -errorline
+    }
+    p
+} 5
+
+test parse-22.30 {expression substitution: unterminated, subst} {
+    list [catch {subst {$((1+2)}} msg] $msg
+} {1 {missing )}}
+test parse-22.31 {expression substitution: unterminated, eval} {
+    list [catch {eval {set v $((1+2)}} msg] $msg
+} {1 {missing )}}
+test parse-22.32 {expression substitution: syntax error is the expr error} {
+    list [catch {set v $((1+))} msg] $msg
+} {1 {missing operand at _@_
+in expression "(1+_@_)"}}
+test parse-22.33 {expression substitution: same error as [expr]} {
+    set a [catch {set v $((1+))} msg1]
+    set b [catch {set v [expr {(1+)}]} msg2]
+    list $a $b [string equal $msg1 $msg2]
+} {1 1 1}
+
+# $((body)) must behave exactly as [expr {body}], including error and
+# non-OK return codes, both when the script is compiled and when it is not.
+test parse-22.40 {expression substitution == [expr {...}]: compiled and not} -body {
+    set bad {}
+    foreach body {
+	{1+2} {2*3+1} {max(3,9)} {"a" eq "a"} {1/0} {1+} {int(7.9)}
+	{[string length abc]+1} {[return -code break]} {[return -code error boom]}
+	{[return -code continue]} {[return -code 7 x]}
+	{1 ? "y" : "n"} {1,2} {$x*2} {$x . 1} {$nosuchvar} {[error oops]}
+	{9223372036854775807+1} {"a$x"} {{braced $x}}
+    } {
+	set new "set x 4; set v \$(($body))"
+	set ref "set x 4; set v \[expr {$body}\]"
+	proc newp {} $new
+	proc refp {} $ref
+	foreach {kind a b} [list \
+		uncompiled [list catch $new] [list catch $ref] \
+		compiled   {catch newp}      {catch refp}] {
+	    set ra [list [{*}$a m1] $m1]
+	    set rb [list [{*}$b m2] $m2]
+	    if {$ra ne $rb} {
+		lappend bad [list $kind $body $ra $rb]
+	    }
+	}
+    }
+    set bad
+} -result {}
+
+test parse-22.50 {empty array name keeps its meaning unless built with $(...)} !exprSubstSingleParen {
+    set () E
+    set v $()
+} E
+test parse-22.51 {"$(" alone is an expr substitution when built that way} exprSubstSingleParen {
+    set v $(1+2)
+} 3
+test parse-22.52 {"$(" alone is not an expr substitution by default} !exprSubstSingleParen {
+    list [catch {set v $(1+2)} msg] $msg
+} {1 {can't read "(1+2)": no such element in array}}
+test parse-22.53 {"$((" works the same under either spelling} {
+    set v $((1+2)*3)
+} 9
+

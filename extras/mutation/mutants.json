@@ -1,0 +1,1490 @@
+[
+{
+"id": 1,
+"file": "generic/tclParse.c",
+"line": 149,
+"op": "delete stmt",
+"orig": "static const char *\tFindExprSubstEnd(const char *src, const char *end);",
+"new": ";"
+},
+{
+"id": 2,
+"file": "generic/tclParse.c",
+"line": 1339,
+"op": "const 0->1",
+"orig": "    int depth = 0;",
+"new": "    int depth = 1;"
+},
+{
+"id": 3,
+"file": "generic/tclParse.c",
+"line": 1339,
+"op": "delete stmt",
+"orig": "    int depth = 0;",
+"new": "    ;"
+},
+{
+"id": 4,
+"file": "generic/tclParse.c",
+"line": 1341,
+"op": "swap <-><=",
+"orig": "    while (src < end) {",
+"new": "    while (src <= end) {"
+},
+{
+"id": 5,
+"file": "generic/tclParse.c",
+"line": 1341,
+"op": "negate cond",
+"orig": "    while (src < end) {",
+"new": "    while (!(src < end)) {"
+},
+{
+"id": 6,
+"file": "generic/tclParse.c",
+"line": 1343,
+"op": "char '\\\\'->'x'",
+"orig": "\tcase '\\\\':",
+"new": "\tcase 'x':"
+},
+{
+"id": 7,
+"file": "generic/tclParse.c",
+"line": 1345,
+"op": "swap <-><=",
+"orig": "\t    if (src + 1 < end) {",
+"new": "\t    if (src + 1 <= end) {"
+},
+{
+"id": 8,
+"file": "generic/tclParse.c",
+"line": 1345,
+"op": "negate cond",
+"orig": "\t    if (src + 1 < end) {",
+"new": "\t    if (!(src + 1 < end)) {"
+},
+{
+"id": 9,
+"file": "generic/tclParse.c",
+"line": 1345,
+"op": "const 1->0",
+"orig": "\t    if (src + 1 < end) {",
+"new": "\t    if (src + 0 < end) {"
+},
+{
+"id": 10,
+"file": "generic/tclParse.c",
+"line": 1346,
+"op": "swap ++->--",
+"orig": "\t\tsrc++;",
+"new": "\t\tsrc--;"
+},
+{
+"id": 11,
+"file": "generic/tclParse.c",
+"line": 1346,
+"op": "delete stmt",
+"orig": "\t\tsrc++;",
+"new": "\t\t;"
+},
+{
+"id": 12,
+"file": "generic/tclParse.c",
+"line": 1348,
+"op": "delete stmt",
+"orig": "\t    break;",
+"new": "\t    ;"
+},
+{
+"id": 13,
+"file": "generic/tclParse.c",
+"line": 1349,
+"op": "char '{'->'}'",
+"orig": "\tcase '{': {",
+"new": "\tcase '}': {"
+},
+{
+"id": 14,
+"file": "generic/tclParse.c",
+"line": 1350,
+"op": "const 1->0",
+"orig": "\t    int braces = 1;",
+"new": "\t    int braces = 0;"
+},
+{
+"id": 15,
+"file": "generic/tclParse.c",
+"line": 1350,
+"op": "delete stmt",
+"orig": "\t    int braces = 1;",
+"new": "\t    ;"
+},
+{
+"id": 16,
+"file": "generic/tclParse.c",
+"line": 1352,
+"op": "swap ++->--",
+"orig": "\t    src++;",
+"new": "\t    src--;"
+},
+{
+"id": 17,
+"file": "generic/tclParse.c",
+"line": 1352,
+"op": "delete stmt",
+"orig": "\t    src++;",
+"new": "\t    ;"
+},
+{
+"id": 18,
+"file": "generic/tclParse.c",
+"line": 1353,
+"op": "swap <-><=",
+"orig": "\t    while (src < end) {",
+"new": "\t    while (src <= end) {"
+},
+{
+"id": 19,
+"file": "generic/tclParse.c",
+"line": 1353,
+"op": "negate cond",
+"orig": "\t    while (src < end) {",
+"new": "\t    while (!(src < end)) {"
+},
+{
+"id": 20,
+"file": "generic/tclParse.c",
+"line": 1354,
+"op": "swap ==->!=",
+"orig": "\t\tif (*src == '\\\\') {",
+"new": "\t\tif (*src != '\\\\') {"
+},
+{
+"id": 21,
+"file": "generic/tclParse.c",
+"line": 1354,
+"op": "char '\\\\'->'x'",
+"orig": "\t\tif (*src == '\\\\') {",
+"new": "\t\tif (*src == 'x') {"
+},
+{
+"id": 22,
+"file": "generic/tclParse.c",
+"line": 1354,
+"op": "negate cond",
+"orig": "\t\tif (*src == '\\\\') {",
+"new": "\t\tif (!(*src == '\\\\')) {"
+},
+{
+"id": 23,
+"file": "generic/tclParse.c",
+"line": 1355,
+"op": "swap <-><=",
+"orig": "\t\t    if (src + 1 < end) {",
+"new": "\t\t    if (src + 1 <= end) {"
+},
+{
+"id": 24,
+"file": "generic/tclParse.c",
+"line": 1355,
+"op": "negate cond",
+"orig": "\t\t    if (src + 1 < end) {",
+"new": "\t\t    if (!(src + 1 < end)) {"
+},
+{
+"id": 25,
+"file": "generic/tclParse.c",
+"line": 1355,
+"op": "const 1->0",
+"orig": "\t\t    if (src + 1 < end) {",
+"new": "\t\t    if (src + 0 < end) {"
+},
+{
+"id": 26,
+"file": "generic/tclParse.c",
+"line": 1356,
+"op": "swap ++->--",
+"orig": "\t\t\tsrc++;",
+"new": "\t\t\tsrc--;"
+},
+{
+"id": 27,
+"file": "generic/tclParse.c",
+"line": 1356,
+"op": "delete stmt",
+"orig": "\t\t\tsrc++;",
+"new": "\t\t\t;"
+},
+{
+"id": 28,
+"file": "generic/tclParse.c",
+"line": 1358,
+"op": "swap ==->!=",
+"orig": "\t\t} else if (*src == '{') {",
+"new": "\t\t} else if (*src != '{') {"
+},
+{
+"id": 29,
+"file": "generic/tclParse.c",
+"line": 1358,
+"op": "char '{'->'}'",
+"orig": "\t\t} else if (*src == '{') {",
+"new": "\t\t} else if (*src == '}') {"
+},
+{
+"id": 30,
+"file": "generic/tclParse.c",
+"line": 1358,
+"op": "negate cond",
+"orig": "\t\t} else if (*src == '{') {",
+"new": "\t\t} else if (!(*src == '{')) {"
+},
+{
+"id": 31,
+"file": "generic/tclParse.c",
+"line": 1359,
+"op": "swap ++->--",
+"orig": "\t\t    braces++;",
+"new": "\t\t    braces--;"
+},
+{
+"id": 32,
+"file": "generic/tclParse.c",
+"line": 1359,
+"op": "delete stmt",
+"orig": "\t\t    braces++;",
+"new": "\t\t    ;"
+},
+{
+"id": 33,
+"file": "generic/tclParse.c",
+"line": 1360,
+"op": "swap ==->!=",
+"orig": "\t\t} else if (*src == '}' && --braces == 0) {",
+"new": "\t\t} else if (*src != '}' && --braces == 0) {"
+},
+{
+"id": 34,
+"file": "generic/tclParse.c",
+"line": 1360,
+"op": "swap ==->!=",
+"orig": "\t\t} else if (*src == '}' && --braces == 0) {",
+"new": "\t\t} else if (*src == '}' && --braces != 0) {"
+},
+{
+"id": 35,
+"file": "generic/tclParse.c",
+"line": 1360,
+"op": "swap &&->||",
+"orig": "\t\t} else if (*src == '}' && --braces == 0) {",
+"new": "\t\t} else if (*src == '}' || --braces == 0) {"
+},
+{
+"id": 36,
+"file": "generic/tclParse.c",
+"line": 1360,
+"op": "swap --->++",
+"orig": "\t\t} else if (*src == '}' && --braces == 0) {",
+"new": "\t\t} else if (*src == '}' && ++braces == 0) {"
+},
+{
+"id": 37,
+"file": "generic/tclParse.c",
+"line": 1360,
+"op": "char '}'->'{'",
+"orig": "\t\t} else if (*src == '}' && --braces == 0) {",
+"new": "\t\t} else if (*src == '{' && --braces == 0) {"
+},
+{
+"id": 38,
+"file": "generic/tclParse.c",
+"line": 1360,
+"op": "negate cond",
+"orig": "\t\t} else if (*src == '}' && --braces == 0) {",
+"new": "\t\t} else if (!(*src == '}' && --braces == 0)) {"
+},
+{
+"id": 39,
+"file": "generic/tclParse.c",
+"line": 1360,
+"op": "const 0->1",
+"orig": "\t\t} else if (*src == '}' && --braces == 0) {",
+"new": "\t\t} else if (*src == '}' && --braces == 1) {"
+},
+{
+"id": 40,
+"file": "generic/tclParse.c",
+"line": 1361,
+"op": "delete stmt",
+"orig": "\t\t    break;",
+"new": "\t\t    ;"
+},
+{
+"id": 41,
+"file": "generic/tclParse.c",
+"line": 1363,
+"op": "swap ++->--",
+"orig": "\t\tsrc++;",
+"new": "\t\tsrc--;"
+},
+{
+"id": 42,
+"file": "generic/tclParse.c",
+"line": 1363,
+"op": "delete stmt",
+"orig": "\t\tsrc++;",
+"new": "\t\t;"
+},
+{
+"id": 43,
+"file": "generic/tclParse.c",
+"line": 1365,
+"op": "swap >=->>",
+"orig": "\t    if (src >= end) {",
+"new": "\t    if (src > end) {"
+},
+{
+"id": 44,
+"file": "generic/tclParse.c",
+"line": 1365,
+"op": "negate cond",
+"orig": "\t    if (src >= end) {",
+"new": "\t    if (!(src >= end)) {"
+},
+{
+"id": 45,
+"file": "generic/tclParse.c",
+"line": 1368,
+"op": "delete stmt",
+"orig": "\t    break;",
+"new": "\t    ;"
+},
+{
+"id": 46,
+"file": "generic/tclParse.c",
+"line": 1370,
+"op": "char '\"'->'x'",
+"orig": "\tcase '\"':",
+"new": "\tcase 'x':"
+},
+{
+"id": 47,
+"file": "generic/tclParse.c",
+"line": 1371,
+"op": "swap ++->--",
+"orig": "\t    src++;",
+"new": "\t    src--;"
+},
+{
+"id": 48,
+"file": "generic/tclParse.c",
+"line": 1371,
+"op": "delete stmt",
+"orig": "\t    src++;",
+"new": "\t    ;"
+},
+{
+"id": 49,
+"file": "generic/tclParse.c",
+"line": 1372,
+"op": "swap !=->==",
+"orig": "\t    while (src < end && *src != '\"') {",
+"new": "\t    while (src < end && *src == '\"') {"
+},
+{
+"id": 50,
+"file": "generic/tclParse.c",
+"line": 1372,
+"op": "swap <-><=",
+"orig": "\t    while (src < end && *src != '\"') {",
+"new": "\t    while (src <= end && *src != '\"') {"
+},
+{
+"id": 51,
+"file": "generic/tclParse.c",
+"line": 1372,
+"op": "swap &&->||",
+"orig": "\t    while (src < end && *src != '\"') {",
+"new": "\t    while (src < end || *src != '\"') {"
+},
+{
+"id": 52,
+"file": "generic/tclParse.c",
+"line": 1372,
+"op": "char '\"'->'x'",
+"orig": "\t    while (src < end && *src != '\"') {",
+"new": "\t    while (src < end && *src != 'x') {"
+},
+{
+"id": 53,
+"file": "generic/tclParse.c",
+"line": 1372,
+"op": "negate cond",
+"orig": "\t    while (src < end && *src != '\"') {",
+"new": "\t    while (!(src < end && *src != '\"')) {"
+},
+{
+"id": 54,
+"file": "generic/tclParse.c",
+"line": 1373,
+"op": "swap ==->!=",
+"orig": "\t\tif (*src == '\\\\') {",
+"new": "\t\tif (*src != '\\\\') {"
+},
+{
+"id": 55,
+"file": "generic/tclParse.c",
+"line": 1373,
+"op": "char '\\\\'->'x'",
+"orig": "\t\tif (*src == '\\\\') {",
+"new": "\t\tif (*src == 'x') {"
+},
+{
+"id": 56,
+"file": "generic/tclParse.c",
+"line": 1373,
+"op": "negate cond",
+"orig": "\t\tif (*src == '\\\\') {",
+"new": "\t\tif (!(*src == '\\\\')) {"
+},
+{
+"id": 57,
+"file": "generic/tclParse.c",
+"line": 1374,
+"op": "swap <-><=",
+"orig": "\t\t    if (src + 1 < end) {",
+"new": "\t\t    if (src + 1 <= end) {"
+},
+{
+"id": 58,
+"file": "generic/tclParse.c",
+"line": 1374,
+"op": "negate cond",
+"orig": "\t\t    if (src + 1 < end) {",
+"new": "\t\t    if (!(src + 1 < end)) {"
+},
+{
+"id": 59,
+"file": "generic/tclParse.c",
+"line": 1374,
+"op": "const 1->0",
+"orig": "\t\t    if (src + 1 < end) {",
+"new": "\t\t    if (src + 0 < end) {"
+},
+{
+"id": 60,
+"file": "generic/tclParse.c",
+"line": 1375,
+"op": "swap ++->--",
+"orig": "\t\t\tsrc++;",
+"new": "\t\t\tsrc--;"
+},
+{
+"id": 61,
+"file": "generic/tclParse.c",
+"line": 1375,
+"op": "delete stmt",
+"orig": "\t\t\tsrc++;",
+"new": "\t\t\t;"
+},
+{
+"id": 62,
+"file": "generic/tclParse.c",
+"line": 1377,
+"op": "swap ==->!=",
+"orig": "\t\t} else if (*src == '[') {",
+"new": "\t\t} else if (*src != '[') {"
+},
+{
+"id": 63,
+"file": "generic/tclParse.c",
+"line": 1377,
+"op": "char '['->']'",
+"orig": "\t\t} else if (*src == '[') {",
+"new": "\t\t} else if (*src == ']') {"
+},
+{
+"id": 64,
+"file": "generic/tclParse.c",
+"line": 1377,
+"op": "negate cond",
+"orig": "\t\t} else if (*src == '[') {",
+"new": "\t\t} else if (!(*src == '[')) {"
+},
+{
+"id": 65,
+"file": "generic/tclParse.c",
+"line": 1378,
+"op": "char ']'->'['",
+"orig": "\t\t    src = SkipExprSubstScan(src + 1, end, ']');",
+"new": "\t\t    src = SkipExprSubstScan(src + 1, end, '[');"
+},
+{
+"id": 66,
+"file": "generic/tclParse.c",
+"line": 1378,
+"op": "const 1->0",
+"orig": "\t\t    src = SkipExprSubstScan(src + 1, end, ']');",
+"new": "\t\t    src = SkipExprSubstScan(src + 0, end, ']');"
+},
+{
+"id": 67,
+"file": "generic/tclParse.c",
+"line": 1378,
+"op": "delete stmt",
+"orig": "\t\t    src = SkipExprSubstScan(src + 1, end, ']');",
+"new": "\t\t    ;"
+},
+{
+"id": 68,
+"file": "generic/tclParse.c",
+"line": 1379,
+"op": "swap ==->!=",
+"orig": "\t\t    if (src == NULL) {",
+"new": "\t\t    if (src != NULL) {"
+},
+{
+"id": 69,
+"file": "generic/tclParse.c",
+"line": 1379,
+"op": "negate cond",
+"orig": "\t\t    if (src == NULL) {",
+"new": "\t\t    if (!(src == NULL)) {"
+},
+{
+"id": 70,
+"file": "generic/tclParse.c",
+"line": 1383,
+"op": "swap ++->--",
+"orig": "\t\tsrc++;",
+"new": "\t\tsrc--;"
+},
+{
+"id": 71,
+"file": "generic/tclParse.c",
+"line": 1383,
+"op": "delete stmt",
+"orig": "\t\tsrc++;",
+"new": "\t\t;"
+},
+{
+"id": 72,
+"file": "generic/tclParse.c",
+"line": 1385,
+"op": "swap >=->>",
+"orig": "\t    if (src >= end) {",
+"new": "\t    if (src > end) {"
+},
+{
+"id": 73,
+"file": "generic/tclParse.c",
+"line": 1385,
+"op": "negate cond",
+"orig": "\t    if (src >= end) {",
+"new": "\t    if (!(src >= end)) {"
+},
+{
+"id": 74,
+"file": "generic/tclParse.c",
+"line": 1388,
+"op": "delete stmt",
+"orig": "\t    break;",
+"new": "\t    ;"
+},
+{
+"id": 75,
+"file": "generic/tclParse.c",
+"line": 1389,
+"op": "char '['->']'",
+"orig": "\tcase '[':",
+"new": "\tcase ']':"
+},
+{
+"id": 76,
+"file": "generic/tclParse.c",
+"line": 1390,
+"op": "char ']'->'['",
+"orig": "\t    src = SkipExprSubstScan(src + 1, end, ']');",
+"new": "\t    src = SkipExprSubstScan(src + 1, end, '[');"
+},
+{
+"id": 77,
+"file": "generic/tclParse.c",
+"line": 1390,
+"op": "const 1->0",
+"orig": "\t    src = SkipExprSubstScan(src + 1, end, ']');",
+"new": "\t    src = SkipExprSubstScan(src + 0, end, ']');"
+},
+{
+"id": 78,
+"file": "generic/tclParse.c",
+"line": 1390,
+"op": "delete stmt",
+"orig": "\t    src = SkipExprSubstScan(src + 1, end, ']');",
+"new": "\t    ;"
+},
+{
+"id": 79,
+"file": "generic/tclParse.c",
+"line": 1391,
+"op": "swap ==->!=",
+"orig": "\t    if (src == NULL) {",
+"new": "\t    if (src != NULL) {"
+},
+{
+"id": 80,
+"file": "generic/tclParse.c",
+"line": 1391,
+"op": "negate cond",
+"orig": "\t    if (src == NULL) {",
+"new": "\t    if (!(src == NULL)) {"
+},
+{
+"id": 81,
+"file": "generic/tclParse.c",
+"line": 1394,
+"op": "delete stmt",
+"orig": "\t    break;",
+"new": "\t    ;"
+},
+{
+"id": 82,
+"file": "generic/tclParse.c",
+"line": 1395,
+"op": "char '('->')'",
+"orig": "\tcase '(':",
+"new": "\tcase ')':"
+},
+{
+"id": 83,
+"file": "generic/tclParse.c",
+"line": 1396,
+"op": "swap ==->!=",
+"orig": "\t    if (closer == ')') {",
+"new": "\t    if (closer != ')') {"
+},
+{
+"id": 84,
+"file": "generic/tclParse.c",
+"line": 1396,
+"op": "char ')'->'('",
+"orig": "\t    if (closer == ')') {",
+"new": "\t    if (closer == '(') {"
+},
+{
+"id": 85,
+"file": "generic/tclParse.c",
+"line": 1396,
+"op": "negate cond",
+"orig": "\t    if (closer == ')') {",
+"new": "\t    if (!(closer == ')')) {"
+},
+{
+"id": 86,
+"file": "generic/tclParse.c",
+"line": 1397,
+"op": "swap ++->--",
+"orig": "\t\tdepth++;",
+"new": "\t\tdepth--;"
+},
+{
+"id": 87,
+"file": "generic/tclParse.c",
+"line": 1397,
+"op": "delete stmt",
+"orig": "\t\tdepth++;",
+"new": "\t\t;"
+},
+{
+"id": 88,
+"file": "generic/tclParse.c",
+"line": 1399,
+"op": "delete stmt",
+"orig": "\t    break;",
+"new": "\t    ;"
+},
+{
+"id": 89,
+"file": "generic/tclParse.c",
+"line": 1400,
+"op": "char ')'->'('",
+"orig": "\tcase ')':",
+"new": "\tcase '(':"
+},
+{
+"id": 90,
+"file": "generic/tclParse.c",
+"line": 1401,
+"op": "swap ==->!=",
+"orig": "\t    if (closer == ')') {",
+"new": "\t    if (closer != ')') {"
+},
+{
+"id": 91,
+"file": "generic/tclParse.c",
+"line": 1401,
+"op": "char ')'->'('",
+"orig": "\t    if (closer == ')') {",
+"new": "\t    if (closer == '(') {"
+},
+{
+"id": 92,
+"file": "generic/tclParse.c",
+"line": 1401,
+"op": "negate cond",
+"orig": "\t    if (closer == ')') {",
+"new": "\t    if (!(closer == ')')) {"
+},
+{
+"id": 93,
+"file": "generic/tclParse.c",
+"line": 1402,
+"op": "swap ==->!=",
+"orig": "\t\tif (depth == 0) {",
+"new": "\t\tif (depth != 0) {"
+},
+{
+"id": 94,
+"file": "generic/tclParse.c",
+"line": 1402,
+"op": "negate cond",
+"orig": "\t\tif (depth == 0) {",
+"new": "\t\tif (!(depth == 0)) {"
+},
+{
+"id": 95,
+"file": "generic/tclParse.c",
+"line": 1402,
+"op": "const 0->1",
+"orig": "\t\tif (depth == 0) {",
+"new": "\t\tif (depth == 1) {"
+},
+{
+"id": 96,
+"file": "generic/tclParse.c",
+"line": 1405,
+"op": "swap --->++",
+"orig": "\t\tdepth--;",
+"new": "\t\tdepth++;"
+},
+{
+"id": 97,
+"file": "generic/tclParse.c",
+"line": 1405,
+"op": "delete stmt",
+"orig": "\t\tdepth--;",
+"new": "\t\t;"
+},
+{
+"id": 98,
+"file": "generic/tclParse.c",
+"line": 1407,
+"op": "delete stmt",
+"orig": "\t    break;",
+"new": "\t    ;"
+},
+{
+"id": 99,
+"file": "generic/tclParse.c",
+"line": 1408,
+"op": "char ']'->'['",
+"orig": "\tcase ']':",
+"new": "\tcase '[':"
+},
+{
+"id": 100,
+"file": "generic/tclParse.c",
+"line": 1409,
+"op": "swap ==->!=",
+"orig": "\t    if (closer == ']') {",
+"new": "\t    if (closer != ']') {"
+},
+{
+"id": 101,
+"file": "generic/tclParse.c",
+"line": 1409,
+"op": "char ']'->'['",
+"orig": "\t    if (closer == ']') {",
+"new": "\t    if (closer == '[') {"
+},
+{
+"id": 102,
+"file": "generic/tclParse.c",
+"line": 1409,
+"op": "negate cond",
+"orig": "\t    if (closer == ']') {",
+"new": "\t    if (!(closer == ']')) {"
+},
+{
+"id": 103,
+"file": "generic/tclParse.c",
+"line": 1412,
+"op": "delete stmt",
+"orig": "\t    break;",
+"new": "\t    ;"
+},
+{
+"id": 104,
+"file": "generic/tclParse.c",
+"line": 1414,
+"op": "swap ++->--",
+"orig": "\tsrc++;",
+"new": "\tsrc--;"
+},
+{
+"id": 105,
+"file": "generic/tclParse.c",
+"line": 1414,
+"op": "delete stmt",
+"orig": "\tsrc++;",
+"new": "\t;"
+},
+{
+"id": 106,
+"file": "generic/tclParse.c",
+"line": 1441,
+"op": "char ')'->'('",
+"orig": "    return SkipExprSubstScan(src, end, ')');",
+"new": "    return SkipExprSubstScan(src, end, '(');"
+},
+{
+"id": 107,
+"file": "generic/tclParse.c",
+"line": 1584,
+"op": "swap ==->!=",
+"orig": "    } else if ((*src == '(') && ((TCL_EXPR_SUBST_PARENS == 1)",
+"new": "    } else if ((*src != '(') && ((TCL_EXPR_SUBST_PARENS == 1)"
+},
+{
+"id": 108,
+"file": "generic/tclParse.c",
+"line": 1584,
+"op": "swap ==->!=",
+"orig": "    } else if ((*src == '(') && ((TCL_EXPR_SUBST_PARENS == 1)",
+"new": "    } else if ((*src == '(') && ((TCL_EXPR_SUBST_PARENS != 1)"
+},
+{
+"id": 109,
+"file": "generic/tclParse.c",
+"line": 1584,
+"op": "swap &&->||",
+"orig": "    } else if ((*src == '(') && ((TCL_EXPR_SUBST_PARENS == 1)",
+"new": "    } else if ((*src == '(') || ((TCL_EXPR_SUBST_PARENS == 1)"
+},
+{
+"id": 110,
+"file": "generic/tclParse.c",
+"line": 1584,
+"op": "char '('->')'",
+"orig": "    } else if ((*src == '(') && ((TCL_EXPR_SUBST_PARENS == 1)",
+"new": "    } else if ((*src == ')') && ((TCL_EXPR_SUBST_PARENS == 1)"
+},
+{
+"id": 111,
+"file": "generic/tclParse.c",
+"line": 1584,
+"op": "const 1->0",
+"orig": "    } else if ((*src == '(') && ((TCL_EXPR_SUBST_PARENS == 1)",
+"new": "    } else if ((*src == '(') && ((TCL_EXPR_SUBST_PARENS == 0)"
+},
+{
+"id": 112,
+"file": "generic/tclParse.c",
+"line": 1585,
+"op": "swap ==->!=",
+"orig": "\t    || ((numBytes > 1) && (src[1] == '(')))) {",
+"new": "\t    || ((numBytes > 1) && (src[1] != '(')))) {"
+},
+{
+"id": 113,
+"file": "generic/tclParse.c",
+"line": 1585,
+"op": "swap >->>=",
+"orig": "\t    || ((numBytes > 1) && (src[1] == '(')))) {",
+"new": "\t    || ((numBytes >= 1) && (src[1] == '(')))) {"
+},
+{
+"id": 114,
+"file": "generic/tclParse.c",
+"line": 1585,
+"op": "swap &&->||",
+"orig": "\t    || ((numBytes > 1) && (src[1] == '(')))) {",
+"new": "\t    || ((numBytes > 1) || (src[1] == '(')))) {"
+},
+{
+"id": 115,
+"file": "generic/tclParse.c",
+"line": 1585,
+"op": "swap ||->&&",
+"orig": "\t    || ((numBytes > 1) && (src[1] == '(')))) {",
+"new": "\t    && ((numBytes > 1) && (src[1] == '(')))) {"
+},
+{
+"id": 116,
+"file": "generic/tclParse.c",
+"line": 1585,
+"op": "char '('->')'",
+"orig": "\t    || ((numBytes > 1) && (src[1] == '(')))) {",
+"new": "\t    || ((numBytes > 1) && (src[1] == ')')))) {"
+},
+{
+"id": 117,
+"file": "generic/tclParse.c",
+"line": 1585,
+"op": "const 1->0",
+"orig": "\t    || ((numBytes > 1) && (src[1] == '(')))) {",
+"new": "\t    || ((numBytes > 0) && (src[1] == '(')))) {"
+},
+{
+"id": 118,
+"file": "generic/tclParse.c",
+"line": 1585,
+"op": "const 1->0",
+"orig": "\t    || ((numBytes > 1) && (src[1] == '(')))) {",
+"new": "\t    || ((numBytes > 1) && (src[0] == '(')))) {"
+},
+{
+"id": 119,
+"file": "generic/tclParse.c",
+"line": 1595,
+"op": "const 1->0",
+"orig": "\tconst char *bodyEnd = FindExprSubstEnd(src + 1, src + numBytes);",
+"new": "\tconst char *bodyEnd = FindExprSubstEnd(src + 0, src + numBytes);"
+},
+{
+"id": 120,
+"file": "generic/tclParse.c",
+"line": 1595,
+"op": "delete stmt",
+"orig": "\tconst char *bodyEnd = FindExprSubstEnd(src + 1, src + numBytes);",
+"new": "\t;"
+},
+{
+"id": 121,
+"file": "generic/tclParse.c",
+"line": 1597,
+"op": "swap ==->!=",
+"orig": "\tif (bodyEnd == NULL) {",
+"new": "\tif (bodyEnd != NULL) {"
+},
+{
+"id": 122,
+"file": "generic/tclParse.c",
+"line": 1597,
+"op": "negate cond",
+"orig": "\tif (bodyEnd == NULL) {",
+"new": "\tif (!(bodyEnd == NULL)) {"
+},
+{
+"id": 123,
+"file": "generic/tclParse.c",
+"line": 1598,
+"op": "swap !=->==",
+"orig": "\t    if (parsePtr->interp != NULL) {",
+"new": "\t    if (parsePtr->interp == NULL) {"
+},
+{
+"id": 124,
+"file": "generic/tclParse.c",
+"line": 1598,
+"op": "negate cond",
+"orig": "\t    if (parsePtr->interp != NULL) {",
+"new": "\t    if (!(parsePtr->interp != NULL)) {"
+},
+{
+"id": 125,
+"file": "generic/tclParse.c",
+"line": 1600,
+"op": "delete stmt",
+"orig": "\t\t\t\"missing )\", -1));",
+"new": "\t\t\t;"
+},
+{
+"id": 126,
+"file": "generic/tclParse.c",
+"line": 1602,
+"op": "delete stmt",
+"orig": "\t    parsePtr->errorType = TCL_PARSE_MISSING_PAREN;",
+"new": "\t    ;"
+},
+{
+"id": 127,
+"file": "generic/tclParse.c",
+"line": 1603,
+"op": "delete stmt",
+"orig": "\t    parsePtr->term = src;",
+"new": "\t    ;"
+},
+{
+"id": 128,
+"file": "generic/tclParse.c",
+"line": 1604,
+"op": "delete stmt",
+"orig": "\t    parsePtr->incomplete = 1;",
+"new": "\t    ;"
+},
+{
+"id": 129,
+"file": "generic/tclParse.c",
+"line": 1605,
+"op": "delete stmt",
+"orig": "\t    goto error;",
+"new": "\t    ;"
+},
+{
+"id": 130,
+"file": "generic/tclParse.c",
+"line": 1607,
+"op": "delete stmt",
+"orig": "\tparsePtr->tokenPtr[varIndex].type = TCL_TOKEN_EXPR_SUBST;",
+"new": "\t;"
+},
+{
+"id": 131,
+"file": "generic/tclParse.c",
+"line": 1608,
+"op": "const 1->0",
+"orig": "\ttokenPtr->start = src + 1;",
+"new": "\ttokenPtr->start = src + 0;"
+},
+{
+"id": 132,
+"file": "generic/tclParse.c",
+"line": 1608,
+"op": "delete stmt",
+"orig": "\ttokenPtr->start = src + 1;",
+"new": "\t;"
+},
+{
+"id": 133,
+"file": "generic/tclParse.c",
+"line": 1609,
+"op": "const 1->0",
+"orig": "\ttokenPtr->size = bodyEnd - (src + 1);",
+"new": "\ttokenPtr->size = bodyEnd - (src + 0);"
+},
+{
+"id": 134,
+"file": "generic/tclParse.c",
+"line": 1609,
+"op": "delete stmt",
+"orig": "\ttokenPtr->size = bodyEnd - (src + 1);",
+"new": "\t;"
+},
+{
+"id": 135,
+"file": "generic/tclParse.c",
+"line": 1610,
+"op": "swap ++->--",
+"orig": "\tparsePtr->numTokens++;",
+"new": "\tparsePtr->numTokens--;"
+},
+{
+"id": 136,
+"file": "generic/tclParse.c",
+"line": 1610,
+"op": "delete stmt",
+"orig": "\tparsePtr->numTokens++;",
+"new": "\t;"
+},
+{
+"id": 137,
+"file": "generic/tclParse.c",
+"line": 1611,
+"op": "const 1->0",
+"orig": "\tsrc = bodyEnd + 1;",
+"new": "\tsrc = bodyEnd + 0;"
+},
+{
+"id": 138,
+"file": "generic/tclParse.c",
+"line": 1611,
+"op": "delete stmt",
+"orig": "\tsrc = bodyEnd + 1;",
+"new": "\t;"
+},
+{
+"id": 139,
+"file": "generic/tclParse.c",
+"line": 1732,
+"op": "delete stmt",
+"orig": "    bool isExprSubst;",
+"new": "    ;"
+},
+{
+"id": 140,
+"file": "generic/tclParse.c",
+"line": 1752,
+"op": "swap ==->!=",
+"orig": "    isExprSubst = (parsePtr->tokenPtr->type == TCL_TOKEN_EXPR_SUBST);",
+"new": "    isExprSubst = (parsePtr->tokenPtr->type != TCL_TOKEN_EXPR_SUBST);"
+},
+{
+"id": 141,
+"file": "generic/tclParse.c",
+"line": 1752,
+"op": "delete stmt",
+"orig": "    isExprSubst = (parsePtr->tokenPtr->type == TCL_TOKEN_EXPR_SUBST);",
+"new": "    ;"
+},
+{
+"id": 142,
+"file": "generic/tclParse.c",
+"line": 1762,
+"op": "negate cond",
+"orig": "    if (isExprSubst) {",
+"new": "    if (!(isExprSubst)) {"
+},
+{
+"id": 143,
+"file": "generic/tclParse.c",
+"line": 2466,
+"op": "const 1->0",
+"orig": "\t    Tcl_Obj *bodyObj = Tcl_NewStringObj(tokenPtr[1].start,",
+"new": "\t    Tcl_Obj *bodyObj = Tcl_NewStringObj(tokenPtr[0].start,"
+},
+{
+"id": 144,
+"file": "generic/tclParse.c",
+"line": 2467,
+"op": "const 1->0",
+"orig": "\t\t    tokenPtr[1].size);",
+"new": "\t\t    tokenPtr[0].size);"
+},
+{
+"id": 145,
+"file": "generic/tclParse.c",
+"line": 2467,
+"op": "delete stmt",
+"orig": "\t\t    tokenPtr[1].size);",
+"new": "\t\t    ;"
+},
+{
+"id": 146,
+"file": "generic/tclParse.c",
+"line": 2468,
+"op": "delete stmt",
+"orig": "\t    Tcl_Obj *valueObj = NULL;",
+"new": "\t    ;"
+},
+{
+"id": 147,
+"file": "generic/tclParse.c",
+"line": 2470,
+"op": "delete stmt",
+"orig": "\t    Tcl_IncrRefCount(bodyObj);",
+"new": "\t    ;"
+},
+{
+"id": 148,
+"file": "generic/tclParse.c",
+"line": 2471,
+"op": "delete stmt",
+"orig": "\t    code = Tcl_ExprObj(interp, bodyObj, &valueObj);",
+"new": "\t    ;"
+},
+{
+"id": 149,
+"file": "generic/tclParse.c",
+"line": 2472,
+"op": "delete stmt",
+"orig": "\t    Tcl_DecrRefCount(bodyObj);",
+"new": "\t    ;"
+},
+{
+"id": 150,
+"file": "generic/tclParse.c",
+"line": 2473,
+"op": "swap ==->!=",
+"orig": "\t    if (code == TCL_OK) {",
+"new": "\t    if (code != TCL_OK) {"
+},
+{
+"id": 151,
+"file": "generic/tclParse.c",
+"line": 2473,
+"op": "swap TCL_OK->TCL_ERROR",
+"orig": "\t    if (code == TCL_OK) {",
+"new": "\t    if (code == TCL_ERROR) {"
+},
+{
+"id": 152,
+"file": "generic/tclParse.c",
+"line": 2473,
+"op": "negate cond",
+"orig": "\t    if (code == TCL_OK) {",
+"new": "\t    if (!(code == TCL_OK)) {"
+},
+{
+"id": 153,
+"file": "generic/tclParse.c",
+"line": 2474,
+"op": "delete stmt",
+"orig": "\t\tTcl_SetObjResult(interp, valueObj);",
+"new": "\t\t;"
+},
+{
+"id": 154,
+"file": "generic/tclParse.c",
+"line": 2475,
+"op": "delete stmt",
+"orig": "\t\tTcl_DecrRefCount(valueObj);",
+"new": "\t\t;"
+},
+{
+"id": 155,
+"file": "generic/tclParse.c",
+"line": 2476,
+"op": "delete stmt",
+"orig": "\t\tappendObj = Tcl_GetObjResult(interp);",
+"new": "\t\t;"
+},
+{
+"id": 156,
+"file": "generic/tclParse.c",
+"line": 2485,
+"op": "delete stmt",
+"orig": "\t\tappendObj = Tcl_GetObjResult(interp);",
+"new": "\t\t;"
+},
+{
+"id": 157,
+"file": "generic/tclParse.c",
+"line": 2487,
+"op": "delete stmt",
+"orig": "\t    count -= tokenPtr->numComponents;",
+"new": "\t    ;"
+},
+{
+"id": 158,
+"file": "generic/tclParse.c",
+"line": 2488,
+"op": "delete stmt",
+"orig": "\t    tokenPtr += tokenPtr->numComponents;",
+"new": "\t    ;"
+},
+{
+"id": 159,
+"file": "generic/tclParse.c",
+"line": 2489,
+"op": "delete stmt",
+"orig": "\t    break;",
+"new": "\t    ;"
+},
+{
+"id": 160,
+"file": "generic/tclCompile.c",
+"line": 2883,
+"op": "swap >->>=",
+"orig": "\t    if (Tcl_DStringLength(&textBuffer) > 0) {",
+"new": "\t    if (Tcl_DStringLength(&textBuffer) >= 0) {"
+},
+{
+"id": 161,
+"file": "generic/tclCompile.c",
+"line": 2883,
+"op": "negate cond",
+"orig": "\t    if (Tcl_DStringLength(&textBuffer) > 0) {",
+"new": "\t    if (!(Tcl_DStringLength(&textBuffer) > 0)) {"
+},
+{
+"id": 162,
+"file": "generic/tclCompile.c",
+"line": 2884,
+"op": "delete stmt",
+"orig": "\t\tTclPushDString(envPtr, &textBuffer);",
+"new": "\t\t;"
+},
+{
+"id": 163,
+"file": "generic/tclCompile.c",
+"line": 2885,
+"op": "swap ++->--",
+"orig": "\t\tnumObjsToConcat++;",
+"new": "\t\tnumObjsToConcat--;"
+},
+{
+"id": 164,
+"file": "generic/tclCompile.c",
+"line": 2885,
+"op": "delete stmt",
+"orig": "\t\tnumObjsToConcat++;",
+"new": "\t\t;"
+},
+{
+"id": 165,
+"file": "generic/tclCompile.c",
+"line": 2886,
+"op": "delete stmt",
+"orig": "\t\tTcl_DStringFree(&textBuffer);",
+"new": "\t\t;"
+},
+{
+"id": 166,
+"file": "generic/tclCompile.c",
+"line": 2889,
+"op": "delete stmt",
+"orig": "\t    envPtr->line += adjust;",
+"new": "\t    ;"
+},
+{
+"id": 167,
+"file": "generic/tclCompile.c",
+"line": 2890,
+"op": "const 1->0",
+"orig": "\t    TclCompileExpr(interp, tokenPtr[1].start, tokenPtr[1].size,",
+"new": "\t    TclCompileExpr(interp, tokenPtr[0].start, tokenPtr[1].size,"
+},
+{
+"id": 168,
+"file": "generic/tclCompile.c",
+"line": 2890,
+"op": "const 1->0",
+"orig": "\t    TclCompileExpr(interp, tokenPtr[1].start, tokenPtr[1].size,",
+"new": "\t    TclCompileExpr(interp, tokenPtr[1].start, tokenPtr[0].size,"
+},
+{
+"id": 169,
+"file": "generic/tclCompile.c",
+"line": 2891,
+"op": "delete stmt",
+"orig": "\t\t    envPtr, 1);",
+"new": "\t\t    ;"
+},
+{
+"id": 170,
+"file": "generic/tclCompile.c",
+"line": 2892,
+"op": "delete stmt",
+"orig": "\t    envPtr->line -= adjust;",
+"new": "\t    ;"
+},
+{
+"id": 171,
+"file": "generic/tclCompile.c",
+"line": 2893,
+"op": "swap ++->--",
+"orig": "\t    numObjsToConcat++;",
+"new": "\t    numObjsToConcat--;"
+},
+{
+"id": 172,
+"file": "generic/tclCompile.c",
+"line": 2893,
+"op": "delete stmt",
+"orig": "\t    numObjsToConcat++;",
+"new": "\t    ;"
+},
+{
+"id": 173,
+"file": "generic/tclCompile.c",
+"line": 2894,
+"op": "delete stmt",
+"orig": "\t    count -= tokenPtr->numComponents;",
+"new": "\t    ;"
+},
+{
+"id": 174,
+"file": "generic/tclCompile.c",
+"line": 2895,
+"op": "delete stmt",
+"orig": "\t    tokenPtr += tokenPtr->numComponents;",
+"new": "\t    ;"
+},
+{
+"id": 175,
+"file": "generic/tclCompile.c",
+"line": 2896,
+"op": "delete stmt",
+"orig": "\t    break;",
+"new": "\t    ;"
+},
+{
+"id": 176,
+"file": "generic/tclCompCmdsSZ.c",
+"line": 1616,
+"op": "const 1->0",
+"orig": "\t\tTclCompileExpr(interp, tokenPtr[1].start, tokenPtr[1].size,",
+"new": "\t\tTclCompileExpr(interp, tokenPtr[0].start, tokenPtr[1].size,"
+},
+{
+"id": 177,
+"file": "generic/tclCompCmdsSZ.c",
+"line": 1616,
+"op": "const 1->0",
+"orig": "\t\tTclCompileExpr(interp, tokenPtr[1].start, tokenPtr[1].size,",
+"new": "\t\tTclCompileExpr(interp, tokenPtr[1].start, tokenPtr[0].size,"
+},
+{
+"id": 178,
+"file": "generic/tclCompCmdsSZ.c",
+"line": 1617,
+"op": "delete stmt",
+"orig": "\t\t\tenvPtr, 1);",
+"new": "\t\t\t;"
+},
+{
+"id": 179,
+"file": "generic/tclCompCmdsSZ.c",
+"line": 1618,
+"op": "swap ++->--",
+"orig": "\t\tcount++;",
+"new": "\t\tcount--;"
+},
+{
+"id": 180,
+"file": "generic/tclCompCmdsSZ.c",
+"line": 1618,
+"op": "delete stmt",
+"orig": "\t\tcount++;",
+"new": "\t\t;"
+},
+{
+"id": 181,
+"file": "generic/tclCompCmdsSZ.c",
+"line": 1619,
+"op": "delete stmt",
+"orig": "\t\tbreak;",
+"new": "\t\t;"
+},
+{
+"id": 182,
+"file": "generic/tclCompExpr.c",
+"line": 938,
+"op": "swap ==->!=",
+"orig": "\t\tif (code == TCL_OK && tokenPtr->type != TCL_TOKEN_VARIABLE",
+"new": "\t\tif (code != TCL_OK && tokenPtr->type != TCL_TOKEN_VARIABLE"
+},
+{
+"id": 183,
+"file": "generic/tclCompExpr.c",
+"line": 938,
+"op": "swap !=->==",
+"orig": "\t\tif (code == TCL_OK && tokenPtr->type != TCL_TOKEN_VARIABLE",
+"new": "\t\tif (code == TCL_OK && tokenPtr->type == TCL_TOKEN_VARIABLE"
+},
+{
+"id": 184,
+"file": "generic/tclCompExpr.c",
+"line": 938,
+"op": "swap &&->||",
+"orig": "\t\tif (code == TCL_OK && tokenPtr->type != TCL_TOKEN_VARIABLE",
+"new": "\t\tif (code == TCL_OK || tokenPtr->type != TCL_TOKEN_VARIABLE"
+},
+{
+"id": 185,
+"file": "generic/tclCompExpr.c",
+"line": 938,
+"op": "swap TCL_OK->TCL_ERROR",
+"orig": "\t\tif (code == TCL_OK && tokenPtr->type != TCL_TOKEN_VARIABLE",
+"new": "\t\tif (code == TCL_ERROR && tokenPtr->type != TCL_TOKEN_VARIABLE"
+},
+{
+"id": 186,
+"file": "generic/tclCompExpr.c",
+"line": 939,
+"op": "swap !=->==",
+"orig": "\t\t\t&& tokenPtr->type != TCL_TOKEN_EXPR_SUBST) {",
+"new": "\t\t\t&& tokenPtr->type == TCL_TOKEN_EXPR_SUBST) {"
+}
+]

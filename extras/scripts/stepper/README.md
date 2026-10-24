@@ -1,0 +1,3 @@
+# Parser stepper sources
+`parser_stepper.html` (in extras/) is self-contained. To rebuild it: run `gen.tcl` with a tcltest binary of each build (writes `data1.json` for the `$(` build and `data2.json` for the default `$((` build; TCL_LIBRARY must point at the Tcl library dir), then `python3 build_page.py out.html` (edit the `G=` path to your generic/ directory). `check.js` (Playwright) runs every scenario in both builds and confirms the JavaScript port of the scanner finds the same body as the real parser.
+The code viewer (colour, Fold, double-click definitions, Back) follows the design of extras/bitarray_stepper.html in the bitarray repository.

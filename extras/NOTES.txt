@@ -1,0 +1,33 @@
+
+UPDATE after mutation testing (see mutation_testing.md):
+ - tclParse.c changed: TclSubstTokens now substitutes the result for non-OK return codes (a bug in the
+   uncompiled path); two redundant assignments were removed. If you copied an earlier version of the
+   files into a tree, copy new/generic/tclParse.c and the three new/tests/*.test files again.
+ - Tests: parse.test (parse-22.x) and compile.test (compile-21.x) grew; 22.80 is a leak test that needs a
+   --enable-symbols=mem build; 22.99 checks the spelling when TCL_TEST_EXPR_SUBST_PARENS=1|2 is set.
+ - Final results: full suite 509,451 (mode 1) / 508,697 (mode 2) tests, 0 failed in both builds, after the subst option on Linux (the cmdAH abort is environmental);
+   ASan(PURIFY) clean; mutation kill rate 86.1% ($() / 87.9% ($(()).
+ - Windows results above predate these edits; rerun test.bat 1 and test.bat 2 after copying the files again.
+
+UPDATE (subst option): new subst options -expressions / -noexpressions; -nocommands and -novariables also turn
+ expression substitution off. Changed or new in this round: generic/tcl.h, generic/tclCmdMZ.c, generic/tclParse.c,
+ doc/subst.n, doc/SubstObj.3, tests/subst.test. Copy those from new/ again (and the rest, if your tree is older),
+ then rerun test.bat 1 and test.bat 2. See design_and_results.md section 6.
+
+UPDATE (look-ahead): the default build now requires $((expr)) to end with )). Changed: generic/tclParse.c, tcl.h (comment), doc/Tcl.n, doc/ParseCmd.3, tests/parse.test (plus the subst files from the previous update). Copy new/ again and rerun test.bat 1 and 2.
+
+Update (Oct 24): "$((expr)" where the input ends right after the first closing paren now reports
+  missing second ")" at _@_ / in expression substitution "..."   (was a bare "missing )").
+It is still TCL_PARSE_MISSING_PAREN with incomplete=1, so tclsh keeps waiting for input.
+A body with no closing paren at all still says "missing )". Tests parse-22.30, 22.31, 22.95 updated.
+Full suites after this change: 0 failed in both builds (509,461 tests each).
+
+Update (Oct 24, evening): code is unchanged since the message change above (tclParse.c md5 7d9e28c9543e3d739b3ea5a4ed696489).
+  * One new test: tests/parse.test parse-22.109 (line numbers after a continuation line). Copy new/tests/parse.test.
+    107 new tests in total across parse.test, subst.test, compile.test and parseOld.test.
+  * Memory checks on the final code, both builds: Valgrind, AddressSanitizer and the Tcl memory-debug build are clean (the only
+    report is a 48-byte leak in core Tcl, TclArgumentBCEnter, which also shows up without this feature). Logs in extras/valgrind/final_*.txt,
+    scripts in extras/scripts/valgrind_asan_mem/.
+  * Mutation testing second pass: 88.1% killed in the default build, 69.4% in the $( build (dead code there). See mutation_testing.md.
+  * Full Linux suites: 509,471 tests ($((, 0 failed) and 508,717 ($(, 0 failed; binary.test killed by the system in that run).
+  * Stepper (extras/parser_stepper.html) now opens on "Review the diff", with the questions-to-hunks map, hunk list, "Back to top" buttons.

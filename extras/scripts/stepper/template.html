@@ -1,0 +1,1312 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
+<meta name="claude:viewport-fit-sides" content="cover">
+<title>Tcl Expression Substitution Stepper</title>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Source+Sans+3:wght@400;600;700&family=JetBrains+Mono:wght@400;600&display=swap">
+<style>
+/* Layout: scenario and build switches, the script text with a moving cursor, three panes (real C code, scanner state, token array and results), caption below. */
+:root {
+  --bg:#f3f5f6; --panel:#ffffff; --fg:#1c2528; --muted:#5d6b70; --line:#d3dade;
+  --accent:#0b6e7a; --accent-fg:#ffffff; --hot:#b3261e; --ok:#1f7a3a;
+  --pc:#fff3c4; --pc-b:#b9770e; --scan:#dbe8fb; --skip:#e8def8; --body:#d6efdc; --dollar:#fbe9c8;
+  --font:"Source Sans 3", system-ui, sans-serif;
+  --mono:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
+}
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
+  --bg:#12191b; --panel:#1b2427; --fg:#e3eaec; --muted:#94a3a8; --line:#33434a; --accent:#4fc3d0; --accent-fg:#0a1a1d;
+  --hot:#ff8a80; --ok:#7bd88f; --pc:#4a4318; --pc-b:#e5a53d; --scan:#1d3354; --skip:#35285a; --body:#1b3d27; --dollar:#4a3510; color-scheme:dark; } }
+:root[data-theme="dark"] {
+  --bg:#12191b; --panel:#1b2427; --fg:#e3eaec; --muted:#94a3a8; --line:#33434a; --accent:#4fc3d0; --accent-fg:#0a1a1d;
+  --hot:#ff8a80; --ok:#7bd88f; --pc:#4a4318; --pc-b:#e5a53d; --scan:#1d3354; --skip:#35285a; --body:#1b3d27; --dollar:#4a3510; color-scheme:dark; }
+* { box-sizing:border-box; }
+body { background:var(--bg); color:var(--fg); font-family:var(--font); font-size:16px; line-height:1.5; margin:0; padding-block:20px 40px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
+main { max-width:1060px; margin-inline:auto; display:flex; flex-direction:column; gap:18px; }
+h1 { font-size:1.6rem; line-height:1.2; margin:0; text-wrap:balance; }
+h2 { font-size:1.05rem; margin:0 0 8px; }
+p { margin:0; }
+code, .mono { font-family:var(--mono); font-size:.88em; }
+.lede { color:var(--muted); max-width:72ch; margin-top:6px; }
+header.top { display:flex; gap:16px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
+header.top .topl { flex:1 1 420px; min-width:0; }
+kbd { font-family:var(--mono); font-size:.75rem; border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:0 5px; background:var(--bg); color:var(--fg); }
+.keys { flex:0 1 300px; min-width:220px; border:1px solid var(--line); border-radius:6px; background:var(--panel); padding:6px 12px; font-size:.8rem; color:var(--muted); }
+.keys b { color:var(--fg); font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; }
+.keys div { margin-top:2px; }
+@media (max-width:760px) { header.top { flex-direction:column; } .keys { flex:none; width:100%; box-sizing:border-box; } }
+.ver { color:var(--muted); margin:0 0 6px; font-size:.8rem; }
+
+.bar { display:flex; flex-wrap:wrap; gap:10px 16px; align-items:center; justify-content:space-between; }
+.seg { display:inline-flex; flex-wrap:wrap; border:1px solid var(--line); border-radius:6px; overflow:hidden; background:var(--panel); }
+.seg button { border:0; background:transparent; color:var(--fg); font:inherit; padding:7px 12px; cursor:pointer; }
+.seg button[aria-pressed="true"] { background:var(--accent); color:var(--accent-fg); font-weight:600; }
+.lbl { font-size:.72rem; color:var(--muted); text-transform:uppercase; letter-spacing:.05em; display:block; margin-bottom:3px; }
+.ctl { display:flex; gap:8px; flex-wrap:wrap; }
+.ctl button { font:inherit; padding:7px 14px; border:1px solid var(--line); background:var(--panel); color:var(--fg); border-radius:6px; cursor:pointer; }
+.ctl button.primary { background:var(--accent); color:var(--accent-fg); border-color:var(--accent); font-weight:600; }
+.ctl button:disabled { opacity:.4; cursor:default; }
+button:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
+.steps { display:flex; gap:3px; flex-wrap:wrap; }
+.steps i { width:12px; height:6px; border-radius:3px; background:var(--line); cursor:pointer; position:relative; }
+.steps i::after { content:''; position:absolute; inset:-9px -2px; }
+.steps i:hover { outline:2px solid var(--accent); outline-offset:1px; }
+.steps i.done { background:var(--accent); opacity:.55; }
+.steps i.cur { background:var(--accent); opacity:1; }
+
+pre.code .ln.add { background:var(--addbg); box-shadow:inset 3px 0 0 var(--addbar); }
+pre.code .ln.add.hit { background:var(--on); }
+.treebox { overflow-x:auto; padding:6px 0 2px; }
+.srcbox { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px 14px; overflow-x:auto; }
+.src { font-family:var(--mono); font-size:1.15rem; white-space:pre; line-height:1.9; }
+.src span { padding:2px 0; border-radius:2px; position:relative; }
+.src .scan { background:var(--scan); }
+.src .skip { background:var(--skip); }
+.src .body { background:var(--body); }
+.src .dollar { background:var(--dollar); font-weight:700; }
+.src .cur { background:var(--pc); outline:2px solid var(--pc-b); outline-offset:0; font-weight:700; }
+.src .tick { position:absolute; left:0; right:0; top:-1.15em; text-align:center; font-size:.62rem; color:var(--muted); line-height:1; font-family:var(--font); }
+.legend { display:flex; gap:12px; flex-wrap:wrap; font-size:.78rem; color:var(--muted); margin-top:6px; }
+.legend b { display:inline-block; width:12px; height:12px; border-radius:2px; vertical-align:-2px; margin-right:4px; border:1px solid var(--line); }
+
+.panes { display:grid; grid-template-columns:1.5fr 1fr 1.1fr; gap:14px; align-items:start; }
+@media (max-width:900px) { .panes { grid-template-columns:1fr; } }
+.pane { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px; min-width:0; }
+.pane h2 { display:flex; justify-content:space-between; align-items:baseline; gap:8px; }
+.pane h2 small { font-weight:400; color:var(--muted); font-size:.74rem; text-align:right; }
+.code { font-family:var(--mono); font-size:.76rem; line-height:1.45; overflow-x:auto; max-height:430px; overflow-y:auto; }
+.code div { display:flex; gap:8px; padding:0 4px; border-radius:3px; white-space:pre; border:1px solid transparent; }
+.code .n { color:var(--muted); width:3.2em; text-align:right; flex:none; user-select:none; }
+.code .on { background:var(--pc); border-color:var(--pc-b); font-weight:600; }
+
+.frame { border:1.5px solid var(--line); border-radius:5px; padding:6px 9px; font-family:var(--mono); font-size:.8rem; background:var(--bg); margin-bottom:5px; }
+.frame.top { border-color:var(--accent); box-shadow:0 0 0 2px var(--accent); }
+.frame small { display:block; font-family:var(--font); color:var(--muted); font-size:.72rem; }
+.frames { display:flex; flex-direction:column-reverse; min-height:60px; }
+.kv { display:grid; grid-template-columns:auto 1fr; gap:3px 10px; font-family:var(--mono); font-size:.8rem; margin-top:8px; }
+.kv span:nth-child(odd) { color:var(--muted); }
+.cond { margin-top:10px; border-top:1px solid var(--line); padding-top:8px; font-family:var(--mono); font-size:.78rem; }
+.cond div { padding:2px 0; }
+.t { color:var(--ok); font-weight:700; } .f { color:var(--hot); font-weight:700; }
+
+table { border-collapse:collapse; width:100%; font-size:.78rem; font-family:var(--mono); }
+th, td { text-align:left; padding:4px 5px; border-bottom:1px solid var(--line); vertical-align:top; word-break:break-all; }
+th { color:var(--muted); font-weight:600; font-family:var(--font); font-size:.7rem; text-transform:uppercase; letter-spacing:.04em; }
+tr.new td { background:var(--body); }
+tr.hl td { background:var(--dollar); }
+.empty { color:var(--muted); font-size:.85rem; text-align:center; padding:12px 0; border:1px dashed var(--line); border-radius:4px; }
+pre.out { margin:8px 0 0; padding:9px; background:var(--bg); border:1px solid var(--line); border-radius:5px; font-size:.74rem; line-height:1.4; overflow-x:auto; font-family:var(--mono); white-space:pre; }
+.res { margin-top:8px; border:1px dashed var(--line); border-radius:4px; padding:5px 8px; font-family:var(--mono); font-size:.85rem; }
+.res small { display:block; font-family:var(--font); font-size:.72rem; color:var(--muted); }
+.res.got { border:1px solid var(--accent); box-shadow:0 0 0 2px var(--accent); }
+.res.bad { border:1px solid var(--hot); box-shadow:0 0 0 2px var(--hot); }
+
+.caption { background:var(--panel); border:1px solid var(--line); border-left:5px solid var(--accent); border-radius:6px; padding:14px 16px; }
+.caption .top { font-family:var(--mono); font-size:.84rem; color:var(--muted); margin-bottom:4px; }
+.caption h2 { margin-bottom:4px; }
+.caption p { max-width:80ch; }
+.cols { display:grid; grid-template-columns:1fr 1fr; gap:16px; }
+@media (max-width:760px) { .cols { grid-template-columns:1fr; } }
+.cols > section { min-width:0; }
+.fine { color:var(--muted); font-size:.88rem; }
+ul { margin:6px 0 0; padding-left:1.2em; } li { margin-bottom:4px; }
+.about { border-top:1px solid var(--line); padding-top:14px; display:flex; flex-direction:column; gap:8px; color:var(--muted); font-size:.9rem; max-width:84ch; }
+.about h2 { color:var(--fg); margin:0; }
+.k-fn, .k-mac, .k-ty { font-weight:700; }
+:root { --addbg:#e4f5e8; --addbar:#2e9e4f; --k-fn:#1556b8; --k-mac:#8a1fa8; --k-ty:#17788a; --cm:#2e7d32; --st:#a31515; --on:#fff3c4; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --addbg:#1c3224; --addbar:#4cc473; --k-fn:#7db4ff; --k-mac:#dc9ff5; --k-ty:#5fd0e0; --cm:#7fc98a; --st:#f0a08a; --on:#4a4318; } }
+.k-fn { color:var(--k-fn); } .k-mac { color:var(--k-mac); } .k-ty { color:var(--k-ty); } .cm { color:var(--cm); } .st { color:var(--st); }
+.codehead { display:grid; grid-template-columns:1fr auto 1fr; gap:10px; align-items:center; margin-bottom:8px; }
+.codehead h2 { margin:0; }
+.copts { justify-self:end; display:flex; gap:14px; }
+.colorbox { display:flex; align-items:center; gap:5px; font-size:.85rem; color:var(--muted); cursor:pointer; }
+@media (max-width:640px) { .codehead { grid-template-columns:1fr; } .copts { justify-self:start; } }
+.ctabs { display:flex; gap:6px; flex-wrap:wrap; margin-bottom:8px; }
+.ctabs button { font:inherit; font-family:var(--mono); font-size:.8rem; padding:3px 9px; border:1px solid var(--line); background:var(--panel); color:var(--fg); border-radius:12px; cursor:pointer; }
+.new { text-decoration:underline; text-decoration-thickness:2px; text-underline-offset:3px; }
+.ctabs button[aria-pressed="true"] { background:var(--accent); color:var(--accent-fg); border-color:var(--accent); }
+.cmsg { font-size:.78rem; color:var(--muted); } .cmsg:not(:empty) { margin-bottom:6px; }
+pre.code { position:relative; margin:0; padding:10px 0; background:var(--bg); border:1px solid var(--line); border-radius:6px; font-family:var(--mono); font-size:.8rem; line-height:1.45; overflow:auto; max-height:72vh; }
+pre.code .ln { display:block; padding:0 12px 0 0; white-space:pre; }
+pre.code .ln i { display:inline-block; width:4.2em; text-align:right; color:var(--muted); font-style:normal; margin-right:12px; user-select:none; }
+pre.code .ln.hit { background:var(--on); }
+pre.code .ln.fold { color:var(--muted); font-style:italic; font-size:.78em; cursor:pointer; user-select:none; }
+pre.code .ln.fold:hover { background:var(--on); } pre.code .ln.fold.open { opacity:.7; }
+pre.code mark.clicked { background:#ffd54a; color:#000; border-radius:2px; padding:0 1px; }
+.cnote { color:var(--muted); font-size:.85rem; margin-top:8px; }
+.bkbtn { font:inherit; padding:7px 14px; border:1px solid var(--accent); background:transparent; color:var(--accent); border-radius:6px; cursor:pointer; }
+.cmp { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+@media (max-width:760px) { .cmp { grid-template-columns:1fr; } }
+.cmpcol { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px; min-width:0; }
+.cmpcol h2 { margin-bottom:6px; }
+.cmpcol .scr { font-family:var(--mono); font-size:.85rem; overflow-x:auto; white-space:pre; padding:4px 0; }
+.cmpcol ol { margin:6px 0 0; padding-left:1.4em; font-size:.88rem; }
+.cmpcol .kvs { display:flex; gap:16px; flex-wrap:wrap; font-size:.85rem; color:var(--muted); margin-top:6px; }
+.cmpcol .kvs b { color:var(--fg); font-family:var(--mono); }
+.badges { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+.badge { border-radius:6px; padding:5px 10px; font-size:.88rem; border:1px solid var(--line); background:var(--panel); }
+.badge.yes { border-color:var(--ok); color:var(--ok); font-weight:600; }
+.badge.no { border-color:var(--hot); color:var(--hot); font-weight:600; }
+.diffs { margin-top:10px; font-size:.9rem; }
+.diffs h2 { font-size:1rem; }
+
+.viewbar { display:flex; gap:10px 16px; align-items:center; flex-wrap:wrap; }
+.review { display:flex; flex-direction:column; gap:16px; } .review[hidden] { display:none; }
+.qbox { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px 16px; }
+.qbox ol { margin:6px 0 0; padding-left:1.3em; }
+.qbox li { margin-bottom:10px; max-width:85ch; }
+.qbox li b { display:block; }
+.qbox li.first { border-left:4px solid var(--hot); padding-left:10px; margin-left:-14px; }
+.rtop { display:grid; grid-template-columns:minmax(0,1.1fr) minmax(0,1fr); gap:16px; align-items:start; }
+.rside { display:flex; flex-direction:column; gap:16px; min-width:0; }
+@media (max-width:900px) { .rtop { grid-template-columns:1fr; } }
+.rside h2 { font-size:1rem; margin:0 0 6px; }
+.rmap, .rlist { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px 14px; font-size:.86rem; }
+.rmap table { border-collapse:collapse; width:100%; } .rmap td { padding:3px 6px 3px 0; vertical-align:top; }
+.rmap td:first-child { font-weight:600; width:1.6em; }
+.rlist ol { margin:0; padding:0; list-style:none; columns:1; }
+.rlist li { display:flex; gap:6px; padding:1px 0; }
+.rlist li .fl { color:var(--muted); font-family:var(--mono); font-size:.74rem; min-width:9.5em; padding-top:1px; }
+.lede .choose { text-underline-offset:3px; text-decoration-thickness:1px; }
+.hl { text-align:left; color:var(--accent); cursor:pointer; text-decoration:underline; background:none; border:0; font:inherit; padding:0 2px; }
+.qchip { display:inline-block; font-size:.7rem; border:1px solid var(--line); border-radius:10px; padding:0 6px; margin-left:4px; color:var(--muted); }
+.hunk { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px; min-width:0; }
+.hunk h3 { margin:0 0 2px; font-size:1.02rem; }
+.hunk .where { font-family:var(--mono); font-size:.76rem; color:var(--muted); margin-bottom:8px; overflow-wrap:anywhere; }
+.hunk dl { display:grid; grid-template-columns:auto 1fr; gap:4px 12px; margin:0 0 10px; font-size:.92rem; }
+.hunk dt { color:var(--muted); font-size:.74rem; text-transform:uppercase; letter-spacing:.05em; padding-top:3px; }
+.hunk dd { margin:0; max-width:85ch; }
+@media (max-width:640px) { .hunk dl { grid-template-columns:1fr; } }
+pre.diff { margin:0; background:var(--bg); border:1px solid var(--line); border-radius:6px; font-family:var(--mono); font-size:.76rem; line-height:1.45; overflow:auto; max-height:420px; padding:6px 0; }
+pre.diff span { display:block; padding:0 10px; white-space:pre; }
+pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-del); } pre.diff .ctx { color:var(--muted); }
+:root { --d-add:#dcf1e0; --d-del:#fadadb; }
+@media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) { --d-add:#173a22; --d-del:#4a1f22; } }
+:root[data-theme="dark"] { --d-add:#173a22; --d-del:#4a1f22; }
+.hbtn { font:inherit; font-size:.85rem; padding:4px 10px; border:1px solid var(--accent); background:transparent; color:var(--accent); border-radius:6px; cursor:pointer; margin-top:8px; }
+</style>
+</head>
+<body>
+<main>
+  <header class="top">
+    <div class="topl">
+    <p class="ver mono">Version 1.3 &middot; Oct 23, 2026</p>
+    <h1>Tcl Expression Substitution <span id="ttlw">Stepper</span></h1>
+    <p class="lede"><u class="choose">Choose either the review of the code changes or the step-by-step walkthrough.</u><br><span id="ledeT">Follow the parser through <code>$((expr))</code>, a shortcut for <code>[expr {expr}]</code>. Step through the real C code in <code>Tcl_ParseVarName</code> and the scanner that finds the closing parenthesis, watch the token array grow, then see the bytecode and result. The panes show the actual source lines and real output from a build of the modified trunk.</span></p>
+    </div>
+    <div class="keys" aria-label="keyboard and mouse shortcuts"><b>Shortcuts</b>
+      <div><kbd>&rarr;</kbd> next step <kbd>&larr;</kbd> back</div>
+      <div><kbd>Space</kbd> start / pause auto-play</div>
+      <div><kbd>Esc</kbd> close the code view</div>
+      <div>code view: double-click a name to jump; double-click that name again, or blank space, or press <kbd>&#9003;</kbd>, to go back</div>
+    </div>
+  </header>
+
+  <div class="viewbar"><span class="lbl" style="margin:0">View</span><div class="seg" role="group" aria-label="View"><button id="v-review" aria-pressed="false">Review the diff</button><button id="v-walk" aria-pressed="true">Walkthrough</button></div></div>
+
+  <div id="walk">
+  <div class="bar">
+    <div><span class="lbl">Script</span><div class="seg" id="scenSeg" role="group" aria-label="Scenario"></div></div>
+    <div id="optbar" hidden><span class="lbl">subst option</span><div class="seg" id="optSeg" role="group" aria-label="subst option"></div></div>
+    <div><span class="lbl">Build</span><div class="seg" role="group" aria-label="Build">
+      <button id="bld2" aria-pressed="true">$(( default</button>
+      <button id="bld1" aria-pressed="false">$( single paren</button>
+    </div></div>
+  </div>
+
+  <div class="srcbox">
+    <span class="lbl">Tcl script being parsed</span>
+    <div class="src" id="src" aria-label="The script text"></div>
+    <div class="legend"><span><b style="background:var(--dollar)"></b>the <code>$</code></span><span><b style="background:var(--pc)"></b>character being examined</span><span><b style="background:var(--scan)"></b>already scanned</span><span><b style="background:var(--skip)"></b>skipped as a unit</span><span><b style="background:var(--body)"></b>the body</span></div>
+  </div>
+
+  <div class="bar">
+    <div class="steps" id="dots" role="group" aria-label="Steps: click one to go to it"></div>
+    <div class="ctl">
+      <button id="b-reset">Reset</button>
+      <button id="b-prev">Back</button>
+      <button id="b-next" class="primary">Next step</button>
+      <button id="b-play">Auto-play</button>
+      <button id="b-code">Show code</button>
+    </div>
+  </div>
+
+  <section class="pane" id="codeview" hidden>
+    <div class="codehead"><h2 id="code-h">Code for this step</h2><div><button class="bkbtn" id="b-back">&larr; Back</button></div>
+      <div class="copts"><label class="colorbox" title="colour the names you can double-click, the comments and the strings"><input type="checkbox" id="colorOn" checked> Color</label><label class="colorbox" title="tint the lines this change adds green, as in the diff"><input type="checkbox" id="chgOn" checked> Changes</label><label class="colorbox" title="fold the outermost blocks of the function: each case of a switch, each branch of an if chain; the block holding the highlighted line stays open"><input type="checkbox" id="foldOn" checked> Fold</label></div></div>
+    <div class="ctabs" id="ctabs"></div><div id="cmsg" class="cmsg"></div>
+    <pre class="code" id="codepre" tabindex="0"></pre>
+    <p class="cnote" id="cnote"></p>
+  </section>
+
+  <div class="panes">
+    <section class="pane">
+      <h2 id="codeTitle">C code <small id="codeFile"></small></h2>
+      <div class="code" id="code" tabindex="0"></div>
+    </section>
+    <section class="pane">
+      <h2>Parser state <small>variables in the C code</small></h2>
+      <div class="lbl">Scanner call stack (top is running)</div>
+      <div class="frames" id="frames"></div>
+      <div class="kv" id="kv"></div>
+      <div class="cond" id="cond"></div>
+    </section>
+    <section class="pane">
+      <h2>Tcl_Token array <small id="tokNote"></small></h2>
+      <div id="toks"></div>
+      <div id="outs"></div>
+    </section>
+  </div>
+
+  <section id="cmp" hidden></section>
+
+  <div class="caption" aria-live="polite">
+    <div class="top" id="cap-top"></div>
+    <h2 id="cap-h"></h2>
+    <p id="cap-p"></p>
+  </div>
+
+  </div>
+
+  <section id="review" class="review" hidden></section>
+
+  <div class="cols">
+    <section>
+      <h2>What the parser does differently</h2>
+      <p>Normally <code>$name(index)</code> is an array reference, and the index is parsed as a word that can contain substitutions. When <code>$</code> is followed by <code>((</code> (or by <code>(</code> in the single-paren build) the new branch takes over instead:</p>
+      <ul>
+        <li>It scans for the matching <code>)</code> without parsing or substituting anything inside.</li>
+        <li>It emits one <code>exprsubst</code> token with a single <code>text</code> token holding the raw body.</li>
+        <li>In the default build the trigger is <code>$((</code> and the body must be followed by <code>))</code>. The scanner ends the body at the first <code>)</code> that balances the parentheses inside it, and a look-ahead then requires a second <code>)</code> right after. That is what turns a forgotten opening parenthesis, as in <code>$((1+2)*3)</code> instead of <code>$(((1+2)*3))</code>, into a syntax error instead of a substitution that ends early and leaves a stray <code>)</code>. Try <em>missing paren</em> and <em>typo</em> on both builds.</li>
+        <li>The compiler hands that raw text to the expression compiler, exactly like the braced word in <code>[expr {...}]</code>. So nothing is substituted twice.</li>
+      </ul>
+    </section>
+    <section>
+      <h2>Why the scanner is not just "find the next )"</h2>
+      <p>A <code>)</code> can legitimately appear inside the expression: in a braced word, a quoted string, a backslash sequence, or a <code>[command]</code>. The scanner skips each of those as a unit and counts nested parentheses. Try the <em>braces</em> script to see a <code>)</code> ignored, and <em>runtime</em> to see a bracketed command skipped through a recursive call.</p>
+      <p class="fine" style="margin-top:8px">Build note: in the default build the test is <code>$((</code>. In the single-paren build it is just <code>$(</code> and there is no look-ahead. Try the <em>single</em> script on both builds.</p>
+    </section>
+  </div>
+
+  <section class="about">
+    <h2>About this page</h2>
+    <p>Written by Claude (an AI) for ET. The C excerpts are copied from the modified Tcl trunk (<code>generic/tclParse.c</code> and <code>generic/tclCompile.c</code>) with their real line numbers, and the token lists, bytecode and results are real output from builds of that code (<code>testparser</code>, <code>tcl::unsupported::disassemble</code>). The step-by-step scanner trace is a faithful port of <code>SkipExprSubstScan</code> to JavaScript, grouped so ordinary characters are one step. At the end of each trace the page checks its own result against the real parser's body, and shows a red warning if they differ.</p>
+    <p>It is a teaching model of a proposed change, not reviewed by the Tcl core team. The version line at the top says which copy you are reading.</p>
+  </section>
+</main>
+
+<script>
+(function () {
+  var SN = __SNIPS__;
+  var FUNCS0 = __FUNCS__;
+  var LN = __LN__;
+  var DATA = {1: __DATA1__, 2: __DATA2__};
+  var SCEN = [
+    ['basic',   'basic'],
+    ['missing', 'missing paren'],
+    ['nested',  'nested, quoted'],
+    ['braces',  'braces'],
+    ['var',     'variable'],
+    ['runtime', 'runtime'],
+    ['unterm',  'unterminated'],
+    ['single',  'single'],
+    ['typo',    'typo'],
+    ['subst',   'subst options']
+  ];
+  var NOTES = {
+    basic: 'A plain command. The whole expression is constant, so the compiler folds it to a literal.',
+    missing: 'One opening parenthesis left out of $(((1+2)*3)). Default build: the scanner ends the body at the first balancing ")", the look-ahead finds "*" instead of a second ")" and reports a syntax error. Single-paren build: this is a perfectly good $(expr) with body (1+2)*3.',
+    nested: 'Inside a quoted word, with nested parentheses and trailing text.',
+    braces: 'A ) hidden in braces: the scanner must not stop there.',
+    'var': 'A variable in the body is read by expr, not by the word parser.',
+    runtime: 'Substituted at run time with subst $var, so a command in the body returns an error code.',
+    unterm: 'No closing parenthesis, so the parse fails with "missing )".',
+    single: 'Only one parenthesis after the $. Different in the two builds.',
+    subst: 'The subst command with -expressions / -noexpressions (and the other options): how the option flags are built in TclSubstOptions and what ParseTokens does with each $ and [ because of them. Pick the option below.',
+    typo: 'The same mistake with spaces: $((  (1+2)*3  )) was meant. Default build: error, as above. Single-paren build: accepted, giving 9 followed by a literal ")" that the user did not intend.'
+  };
+  var $ = function (id) { return document.getElementById(id); };
+  var scen = 'basic', build = 2, i = 0, timer = null, steps = [], sopt = 'd';
+  var SOPTS = [['d', '(none)', ''], ['ne', '-noexpressions', '-noexpressions'], ['e', '-expressions', '-expressions'], ['nc', '-nocommands', '-nocommands'], ['nv', '-novariables', '-novariables'], ['nb', '-nobackslashes', '-nobackslashes']];
+
+  /* ---- minimal Tcl list parser, for the testparser output ---- */
+  function tclList(s) {
+    var r = [], k = 0, n = s.length;
+    while (k < n) {
+      while (k < n && /\s/.test(s[k])) k++;
+      if (k >= n) break;
+      var w = '';
+      if (s[k] === '{') {
+        var d = 1; k++;
+        while (k < n) {
+          if (s[k] === '\\') { w += s[k] + (s[k + 1] || ''); k += 2; continue; }
+          if (s[k] === '{') d++;
+          else if (s[k] === '}' && --d === 0) break;
+          w += s[k++];
+        }
+        k++;
+      } else {
+        while (k < n && !/\s/.test(s[k])) {
+          if (s[k] === '\\') { w += s[k + 1] || ''; k += 2; } else w += s[k++];
+        }
+      }
+      r.push(w);
+    }
+    return r;
+  }
+  function realTokens(out) {
+    if (out.indexOf('ERROR') === 0) return null;
+    var it = tclList(out), t = [];
+    for (var k = 3; k + 2 < it.length; k += 3) t.push({type: it[k], text: it[k + 1], nc: it[k + 2]});
+    return t;
+  }
+
+
+  /* ---- the expr parse tree, drawn: tokens (type, text, nc = number of tokens below) -> rooted tree diagram ---- */
+  function treeFromTokens(T) {
+    function node(i) {   /* token i and everything below it */
+      var tk = T[i], n = {type: tk.type, text: tk.text, kids: [], cls: tk.cls || ''}, nc = +tk.nc, j = i + 1, end = i + 1 + nc;
+      while (j < end && j < T.length) { var c = node(j); n.kids.push(c.n); j += c.len; }
+      return {n: n, len: 1 + nc};
+    }
+    function simp(n) {   /* subexpr nodes disappear: an operator node takes its operator as label, a lone operand becomes a leaf */
+      if (n.type === 'subexpr') {
+        var K = n.kids;
+        if (K.length && K[0].type === 'operator') return {label: K[0].text, kind: 'op', kids: K.slice(1).map(simp)};
+        if (K.length === 1) return simp(K[0]);
+        return {label: n.text, kind: 'leaf', cap: 'subexpr', kids: []};
+      }
+      return {label: n.text, kind: 'leaf', cap: n.type, kids: [], hot: n.type === 'variable' || n.type === 'command'};
+    }
+    if (!T.length) return null;
+    return simp(node(0).n);
+  }
+  function drawTree(T) {
+    var root = treeFromTokens(T); if (!root) return '';
+    var CW = 7.4, H = 26, VG = 34, HG = 12, seen = 0;
+    function w(n) { n.w = Math.max(26, n.label.length * CW + 16); return n.w; }
+    function lay(n, d) {   /* returns total width of the subtree; sets n.x (centre) relative to the subtree's left edge */
+      w(n); n.d = d;
+      if (!n.kids.length) { n.sw = n.w + HG; n.x = n.sw / 2; return n.sw; }
+      var off = 0;
+      n.kids.forEach(function (k) { var kw = lay(k, d + 1); k.off = off; off += kw; });
+      n.sw = Math.max(off, n.w + HG);
+      var shift = (n.sw - off) / 2; n.kids.forEach(function (k) { k.off += shift; });
+      var first = n.kids[0], last = n.kids[n.kids.length - 1];
+      n.x = (first.off + first.x + last.off + last.x) / 2;
+      return n.sw;
+    }
+    function place(n, base) { n.ax = base + n.x; n.kids.forEach(function (k) { place(k, base + k.off); }); }
+    var total = lay(root, 0); place(root, 0);
+    var maxd = 0, lines = '', boxes = '';
+    (function walk(n) {
+      if (n.d > maxd) maxd = n.d;
+      var y = 8 + n.d * (H + VG);
+      n.kids.forEach(function (k) {
+        var ky = 8 + k.d * (H + VG);
+        lines += '<path d="M' + n.ax.toFixed(1) + ' ' + (y + H) + ' L' + k.ax.toFixed(1) + ' ' + ky + '" fill="none" stroke="var(--muted)" stroke-width="1.2"/>';
+        walk(k);
+      });
+      var fill = n.kind === 'op' ? 'var(--accent)' : (n.hot ? 'var(--dollar)' : 'var(--panel)');
+      var tc = n.kind === 'op' ? 'var(--accent-fg)' : 'var(--fg)';
+      boxes += '<g><rect x="' + (n.ax - n.w / 2).toFixed(1) + '" y="' + y + '" width="' + n.w.toFixed(1) + '" height="' + H + '" rx="' + (n.kind === 'op' ? 13 : 5) + '" fill="' + fill + '" stroke="' + (n.kind === 'op' ? 'var(--accent)' : 'var(--line)') + '" stroke-width="1.2"/>'
+        + '<text x="' + n.ax.toFixed(1) + '" y="' + (y + 17.5) + '" text-anchor="middle" font-family="var(--mono)" font-size="12.5" font-weight="' + (n.kind === 'op' ? 700 : 400) + '" fill="' + tc + '">' + esc(n.label) + '</text>'
+        + (n.kind === 'leaf' ? '<text x="' + n.ax.toFixed(1) + '" y="' + (y + H + 11) + '" text-anchor="middle" font-size="9.5" fill="var(--muted)">' + esc(n.cap) + '</text>' : '') + '</g>';
+    })(root);
+    var hh = 8 + (maxd + 1) * (H + VG) - VG + 14;
+    return '<span class="lbl" style="margin-top:12px">The same tree, drawn (operators on top, operands below)</span>'
+      + '<div class="treebox"><svg role="img" aria-label="expression parse tree" width="' + Math.ceil(total) + '" height="' + hh + '" viewBox="0 0 ' + Math.ceil(total) + ' ' + hh + '">' + lines + boxes + '</svg></div>';
+  }
+
+  /* ---- trace builder ---- */
+  function build_trace() {
+    if (scen === 'subst') return substTrace();
+    var D = DATA[build][scen], src = D.src, N = src.length, out = [];
+    var d = src.indexOf('$');
+    var base = {tokens: [], frames: [], reg: [], pos: null, kv: {}, cond: null, outs: null, res: null, tokNote: ''};
+    function snap(o) { var s = JSON.parse(JSON.stringify(base)); for (var k in o) s[k] = o[k]; return s; }
+    function E(sn, ln, h, p, o) {
+      var s = snap(o || {});
+      s.sn = sn; s.ln = ln; s.h = h; s.p = p;
+      out.push(s); return s;
+    }
+    var frames = [];
+    function F() { return frames.map(function (f) { return {fn: 'SkipExprSubstScan', closer: f.closer, depth: f.depth, start: f.start}; }); }
+    var scanFrom = -1;
+    function reg(from, to, cls) { return {a: from, b: to, c: cls}; }
+    var firstParen = d + 1;
+
+    /* 1: token for $ */
+    var tokVar = {type: 'variable', text: '$', nc: '?', cls: 'new'};
+    E('pvn', 1581, 'Tcl_ParseVarName: a token for the $',
+      'The word parser met a $ and called Tcl_ParseVarName. It starts by filling in a TCL_TOKEN_VARIABLE token whose start points at the $. Its size and numComponents are filled in at the very end.',
+      {pos: d, reg: [reg(d, d + 1, 'dollar')], tokens: [tokVar], tokNote: 'being built',
+       kv: {'src': 'at the $', numBytes: String(N - d)}});
+    E('pvn', 1586, 'Step past the $',
+      'src++ and numBytes-- move past the dollar sign. A second token (TEXT) is started for the variable name, but nothing has decided yet whether this is a name at all.',
+      {pos: d + 1, reg: [reg(d, d + 1, 'dollar')], tokens: [tokVar], tokNote: 'being built',
+       kv: {src: 'at "' + src[d + 1] + '"', numBytes: String(N - d - 1)}});
+
+    /* 3: hook test */
+    var rest = N - (d + 1);       /* numBytes at the hook */
+    var c0 = src[d + 1] === '(';
+    var cOne = build === 1;
+    var cTwo = rest > 1 && src[d + 2] === '(';
+    var accept = c0 && (cOne || cTwo);
+    function cond(a, b, c, final) {
+      return [
+        ['*src == \'(\'', a],
+        ['TCL_EXPR_SUBST_PARENS == 1', b === null ? '?' : b, 'compile-time constant: ' + (build === 1 ? '1' : '2')],
+        ['numBytes > 1 && src[1] == \'(\'', c === null ? '?' : c, (c === null ? '' : 'src[1] is "' + (src[d + 2] || '') + '"')],
+        ['=> take the new branch', final]
+      ];
+    }
+    var condRows = cond(c0, cOne, build === 1 && cOne ? null : cTwo, accept);
+    if (build === 1) condRows[2][1] = '(not evaluated)';
+    E('hook', 1655, 'Is this an expression substitution?',
+      'The new branch is tried before the ordinary variable-name branch. It needs the next character to be "(". In the default build the character after that must also be "(", which is what makes it $((. In the single-paren build any "(" is enough. The test on the build is a compile-time constant, so one half of the condition is dead code in each build.',
+      {pos: d + 1, reg: [reg(d, d + 1, 'dollar')], tokens: [tokVar], tokNote: 'being built', cond: condRows,
+       kv: {src: 'at "' + src[d + 1] + '"', numBytes: String(rest)}});
+
+    var D2 = D, realT = realTokens(D2.tokens);
+
+    if (!accept) {
+      /* the old path: empty array name */
+      E('arr', 1711, 'Not taken: the ordinary name path runs',
+        'In this build "$(" followed by something that is not "(" is still what it always was: a variable with the empty name and an array index. The name is empty, so the code takes the array branch and parses the text up to the ")" as an index with ParseTokens.',
+        {pos: d + 1, reg: [reg(d, d + 1, 'dollar')], tokens: [tokVar], tokNote: 'being built', cond: condRows,
+         kv: {name: '"" (empty)', array: '1'}});
+      var tk = (realT || []).map(function (t) { return t; });
+      E('arr2', 1750, 'Parse the index as a word',
+        'The text between the parentheses is parsed with the usual substitution rules (it is a word, not an expression), giving a TEXT token. The result is a TCL_TOKEN_VARIABLE for an array element, with an empty name token and one index token.',
+        {pos: d + 2, reg: [reg(d, d + 1, 'dollar'), reg(d + 2, N, 'scan')], tokens: tk, tokNote: 'real testparser output', cond: condRows,
+         kv: {name: '"" (empty)', array: '1', index: '1+2'}});
+      var r = D2;
+      E('run', 2558, 'Result: a variable lookup, not an expression',
+        'At run time the variable named "" (empty) is looked up with index 1+2. It does not exist. Use the single-paren build to see $(1+2) evaluate as an expression.',
+        {pos: null, reg: [], tokens: tk, tokNote: 'real testparser output', res: {text: r.res, bad: r.rc !== 0, label: 'Result (real, error)'}});
+      return finish(out);
+    }
+
+    /* 4: call the scanner */
+    var skip = build === 2 ? 2 : 1;
+    var scanStart = firstParen + skip;
+    E('hook', 1672, 'skip = ' + skip + ' \u2192 ' + (skip === 2 ? '$((' : '$(') + ': how many "(" belong to the trigger',
+      'skip is the number of opening parentheses that belong to the trigger. It is a compile-time constant:  skip = 1 \u2192 $(  (single-paren build)   skip = 2 \u2192 $((  (default build).  This build: skip = ' + skip + ' \u2192 ' + (skip === 2 ? '$((' : '$(') + '. The scan starts after the trigger, and the body starts there too.',
+      {pos: d + 1, reg: [reg(d, d + 1, 'dollar'), reg(firstParen, scanStart, 'scan')], tokens: [tokVar], tokNote: 'being built', cond: condRows, kv: {skip: skip + ' \u2192 ' + (skip === 2 ? '$((' : '$(')}});
+    var f0 = {closer: ')', depth: 0, start: scanStart};
+    frames.push(f0);
+    E('hook', 1673, 'FindExprSubstEnd(src + skip, end)',
+      'The code looks for the first ")" that balances the parentheses inside the body, starting just after the trigger. It calls FindExprSubstEnd, which is a one-line wrapper that calls SkipExprSubstScan with closer ")".',
+      {pos: scanStart, reg: [reg(d, d + 1, 'dollar'), reg(firstParen, scanStart, 'scan')], tokens: [tokVar], tokNote: 'being built',
+       frames: F(), cond: condRows, kv: {closer: "')'", depth: '0'}});
+
+    var found = -1;
+    /* scanning, with grouping of ordinary characters */
+    function scanRegs(cur, extra) {
+      var r = [reg(d, d + 1, 'dollar'), reg(firstParen, scanStart, 'scan'), reg(scanStart, cur, 'scan')];
+      return r.concat(extra || []);
+    }
+    var scanAll = function (from, closer, topLevel) {
+      /* returns index of closer or -1 */
+      var f = {closer: closer, depth: 0, start: from};
+      if (!topLevel) frames.push(f); else f = f0;
+      var j = from, res = -1;
+      function st(ln, h, p, pos, extra, moreReg) {
+        E('scan', ln, h, p, {pos: pos, reg: scanRegs(pos, extra).concat(moreReg || []), tokens: [tokVar], tokNote: 'being built',
+          frames: F(), kv: {closer: "'" + closer + "'", depth: String(f.depth), src: pos >= N ? 'at the end of the text' : 'at "' + src[pos] + '"'}});
+      }
+      function special(c) {
+        if ('\\{"['.indexOf(c) >= 0) return true;
+        if (closer === ')' && (c === '(' || c === ')')) return true;
+        if (closer === ']' && c === ']') return true;
+        return false;
+      }
+      loop: while (j < N) {
+        var c = src[j];
+        if (!special(c)) {
+          var k = j; while (k < N && !special(src[k])) k++;
+          st(1426, 'Ordinary characters: ' + JSON.stringify(src.slice(j, k)).slice(1, -1),
+            'None of these characters is special in the switch, so each one just does src++ and the loop goes on. (Grouped into one step.)', j, [], [reg(j, k, 'scan')]);
+          j = k; continue;
+        }
+        if (c === '\\') {
+          st(1355, 'Backslash: skip the next character', 'A backslash escapes whatever follows, so that character is skipped without being looked at.', j);
+          if (j + 1 < N) j++;
+        } else if (c === '{') {
+          var b = 1, k2 = j + 1;
+          st(1361, 'Open brace: skip the whole braced word', 'A braced word is skipped as a unit, counting nested braces. Whatever is inside, including a ")", is not seen by the outer scan.', j);
+          while (k2 < N) {
+            var ch = src[k2];
+            if (ch === '\\') { if (k2 + 1 < N) k2++; }
+            else if (ch === '{') { b++; st(1370, 'Brace level ' + b, 'A nested open brace raises the count.', k2, [], [reg(j, k2 + 1, 'skip')]); }
+            else if (ch === '}' && --b === 0) break;
+            else if (ch === '}') { st(1372, 'Brace level ' + b, 'A close brace that does not bring the count to zero.', k2, [], [reg(j, k2 + 1, 'skip')]); }
+            else if (ch === ')' || ch === ']') { st(1375, JSON.stringify(ch).slice(1, -1) + ' inside braces is ignored', 'The inner loop only cares about backslash and braces. This ' + ch + ' is part of the braced word, so it neither closes nor counts.', k2, [], [reg(j, k2 + 1, 'skip')]); }
+            k2++;
+          }
+          if (k2 >= N) { st(1378, 'No closing brace: give up', 'The end of the text was reached inside the braces. The scan returns NULL.', Math.min(k2, N - 1), [], [reg(j, N, 'skip')]); res = -1; break loop; }
+          st(1372, 'Closing brace: the braced word ends', 'The count is back to zero. Everything from the open brace to here has been skipped as one unit.', k2, [], [reg(j, k2 + 1, 'skip')]);
+          j = k2;
+        } else if (c === '"') {
+          st(1382, 'Open quote: skip the quoted string', 'A double-quoted string is skipped as a unit. Backslashes are honored and a [command] inside it is skipped with a recursive scan.', j);
+          var q = j + 1;
+          while (q < N && src[q] !== '"') {
+            if (src[q] === '\\') { if (q + 1 < N) q++; }
+            else if (src[q] === '[') {
+              st(1390, 'A [ inside the string: scan it recursively', 'SkipExprSubstScan calls itself with closer "]".', q, [], [reg(j, q + 1, 'skip')]);
+              var e = scanAll(q + 1, ']', false);
+              if (e < 0) { res = -1; break loop; }
+              q = e;
+            }
+            q++;
+          }
+          if (q >= N) { st(1397, 'No closing quote: give up', 'The end of the text was reached inside the string.', N - 1, [], [reg(j, N, 'skip')]); res = -1; break loop; }
+          st(1384, 'Closing quote', 'The quoted string is skipped.', q, [], [reg(j, q + 1, 'skip')]);
+          j = q;
+        } else if (c === '[') {
+          st(1402, 'Open bracket: skip the command', 'A bracketed command is skipped by calling SkipExprSubstScan again, this time looking for the matching "]". Parentheses do not count in there.', j);
+          var e2 = scanAll(j + 1, ']', false);
+          if (e2 < 0) { res = -1; break loop; }
+          E('scan', 1403, 'Back from the recursive scan',
+            'The inner scan found the matching "]" at the position shown. The outer scan continues after it.',
+            {pos: e2, reg: scanRegs(e2 + 1, [reg(j, e2 + 1, 'skip')]), tokens: [tokVar], tokNote: 'being built', frames: F(), kv: {closer: "'" + closer + "'", depth: String(f.depth)}});
+          j = e2;
+        } else if (c === '(') {
+          f.depth++;
+          st(1409, 'Open parenthesis: depth ' + (f.depth - 1) + ' to ' + f.depth, 'Nested parentheses are counted, so the matching close is not mistaken for the end.', j);
+        } else if (c === ')') {
+          if (f.depth === 0) {
+            st(1415, 'Close parenthesis at depth 0: found it', 'This ")" matches the opening "(" of the substitution. The scan returns a pointer to it.', j);
+            res = j; break loop;
+          }
+          f.depth--;
+          st(1417, 'Close parenthesis: depth ' + (f.depth + 1) + ' to ' + f.depth, 'This ")" closes a nested "(", not the substitution.', j);
+        } else if (c === ']') {
+          st(1422, 'Close bracket: the command ends', 'The "]" that matches the "[" is found, so this recursive call returns.', j);
+          res = j; break loop;
+        }
+        j++;
+      }
+      if (res < 0 && j >= N) {
+        st(1428, 'End of text: return NULL', 'src has reached the end of the text without finding the closer, so the scan returns NULL.', N);
+      }
+      if (!topLevel) frames.pop();
+      return res;
+    };
+    found = scanAll(scanStart, ')', true);
+
+    if (found < 0 || (build === 2 && found + 1 >= N)) {
+      frames.length = 0;
+      var tt = [tokVar];
+      E('hook', found < 0 ? 1685 : 1693, found < 0 ? 'bodyEnd is NULL: missing )' : 'No second ")" before the end: missing second ")"',
+        found < 0
+          ? 'FindExprSubstEnd returned NULL, so there is no balancing parenthesis. The parser sets the error message "missing )" and the error type TCL_PARSE_MISSING_PAREN, and marks the parse incomplete. Incomplete matters: an interactive tclsh, or info complete, treats the text as unfinished and waits for more lines.'
+          : 'The scan found the first ")" but the text ends right after it, so the second ")" that $(( requires is not there yet. The message is the same one as for a wrong character there (missing second ")" at _@_, with the text around the marker), but the error type is still TCL_PARSE_MISSING_PAREN and the parse is marked incomplete, so an interactive tclsh waits for more input.',
+        {pos: null, reg: [reg(d, N, 'scan')], tokens: tt, tokNote: 'discarded (parse failed)', cond: condRows,
+         res: {text: D.res, bad: true, label: 'Result (real, error)'}});
+      return finish(out);
+    }
+
+    if (build === 2) {
+      var nextc = src[found + 1];
+      var la = [reg(d, d + 1, 'dollar'), reg(scanStart, found, 'body'), reg(found, found + 2, 'scan')];
+      if (nextc !== ')') {
+        frames.length = 0;
+        E('hook', 1675, 'Look ahead: the character after the ")" is ' + JSON.stringify(nextc),
+          'In the default build the ")" that ends the body must be followed by a second ")". Here it is followed by ' + JSON.stringify(nextc) + '. This is the case where an opening parenthesis was left out, for example $((1+2)*3) instead of $(((1+2)*3)): without this check the substitution would silently end at the first ")" and leave a stray one behind.',
+          {pos: found + 1, reg: la, tokens: [tokVar], tokNote: 'being built', cond: condRows, kv: {'bodyEnd[1]': JSON.stringify(nextc)}});
+        E('hook', 1678, 'Syntax error: missing second ")"',
+          'ExprSubstSyntaxError builds the message in the style of expr: the position is marked with _@_ and the text around it is quoted (long text is shortened with "..."). The error type is TCL_PARSE_SYNTAX and the parse is not marked incomplete, because more input could not fix it.',
+          {pos: null, reg: [reg(d, N, 'scan')], tokens: [tokVar], tokNote: 'discarded (parse failed)', cond: condRows,
+           res: {text: D.res, bad: true, label: 'Result (real, error)'}});
+        return finish(out);
+      }
+      frames.length = 0;
+      E('hook', 1675, 'Look ahead: the next character is ")"',
+        'The second ")" is there, so the closing "))" is complete and the substitution is well formed.',
+        {pos: found + 1, reg: la, tokens: [tokVar], tokNote: 'being built', cond: condRows, kv: {'bodyEnd[1]': '")"'}});
+    }
+
+    var bodyA = scanStart, bodyB = found;   /* body = [bodyA, bodyB) */
+    frames.length = 0;
+    var bodyText = src.slice(bodyA, bodyB);
+    var bodyReg = [reg(d, d + 1, 'dollar'), reg(bodyA, bodyB, 'body')];
+    E('hook', 1705, 'Scanner returned: bodyEnd found',
+      build === 2
+        ? 'bodyEnd points at the first ")" that balances the body. The body is everything between the "$((" and that ")". For $((1+2)) it is 1+2; for $(((1+2)*3)) it is (1+2)*3, because the inner parentheses are counted by the scanner and belong to the body.'
+        : 'bodyEnd points at the matching ")". The body is everything between the "(" and that ")". In this build $((1+2)) has the body (1+2): the inner parentheses are just a parenthesized subexpression.',
+      {pos: bodyB, reg: bodyReg, tokens: [tokVar], tokNote: 'being built', cond: condRows, kv: {bodyEnd: 'at the ")"', body: JSON.stringify(bodyText)}});
+    var t1 = {type: 'exprsubst', text: '$', nc: '?', cls: 'new'};
+    E('hook', 1705, 'Change the first token to EXPR_SUBST',
+      'The TCL_TOKEN_VARIABLE token started earlier is relabeled TCL_TOKEN_EXPR_SUBST. This is the new token type (value 512 in tcl.h).',
+      {pos: d, reg: bodyReg, tokens: [t1], tokNote: 'being built', kv: {type: 'EXPR_SUBST'}});
+    var t2 = {type: 'text', text: bodyText, nc: '0', cls: 'new'};
+    E('hook', 1706, 'A TEXT token holds the raw body',
+      'The second token points at src + skip, just after the trigger, and gets size = bodyEnd - (src + skip). Nothing is parsed: the body is just a start pointer and a length. numTokens is incremented to count it.',
+      {pos: bodyA, reg: bodyReg, tokens: [t1, t2], tokNote: 'being built', kv: {start: 'src + skip', size: String(bodyB - bodyA)}});
+    E('hook', 1709, (build === 2 ? 'Move past the closing parentheses' : 'Move past the closing parenthesis'),
+      'src = bodyEnd + skip: parsing of the word continues after the ' + (build === 2 ? '"))"' : '")"') + '.',
+      {pos: bodyB + skip, reg: bodyReg, tokens: [t1, t2], tokNote: 'being built', kv: {src: 'after the ' + (build === 2 ? '"))"' : '")"')}});
+    var t1f = {type: 'exprsubst', text: src.slice(d, bodyB + skip), nc: '1', cls: 'new'};
+    E('fin', 1777, 'Fill in size and numComponents',
+      'Back at the end of Tcl_ParseVarName: the first token\'s size now covers $ through the closing ' + (build === 2 ? '"))"' : '")"') + ', and numComponents is numTokens - (varIndex + 1) = 1, the body token. Word-level code skips over a token and its components using that count.',
+      {pos: null, reg: bodyReg, tokens: [t1f, t2], tokNote: 'complete', kv: {size: String(bodyB + skip - d), numComponents: '1'}});
+
+    /* the real token list */
+    if (realT) {
+      var shown = realT.map(function (t) { return {type: t.type, text: t.text, nc: t.nc, cls: (t.type === 'exprsubst' ? 'hl' : '')}; });
+      E('hook', 1709, 'The rest of the word, then the whole command',
+        'The word parser carries on with the rest of the word (text after the substitution, if any). This is the complete token list that the real parser produced for the command (output of testparser). Each token is: type, source text, number of components after it.',
+        {pos: null, reg: bodyReg, tokens: shown, tokNote: 'real testparser output'});
+      var key = realT.filter(function (t) { return t.type === 'exprsubst'; }).length;
+      /* self-check */
+      var tb = realT.filter(function (t, k) { return k > 0 && realT[k - 1].type === 'exprsubst'; })[0];
+      var ok = tb && tb.text === bodyText;
+      out[out.length - 1].check = ok ? 'ok' : ('MISMATCH: trace body ' + JSON.stringify(bodyText) + ' vs real ' + JSON.stringify(tb && tb.text));
+    }
+
+    /* compile and run */
+    if (scen !== 'runtime') {
+      E('comp', 2890, 'Compile: the body goes to the expression compiler',
+        'When the script is compiled, TclCompileTokens meets the EXPR_SUBST token. It flushes any pending literal text, then calls TclCompileExpr on the stored body. The result is the same bytecode as for [expr {body}] with the same body text. Here is the real disassembly of this script.',
+        {pos: null, reg: bodyReg, tokens: realT ? realT.map(function (t) { return {type: t.type, text: t.text, nc: t.nc, cls: t.type === 'exprsubst' ? 'hl' : ''}; }) : [t1f, t2], tokNote: 'real testparser output',
+         outs: D.dis});
+    } else {
+      E('run', 2569, 'Run time: Tcl_ExprObj on a copy of the body',
+        'This text was handed to subst as a variable value, so it was never compiled: TclSubstTokens meets the token while substituting. It makes a string object from the body and calls Tcl_ExprObj. The body runs the command [return -code error boom], so expr returns TCL_ERROR with the message boom. The result of such an evaluation is the text that gets substituted, exactly as with [command] substitution. Before a bug found by mutation testing, this message was lost and the result was empty.',
+        {pos: null, reg: bodyReg, tokens: realT ? realT.map(function (t) { return {type: t.type, text: t.text, nc: t.nc, cls: t.type === 'exprsubst' ? 'hl' : ''}; }) : [t1f, t2], tokNote: 'real testparser output'});
+    }
+    var lastRes = {text: D.res, bad: D.rc !== 0 && scen !== 'runtime', label: scen === 'runtime' ? 'Result of subst $t (real)' : (D.rc ? 'Result (real, error)' : 'Result of the command (real)')};
+    var runNote = ' (The highlighted line is the Tcl_ExprObj call that TclSubstTokens makes when a script is not compiled, as with subst. A compiled script runs the bytecode shown above instead.)';
+    var last = E('run', 2569, scen === 'runtime' ? 'Result' : 'Run: the value is substituted',
+      scen === 'basic' ? 'The substituted value, ' + D.res + ', is stored in v. The expression was constant, so the compiler folded it: the disassembly has no arithmetic left, only a push of the result.' + runNote :
+      scen === 'runtime' ? 'The message boom is the substituted text, matching what [expr {...}] would give for the same body.' :
+      scen === 'braces' ? 'The braced words compared equal, so the value is ' + D.res + '.' + runNote :
+      scen === 'var' ? 'x is read by expr when the code runs (the loadStk in the disassembly), and the product is ' + D.res + '.' + runNote :
+      'The substituted value is stored in v.' + runNote,
+      {pos: null, reg: bodyReg, tokens: realT ? realT.map(function (t) { return {type: t.type, text: t.text, nc: t.nc, cls: t.type === 'exprsubst' ? 'hl' : ''}; }) : [t1f, t2], tokNote: 'real testparser output',
+       outs: scen === 'runtime' ? null : D.dis, res: lastRes});
+    /* ---- how expr handles the body, and how the [expr {...}] form differs ---- */
+    if (D.body) {
+      var row = function (t) { return {type: t.type, text: t.text, nc: t.nc, cls: (t.type === 'command' || t.type === 'variable') ? 'hl' : ''}; };
+      var treeT = (realTokens(D.tree) || []).map(row);
+      var refT = (realTokens(D.refTok) || []).map(function (t) { return {type: t.type, text: t.text, nc: t.nc, cls: t.type === 'command' ? 'hl' : ''}; });
+      var rs = D.refSrc, o1 = rs.indexOf('[expr {'), bs = o1 + 7, be = bs + D.body.length;
+      var refReg = [reg(o1, bs, 'dollar'), reg(bs, be, 'body'), reg(be, be + 2, 'dollar')];
+      var isRt = scen === 'runtime';
+      E('cexpr', LN.parseexpr, 'expr parses the body as an expression',
+        'The body text goes to TclCompileExpr (or Tcl_ExprObj when run uncompiled), which calls ParseExpr. This is expr\'s own parser, not the word parser: it builds an operator tree. Words that need substitution, a $variable or a [command], become their own nodes (highlighted) and are substituted once, when the expression is evaluated. That is why the body can safely be left unparsed by the word parser.',
+        {pos: null, reg: bodyReg, tokens: treeT, tokNote: 'expr parse tree (testexprparser)'});
+      var lblRef = isRt
+        ? 'The outer parser sees one command token. Nothing inside it has been parsed yet. When the text is substituted, the command is evaluated as a script: the command expr is looked up by name, runs, and its C code (Tcl_ExprObjCmd) calls the same expression engine on the braced word. The braces mean no substitution happens before expr sees the text.'
+        : 'The outer parser sees [ ... ] as one command token and does not look inside it. The compiler later parses that text as a command of its own: the word expr, then one braced word. The braces stop the word parser from substituting anything, which is the same protection $((...)) gets by never parsing its body. The command name expr has to be looked up, and the compiler routine for the core expr command, TclCompileExprCmd, runs.';
+      E(isRt ? 'run' : 'cexcmd', isRt ? LN.cmdcase : LN.exprwords, 'The same text written as [expr {...}]', lblRef,
+        {pos: null, srcText: rs, reg: refReg, tokens: refT, tokNote: 'real testparser output (reference form)'});
+      if (!isRt) {
+        E('cexw', LN.direct, 'A single braced word goes straight to TclCompileExpr',
+          'TclCompileExprWords checks that the expression is a single word with no substitutions (a braced word is a "simple word"). It is, so it calls TclCompileExpr with the body, the same call the $((...)) code makes. If the word needed substitutions, as in expr $x*2 with no braces, the else branch would emit code to concatenate the words and call expr again at run time (the EXPR_STK instruction). That second round of substitution is the double substitution that $((...)) cannot trigger, because its body is never a word.',
+          {pos: null, srcText: rs, reg: refReg, tokens: refT, tokNote: 'real testparser output (reference form)'});
+      }
+      var insns = function (d) { return d.split('\n').filter(function (l) { return /^\s+\(\d+\) /.test(l); }).map(function (l) { return l.replace(/^\s+\(\d+\)\s*/, '').replace(/\s+/g, ' ').trim(); }); };
+      var cmds = function (d) { var m = /Cmds (\d+)/.exec(d); return m ? m[1] : '-'; };
+      var sameI = !isRt && JSON.stringify(insns(D.dis)) === JSON.stringify(insns(D.refDis));
+      var sameR = String(D.res) === String(D.refRes) && String(D.rc) === String(D.refRc);
+      var cmp = {
+        rt: isRt, sameI: sameI, sameR: sameR,
+        a: {title: '$' + (build === 2 ? '((' : '(') + ' ... ' + (build === 2 ? '))' : ')') + ' form', script: D.src, route: isRt
+              ? ['TclSubstTokens meets the EXPR_SUBST token', 'Tcl_ExprObj(body)']
+              : ['Tcl_ParseVarName emits EXPR_SUBST + TEXT', 'TclCompileTokens', 'TclCompileExpr(body)'],
+            ntok: String((realTokens(D.tokens) || []).length), cmds: isRt ? '-' : cmds(D.dis), dis: D.dis, res: D.res, rc: D.rc},
+        b: {title: '[expr {...}] form', script: D.refSrc, route: isRt
+              ? ['TclSubstTokens meets a COMMAND token', 'Tcl_EvalEx runs the script "expr {...}"', 'look up the command expr', 'Tcl_ExprObjCmd, then the expression engine']
+              : ['word parser: one COMMAND token', 'compile the command expr: look up expr', 'TclCompileExprCmd', 'TclCompileExprWords', 'TclCompileExpr(body)'],
+            ntok: String((realTokens(D.refTok) || []).length), cmds: isRt ? '-' : cmds(D.refDis), dis: D.refDis, res: D.refRes, rc: D.refRc}
+      };
+      E('cexpr', LN.compiletree, 'Side by side',
+        isRt ? 'Both forms end in the same expression engine and give the same result. The $((...)) form skips the command lookup and the second parse of the script.'
+             : 'Both forms hand the same body text to TclCompileExpr, so they produce the same instructions and the same value. The bracket form needs a second parse and a command lookup first; the $((...)) form goes there directly.',
+        {pos: null, reg: bodyReg, tokens: realT ? realT.map(function (t) { return {type: t.type, text: t.text, nc: t.nc, cls: t.type === 'exprsubst' ? 'hl' : ''}; }) : [], tokNote: 'real testparser output',
+         cmp: cmp});
+    }
+    return finish(out);
+  }
+  function finish(o) { return o; }
+
+  /* ---- the subst command: option flags, then what ParseTokens does with each $ and [ ---- */
+  var FLN = ['COMMANDS', 'VARIABLES', 'BACKSLASHES', 'EXPRESSIONS'];
+  function flagText(v) { var n = FLN.filter(function (_, k) { return v & (1 << k); }); return v + ' = ' + (n.length ? n.join('|') : 'none'); }
+  function substTrace() {
+    var D = DATA[build]['subst_' + sopt], cmd = D.src, out = [];
+    var off = cmd.indexOf('{') + 1, T = cmd.slice(off, -1);
+    var opt = SOPTS.filter(function (o) { return o[0] === sopt; })[0][2], neg = /^-no/.test(opt);
+    var base = {tokens: [], frames: [], reg: [], pos: null, kv: {}, cond: null, outs: null, res: null, tokNote: ''};
+    function E(sn, ln, h, p, o) { var s = JSON.parse(JSON.stringify(base)); for (var k in (o || {})) s[k] = o[k]; s.sn = sn; s.ln = ln; s.h = h; s.p = p; out.push(s); return s; }
+    function reg(a, b, c) { return {a: a, b: b, c: c}; }
+    var whole = [reg(0, cmd.length, 'scan')];
+    var bit = {'-commands': 1, '-variables': 2, '-backslashes': 4, '-expressions': 8, '-nocommands': 1, '-novariables': 2, '-nobackslashes': 4, '-noexpressions': 8}[opt] || 0;
+    var objc = opt ? 3 : 2, flags;
+    E('subc', LN.s_objc, 'subst is called', 'The command procedure checks that there is at least a string argument. objc counts the command name, the options and the string.',
+      {pos: 0, reg: whole, kv: {objc: String(objc), options: opt || 'none'}});
+    E('subc', LN.s_call, 'Ask TclSubstOptions for the flags', 'Everything between the command name and the last argument is an option. TclSubstOptions turns the list into a bit mask. Its result is what ParseTokens will consult for each $ and [.',
+      {pos: 0, reg: whole, kv: {numOpts: String(objc - 2)}});
+    flags = opt ? 0 : 15;
+    E('subo', LN.o_init, opt ? 'No option yet: flags starts at 0' : 'No options: every substitution is on', opt ? 'With at least one option, flags starts at 0 and the options add or (for the -no forms) later remove bits.' : 'Without options the mask is TCL_SUBST_ALL, which now includes TCL_SUBST_EXPRESSIONS (value 8, so ALL is 15).',
+      {pos: 0, reg: whole, kv: {flags: flagText(flags)}});
+    if (opt) {
+      flags = neg ? bit << 16 : bit;
+      E('subo', LN.o_or, 'The option is looked up and its flag OR-ed in', 'Tcl_GetIndexFromObj finds "' + opt + '" in the table (unique prefixes work). A positive option contributes its bit. A negated one contributes the bit shifted left by 16, so the two kinds can be told apart afterwards.',
+        {pos: 0, reg: whole, kv: {option: opt, flags: neg ? FLN[Math.log2(bit)] + ' << 16' : flagText(flags)}});
+    }
+    if (neg) {
+      E('subo', LN.o_neg, 'A negated option was given', 'flags >> 16 is not zero, so this is the "turn things off" form. (Mixing it with a positive option is the error "cannot combine positive and negative options".)',
+        {pos: 0, reg: whole, cond: [['flags >> 16', true]], kv: {flags: FLN[Math.log2(bit)] + ' << 16'}});
+      flags = 15 & ~bit;
+      E('subo', LN.o_mask, 'Start from ALL and remove the negated bit', 'The mask becomes TCL_SUBST_ALL with the named kind cleared.',
+        {pos: 0, reg: whole, kv: {flags: flagText(flags)}});
+      var both = (flags & 3) === 3;
+      E('subo', LN.o_clearif, 'Are variables and commands both still on?', 'An expression body can contain [commands], and $(( is "$" syntax. So if variables or commands are off, expressions are turned off too. That keeps scripts that use -nocommands or -novariables to make text safe exactly as safe as before.',
+        {pos: 0, reg: whole, cond: [['flags & VARIABLES', !!(flags & 2)], ['flags & COMMANDS', !!(flags & 1)], ['=> clear the EXPRESSIONS bit', !both]], kv: {flags: flagText(flags)}});
+      if (!both) {
+        flags &= ~8;
+        E('subo', LN.o_clear, 'Clear the EXPRESSIONS bit', 'flags &= ~TCL_SUBST_EXPRESSIONS.', {pos: 0, reg: whole, kv: {flags: flagText(flags)}});
+      }
+    }
+    E('subc', LN.s_nr, 'Substitute with these flags', 'The mask is handed to Tcl_NRSubstObj, which parses the string with ParseTokens and then evaluates the tokens. The next steps look at the three places in ParseTokens where a flag decides.',
+      {pos: null, reg: [reg(off, off + T.length, 'scan')], kv: {flags: flagText(flags)}});
+    var parts = [['$((1+2))', 8, 'expr'], ['$x', 2, 'var'], ['[set y 7]', 1, 'cmd']], pred = T;
+    parts.forEach(function (pt) {
+      var p = T.indexOf(pt[0]), a = off + p, z = a + pt[0].length, on = !!(flags & pt[1]), isE = pt[2] === 'expr', isC = pt[2] === 'cmd';
+      var rg = [reg(a, z, on ? 'body' : 'skip')];
+      if (!isC) {
+        E('ptok', LN.p_exprsyn, 'A "$" is met: is it the expression form?', isE
+          ? 'exprSyntax is true when the next characters are "((" (or "(" in the single-paren build). Here they are.'
+          : 'exprSyntax is true when the next characters are "((" (or "(" in the single-paren build). After "$x" they are not, so this is an ordinary variable.',
+          {pos: a, reg: rg, kv: {'text': pt[0], exprSyntax: String(isE)}});
+        E('ptok', LN.p_gate, 'Which flag decides?', isE
+          ? 'For the expression form the EXPRESSIONS bit decides; for any other "$" the VARIABLES bit does. If the bit is clear the "$" is turned into a literal text token.'
+          : 'For any other "$" the VARIABLES bit decides.',
+          {pos: a, reg: rg, cond: [['exprSyntax', isE], [isE ? 'flags & EXPRESSIONS' : 'flags & VARIABLES', on], ['=> ' + (on ? 'parse it' : 'literal "$"'), on]], kv: {flags: flagText(flags)}});
+        if (on) E('ptok', LN.p_call, isE ? 'Tcl_ParseVarName makes an EXPR_SUBST token' : 'Tcl_ParseVarName makes a VARIABLE token', isE ? 'This is the path the other scripts step through: the body is found by SkipExprSubstScan and kept as raw text.' : 'An ordinary variable substitution, as always.', {pos: a, reg: rg, kv: {}});
+        else E('ptok', LN.p_lit, 'The "$" stays literal text', 'The "$" becomes a TEXT token of size 1 and parsing goes on after it. Nothing after it is looked at as a substitution, so "' + pt[0] + '" appears in the result unchanged.', {pos: a, reg: rg, kv: {}});
+      } else {
+        E('ptok', LN.p_cgate, 'A "[" is met: is COMMANDS on?', on ? 'The COMMANDS bit is set, so the bracketed script is parsed as a command substitution.' : 'The COMMANDS bit is clear, so the "[" is literal text.',
+          {pos: a, reg: rg, cond: [['flags & COMMANDS', on], ['=> ' + (on ? 'command substitution' : 'literal "["'), on]], kv: {flags: flagText(flags)}});
+      }
+      if (on) pred = pred.replace(pt[0], isE ? '3' : isC ? '7' : '5');
+    });
+    var ok = pred === D.res;
+    E('subc', LN.s_nr, 'Result', 'The tokens are evaluated. $x was set to 5 and [set y 7] returns 7 beforehand in the test run; the result is the real one from this build.',
+      {pos: null, reg: [], res: {text: D.res, bad: Number(D.rc) !== 0, label: 'Result (real)'}, check: ok ? 'ok' : 'trace predicts "' + pred + '"', kv: {flags: flagText(flags)}});
+    return out;
+  }
+  function curD() { return scen === 'subst' ? DATA[build]['subst_' + sopt] : DATA[build][scen]; }
+
+  /* ---- rendering ---- */
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function renderSrc(s, src) {
+    var cls = new Array(src.length), k;
+    (s.reg || []).forEach(function (r) { for (k = r.a; k < r.b && k < src.length; k++) cls[k] = r.c; });
+    var html = '';
+    for (k = 0; k < src.length; k++) {
+      var c = cls[k] || '';
+      if (s.pos === k) c = 'cur';
+      html += '<span' + (c ? ' class="' + c + '"' : '') + '>' + esc(src[k]) + '</span>';
+    }
+    $('src').innerHTML = html;
+  }
+  function cmpHtml(c) {
+    var col = function (x) {
+      return '<div class="cmpcol"><h2>' + esc(x.title) + '</h2><div class="scr">' + esc(x.script) + '</div><span class="lbl" style="margin-top:6px">Route</span><ol>' + x.route.map(function (r) { return '<li>' + esc(r) + '</li>'; }).join('') + '</ol>'
+        + '<div class="kvs"><span>tokens from the word parser <b>' + esc(x.ntok) + '</b></span>' + (c.rt ? '' : '<span>commands in the bytecode <b>' + esc(x.cmds) + '</b></span>') + '</div>'
+        + (c.rt ? '' : '<pre class="out">' + esc(x.dis.replace(/ 0x[0-9a-f]+/g, ' 0x...')) + '</pre>')
+        + '<div class="res ' + (Number(x.rc) ? 'bad' : 'got') + '"><small>Result' + (Number(x.rc) ? ' (error)' : '') + '</small>' + esc(x.res) + '</div></div>';
+    };
+    var h = '<div class="cmp">' + col(c.a) + col(c.b) + '</div><div class="badges">'
+      + (c.rt ? '' : '<span class="badge ' + (c.sameI ? 'yes' : 'no') + '">Instructions identical: ' + (c.sameI ? 'yes' : 'NO') + '</span>')
+      + '<span class="badge ' + (c.sameR ? 'yes' : 'no') + '">Result identical: ' + (c.sameR ? 'yes' : 'NO') + '</span></div>'
+      + '<div class="diffs"><h2>What differs</h2><ul>'
+      + '<li>The bracket form is parsed twice (once as a token, once as a command) and the command <code>expr</code> is looked up by name. The $((...)) form is neither. That is why its bytecode lists one command instead of two.</li>'
+      + '<li>Because <code>expr</code> is looked up, redefining it (<code>proc expr ...</code>) or putting an execution trace on it changes the bracket form. It does not change $((...)). Both were checked on a real build.</li>'
+      + '<li>An error trace ends with <code>invoked from within "set v $((1+))"</code> for this form and <code>"expr {(1+)}"</code> for the other. The message itself is identical.</li>'
+      + '<li>Measured in instructions executed: about 3% fewer to run through eval and about 4% fewer to compile in a proc.</li></ul></div>';
+    return h;
+  }
+  function expTabs(x) { var o = ''; for (var q = 0; q < x.length; q++) { if (x[q] === '\t') { do { o += ' '; } while (o.length % 8); } else o += x[q]; } return o; }   /* tab stops every 8 columns, as Tcl's sources are written */
+  function render() {
+    var s = steps[i], D = curD(), sn = SN[s.sn];
+    renderSrc(s, s.srcText || D.src);
+    $('codeTitle').firstChild.textContent = sn.title + ' ';
+    $('codeFile').textContent = sn.file + ', line ' + sn.lines[0][0] + ' on' + (sn.note ? ' \u2014 ' + sn.note : '');
+    var cstMini = {inBlock: /^\s*\*/.test(sn.lines[0][1]) && !/^\s*\*\//.test(sn.lines[0][1]) && !/\/\*/.test(sn.lines[0][1])};
+    $('code').innerHTML = sn.lines.map(function (l) {
+      return '<div class="' + (l[0] === s.ln ? 'on' : '') + '" data-l="' + l[0] + '"><span class="n">' + l[0] + '</span><span>' + lineHtml(expTabs(l[1]), cstMini, null, false) + '</span></div>';
+    }).join('');
+    var on = $('code').querySelector('.on');
+    if (on) { var box = $('code'); box.scrollTop = Math.max(0, on.offsetTop - box.offsetTop - 90); }
+    $('frames').innerHTML = s.frames.length ? s.frames.map(function (f, n) {
+      return '<div class="frame' + (n === s.frames.length - 1 ? ' top' : '') + '">SkipExprSubstScan<small>closer ' + esc(f.closer) + ' &middot; depth ' + f.depth + '</small></div>';
+    }).join('') : '<div class="empty">not running</div>';
+    var kv = '';
+    Object.keys(s.kv || {}).forEach(function (k) { kv += '<span>' + esc(k) + '</span><span>' + esc(s.kv[k]) + '</span>'; });
+    $('kv').innerHTML = kv;
+    $('cond').innerHTML = s.cond ? s.cond.map(function (r) {
+      var v = r[1];
+      var mark = v === true ? '<span class="t">true</span>' : v === false ? '<span class="f">false</span>' : esc(v);
+      return '<div>' + esc(r[0]) + ' ' + mark + (r[2] ? ' <span style="color:var(--muted)">(' + esc(r[2]) + ')</span>' : '') + '</div>';
+    }).join('') : '';
+    $('tokNote').textContent = s.tokNote || '';
+    $('toks').innerHTML = s.tokens.length ? '<table><tr><th>type</th><th>text</th><th>comp.</th></tr>' + s.tokens.map(function (t) {
+      return '<tr class="' + (t.cls || '') + '"><td>' + esc(t.type) + '</td><td>' + esc(t.text) + '</td><td>' + esc(t.nc) + '</td></tr>';
+    }).join('') + '</table>' + (/expr parse tree/.test(s.tokNote || '') ? drawTree(s.tokens) : '') : '<div class="empty">no tokens yet</div>';
+    var o = '';
+    if (s.outs) o += '<span class="lbl" style="margin-top:10px">Bytecode (tcl::unsupported::disassemble)</span><pre class="out">' + esc(s.outs.replace(/ 0x[0-9a-f]+/g, ' 0x&hellip;').replace(/0x&hellip;/g, '0x...')) + '</pre>';
+    if (s.res) o += '<div class="res ' + (s.res.bad ? 'bad' : 'got') + '"><small>' + esc(s.res.label) + '</small>' + esc(s.res.text) + '</div>';
+    if (s.check) o += '<div class="res ' + (s.check === 'ok' ? 'got' : 'bad') + '"><small>Self-check against the real build</small>' + (s.check === 'ok' ? (scen === 'subst' ? 'the result predicted by the flags matches the real one' : 'trace body matches the real token') : esc(s.check)) + '</div>';
+    $('outs').innerHTML = o;
+    $('cmp').hidden = !s.cmp;
+    if (s.cmp) $('cmp').innerHTML = cmpHtml(s.cmp);
+    $('cap-top').textContent = 'Step ' + (i + 1) + ' of ' + steps.length + ' · ' + sn.file + ' line ' + s.ln;
+    $('cap-h').textContent = s.h;
+    $('cap-p').textContent = s.p;
+    $('dots').innerHTML = steps.map(function (_, n) { return '<i data-n="' + n + '" title="Step ' + (n + 1) + ': ' + esc(steps[n].h) + '" class="' + (n < i ? 'done' : n === i ? 'cur' : '') + '"></i>'; }).join('');
+    $('b-prev').disabled = i === 0;
+    $('b-next').disabled = i === steps.length - 1;
+    $('bld1').setAttribute('aria-pressed', build === 1);
+    $('bld2').setAttribute('aria-pressed', build === 2);
+    Array.prototype.forEach.call($('scenSeg').children, function (b) { b.setAttribute('aria-pressed', b.dataset.k === scen); });
+    $('optbar').hidden = scen !== 'subst';
+    Array.prototype.forEach.call($('optSeg').children, function (b) { b.setAttribute('aria-pressed', b.dataset.k === sopt); });
+    if (i === steps.length - 1) stop();
+    if (window.__codeOpen) renderCode();
+  }
+  function stop() { if (timer) { clearInterval(timer); timer = null; $('b-play').textContent = 'Auto-play'; } }
+  function reload(keep) { stop(); steps = build_trace(); if (!keep) i = 0; if (i >= steps.length) i = steps.length - 1; render(); }
+  $('scenSeg').innerHTML = SCEN.map(function (s) { return '<button data-k="' + s[0] + '" title="' + esc(NOTES[s[0]]) + '" aria-pressed="false">' + esc(s[1]) + '</button>'; }).join('');
+  $('scenSeg').onclick = function (e) { var k = e.target.dataset && e.target.dataset.k; if (k) { scen = k; reload(); } };
+  $('optSeg').innerHTML = SOPTS.map(function (o) { return '<button data-k="' + o[0] + '" aria-pressed="false">' + esc(o[1]) + '</button>'; }).join('');
+  $('optSeg').onclick = function (e) { var k = e.target.dataset && e.target.dataset.k; if (k) { sopt = k; reload(); } };
+  $('bld1').onclick = function () { build = 1; reload(); };
+  $('bld2').onclick = function () { build = 2; reload(); };
+  $('b-next').onclick = function () { stop(); if (i < steps.length - 1) { i++; render(); } };
+  $('b-prev').onclick = function () { stop(); if (i > 0) { i--; render(); } };
+  $('b-reset').onclick = function () { stop(); i = 0; render(); };
+  $('b-play').onclick = function () {
+    if (timer) { stop(); return; }
+    if (i === steps.length - 1) i = 0;
+    $('b-play').textContent = 'Pause'; render();
+    timer = setInterval(function () { if (i < steps.length - 1) { i++; render(); } else stop(); }, 1500);
+  };
+  $('dots').addEventListener('click', function (e) {
+    var d = e.target.closest('i[data-n]'); if (!d) return;
+    stop(); i = +d.dataset.n; render();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.ctrlKey || e.metaKey || e.altKey) return;
+    if ($('walk').hidden) return;   /* the review view has no steps */
+    if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); if (!e.repeat) $('b-play').click(); return; }
+    if ((e.key === 'ArrowRight' || e.key === 'ArrowLeft') && timer) { stop(); e.preventDefault(); return; }   /* during auto-play an arrow only pauses */
+    if (e.key === 'ArrowRight') { e.preventDefault(); $('b-next').click(); }
+    else if (e.key === 'ArrowLeft') { e.preventDefault(); $('b-prev').click(); }
+  });
+  window.__stepper = {dump: function (b, s, o) {
+    build = b; scen = s; if (o) sopt = o;
+    var D = (scen === 'subst') ? null : DATA[build][scen];
+    var t = build_trace();
+    return {src: D ? D.src : null, steps: t.map(function (x, k) {
+      var sn = SN[x.sn], lt = sn ? (sn.lines.filter(function (l) { return l[0] === x.ln; })[0] || [])[1] : null;
+      return {k: k + 1, sn: x.sn, ln: x.ln, line: lt, h: x.h, p: x.p, pos: x.pos, reg: (x.reg || []).map(function (r) { return r.c + ':' + r.a + '-' + r.b; }).join(' '),
+        tokens: (x.tokens || []).map(function (q) { return q.type + ' ' + JSON.stringify(q.text) + ' ' + q.nc; }).join('; '), kv: x.kv, frames: (x.frames || []).map(function (f) { return f.closer + '@' + f.depth; }).join(','),
+        res: x.res && x.res.text, check: x.check};
+    })};
+  }, all: function () {
+    var r = {};
+    [1, 2].forEach(function (b) { SCEN.forEach(function (s) { build = b; scen = s[0]; if (scen === 'subst') { SOPTS.forEach(function (o) { sopt = o[0]; var t2 = build_trace(); r[b + ':subst:' + o[0]] = {n: t2.length, checks: t2.filter(function (x) { return x.check; }).map(function (x) { return x.check; })}; }); sopt = 'd'; return; } var t = build_trace(); r[b + ':' + s[0]] = {n: t.length, checks: t.filter(function (x) { return x.check; }).map(function (x) { return x.check; })}; }); });
+    return r;
+  }};
+  /* ================= full code view: coloured, foldable, double-click to follow a name ================= */
+  var FN = {pvn: 'Tcl_ParseVarName', hook: 'Tcl_ParseVarName', fin: 'Tcl_ParseVarName', arr: 'Tcl_ParseVarName', arr2: 'Tcl_ParseVarName',
+            scan: 'SkipExprSubstScan', comp: 'TclCompileTokens', run: 'TclSubstTokens',
+            subc: 'TclNRSubstObjCmd', subo: 'TclSubstOptions', ptok: 'ParseTokens',
+            cexpr: 'TclCompileExpr', cexcmd: 'TclCompileExprCmd', cexw: 'TclCompileExprWords'};
+  var FILES = __FILES__;
+  var NEWDEFS = __NEWDEFS__;   /* functions and macros that this change adds (underlined in the code view) */
+  var BASE_TABS = ['tclParse.c', 'tclCompile.c', 'tclCompCmdsSZ.c', 'tclCompExpr.c', 'tclCmdMZ.c', 'tclCompCmds.c', 'tclTest.c', 'tcl.h'];
+  var FILEL = {}, FOLDS = {}, DEFS = new Map(), HDR = new Map(), HDRL = [], KIND = new Map();
+  BASE_TABS.forEach(function (n) { FILEL[n] = FILES[n].replace(/\r\n/g, '\n').split('\n'); });
+  var colorOn = true, foldOn = true, openFolds = new Set(), closedFolds = new Set(), codeOpen = false, codeTab = null, codeStep = -1,
+      codeWant = null, codeHit = null, codeMark = null, codeStack = [], codeExtra = [], codeCur = {fn: null};
+  window.__codeOpen = false;
+
+  function indexTclHeader(text) {
+    var L = text.replace(/\r\n/g, '\n').split('\n'), M = new Map();
+    var comment = function (a) {
+      if (a > 0 && /^\s*(\/\*|\*)/.test(L[a - 1]) && /\*\/\s*$/.test(L[a - 1])) { var d = a - 1; while (d > 0 && !/^\s*\/\*/.test(L[d]) && a - d < 40) d--; if (/^\s*\/\*/.test(L[d])) return d; }
+      return a;
+    };
+    var put = function (name, a, b, rank, kind) { var o = M.get(name); if (!o || rank > o.rank) M.set(name, {a: a, b: b, rank: rank, kind: kind}); };
+    var count = function (l) { var d = 0; l.replace(/\/\*.*?\*\//g, '').split('').forEach(function (ch) { if (ch === '{') d++; else if (ch === '}') d--; }); return d; };
+    for (var i = 0; i < L.length; i++) {
+      var l = L[i], m;
+      if ((m = /^\s*#\s*define\s+(\w+)/.exec(l))) {
+        var b = i; while (/\\\s*$/.test(L[b]) && b < L.length - 1) b++;
+        put(m[1], comment(i), b, 2, /^[A-Z0-9_]+$/.test(m[1]) ? 'k-mac' : 'k-fn'); i = b; continue;
+      }
+      if ((m = /^\s*\}\s*(\w+)\s*;/.exec(l))) {
+        var d = 0, j = i; for (; j >= 0; j--) { d += -count(L[j]); if (d <= 0 && /\{/.test(L[j])) break; }
+        if (j >= 0) put(m[1], comment(j), i, 3, 'k-ty');
+      }
+      if ((m = /^\s*(?:typedef\s+)?(?:struct|union|enum)\s+(\w+)\s*\{/.exec(l))) {
+        var d2 = 0, j2 = i; for (; j2 < L.length; j2++) { d2 += count(L[j2]); if (d2 <= 0) break; }
+        put(m[1], comment(i), j2, 3, 'k-ty');
+      }
+      if (/^\s*typedef\b/.test(l) && !/\{/.test(l)) {
+        var b2 = i; while (!/;\s*(\/\*.*\*\/)?\s*$/.test(L[b2]) && b2 < L.length - 1) b2++;
+        var tt = L.slice(i, b2 + 1).join(' ').replace(/\/\*.*?\*\//g, '');
+        var mm = /\(\s*\*?\s*(\w+)\s*\)\s*\(/.exec(tt) || /(\w+)\s*(?:\[[^\]]*\])?\s*;\s*$/.exec(tt);
+        if (mm) put(mm[1], comment(i), b2, 1, 'k-ty');
+        i = b2;
+      }
+    }
+    HDRL = L; return M;
+  }
+  function buildDefs() {
+    DEFS = new Map(); KIND = new Map();
+    BASE_TABS.forEach(function (tab) {
+      if (tab === 'tcl.h') return;
+      FILEL[tab].forEach(function (l, k) {
+        var m = /^([A-Za-z_]\w*)\(/.exec(l);
+        if (m && !DEFS.has(m[1]) && !/^(if|for|while|switch|return|sizeof)$/.test(m[1])) { DEFS.set(m[1], {tab: tab, line: k + 1}); KIND.set(m[1], 'k-fn'); }
+        m = /^\s*#\s*define\s+(\w+)/.exec(l);
+        if (m && !DEFS.has(m[1])) { DEFS.set(m[1], {tab: tab, line: k + 1}); KIND.set(m[1], 'k-mac'); }
+      });
+    });
+    HDR.forEach(function (h, n) { if (!DEFS.has(n)) { DEFS.set(n, {tab: 'tcl.h', line: h.a + 1}); KIND.set(n, h.kind); } });
+    NEWDEFS.forEach(function (n) { if (KIND.has(n)) KIND.set(n, KIND.get(n) + ' new'); });
+  }
+  function lineHtml(l, st, mk, clickable) {
+    var T = [], push = function (s, e, c) { if (e > s) T.push([s, e, c]); };
+    var comm = function (s, e) {
+      var re = /[A-Za-z_]\w*/g; re.lastIndex = s; var last = s, m;
+      while ((m = re.exec(l)) && m.index < e) { var k = clickable && KIND.get(m[0]); if (k) { push(last, m.index, 'cm'); push(m.index, m.index + m[0].length, k); last = m.index + m[0].length; } }
+      push(last, e, 'cm');
+    };
+    var n = l.length, i = 0, done = false;
+    if (st.inBlock) { var j = l.indexOf('*/'); if (j < 0) { comm(0, n); done = true; } else { comm(0, j + 2); st.inBlock = false; i = j + 2; } }
+    if (!done) {
+      var re = /\/\*|\/\/|"(?:\\.|[^"\\])*"|'(?:\\.|[^'\\])*'|[A-Za-z_]\w*/g; re.lastIndex = i;
+      var last2 = i, m2;
+      while ((m2 = re.exec(l))) {
+        var s = m2.index, t = m2[0], e = s + t.length;
+        push(last2, s, '');
+        if (t === '/*') { var j2 = l.indexOf('*/', s + 2); if (j2 < 0) { comm(s, n); st.inBlock = true; last2 = n; break; } comm(s, j2 + 2); last2 = j2 + 2; re.lastIndex = last2; continue; }
+        if (t === '//') { comm(s, n); last2 = n; break; }
+        if (t[0] === '"' || t[0] === "'") push(s, e, 'st'); else push(s, e, (clickable && KIND.get(t)) || '');
+        last2 = e;
+      }
+      push(last2, n, '');
+    }
+    var out = '';
+    T.forEach(function (x) {
+      var s = x[0], e = x[1], c = x[2];
+      var piece = function (a, b) { if (b <= a) return ''; var tx = esc(l.slice(a, b)); return c ? '<span class="' + c + '">' + tx + '</span>' : tx; };
+      if (mk && mk.col < e && mk.col + mk.len > s) {
+        var a = Math.max(s, mk.col), b = Math.min(e, mk.col + mk.len);
+        out += piece(s, a) + '<mark class="clicked">' + piece(a, b) + '</mark>' + piece(b, e);
+      } else out += piece(s, e);
+    });
+    return out;
+  }
+  function codeOnly(lines) {
+    var inBlock = false;
+    return lines.map(function (l) {
+      var o = '', i = 0;
+      while (i < l.length) {
+        if (inBlock) { var j = l.indexOf('*/', i); if (j < 0) { i = l.length; break; } inBlock = false; i = j + 2; o += ' '; continue; }
+        var c = l[i];
+        if (c === '/' && l[i + 1] === '*') { inBlock = true; i += 2; continue; }
+        if (c === '/' && l[i + 1] === '/') break;
+        if (c === '"' || c === "'") { var k = i + 1; while (k < l.length && l[k] !== c) k += (l[k] === '\\') ? 2 : 1; o += c + ' '.repeat(Math.max(0, k - i - 1)) + c; i = k + 1; continue; }
+        o += c; i++;
+      }
+      return o;
+    });
+  }
+  function foldRegions(lines) {
+    /* every block of a function that is an if / else if / else / for / while / do / switch body or a switch case, at any depth */
+    var S = codeOnly(lines), n = lines.length, D = [], d = 0, k, ch;
+    for (k = 0; k < n; k++) { D[k] = d; for (var q = 0; q < S[k].length; q++) { ch = S[k][q]; if (ch === '{') d++; else if (ch === '}') d--; if (d < 0) return []; } }
+    if (d !== 0) return [];
+    var T = S.map(function (x) { return x.trim(); });
+    var lead = function (k) { var c = 0; for (var q = 0; q < T[k].length; q++) { if (T[k][q] === '}') c++; else if (T[k][q] !== ' ') break; } return c; };
+    var open = -1; for (k = 0; k < n; k++) if (T[k] === '{' && D[k] === 0) { open = k; break; }
+    if (open < 0) return [];
+    var R = [], endOf = function (r, depth) { for (var k2 = r + 1; k2 < n; k2++) if (D[k2] === depth && T[k2][0] === '}') return k2; return -1; };
+    var add = function (s, e) { while (e >= s && T[e] === '') e--; if (e - s + 1 >= 2) R.push({s: s, e: e}); };
+    for (var r = open + 1; r < n; r++) {
+      if (!/\{$/.test(T[r]) || D[r] - lead(r) < 1) continue;
+      var cd = D[r] - lead(r) + 1;   /* depth of the lines inside this block */
+      var head = T[r], h = r;
+      while (h > open + 1 && (head.split(')').length - 1) > (head.split('(').length - 1) && r - h < 8) { h--; head = T[h] + ' ' + head; }
+      if (/^(\}\s*)?(if\s*\(|else\s+if\s*\(|else\s*\{$|for\s*\(|while\s*\(|do\s*\{$|switch\s*\()/.test(head) || /^(case\b[^:]*:|default\s*:)\s*\{$/.test(head)) {
+        var c = endOf(r, cd); if (c > 0) add(r + 1, c - 1);
+      }
+      if (/^switch\s*\(/.test(head)) {
+        var c2 = endOf(r, cd); if (c2 < 0) continue;
+        var labels = []; for (var k3 = r + 1; k3 < c2; k3++) if (D[k3] === cd && /^(case\b|default\s*:)/.test(T[k3])) labels.push(k3);
+        labels.forEach(function (k4, ii) { if (!/\{$/.test(T[k4])) add(k4 + 1, (ii + 1 < labels.length ? labels[ii + 1] : c2) - 1); });
+      }
+    }
+    return R;
+  }
+  function stepTarget() {
+    var s = steps[i];
+    return {tab: FUNCS0[FN[s.sn]].file, k: s.ln - 1, s: s};
+  }
+  /* the functions of a file: the "{" alone at the start of a line to the "}" at the start of a later line */
+  function fileFuncs(tab) {
+    if (FOLDS[tab]) return FOLDS[tab];
+    var L = FILEL[tab], R = [], k = 0;
+    while (k < L.length) {
+      if (L[k] === '{') { var e = k + 1; while (e < L.length && L[e][0] !== '}') e++; if (e < L.length && e - k >= 3) R.push({b0: k, b1: e}); k = e; }
+      k++;
+    }
+    return (FOLDS[tab] = R);
+  }
+  /* all the foldable regions of one function: the body, then every block inside it with its nesting level (0 = directly in the body) */
+  var chgOn = true, ADDED = null;
+  function addedFor(tab) {   /* 0-based line numbers the change adds to this file, from the diff hunks */
+    if (!ADDED) {
+      ADDED = {};
+      REVIEW.hunks.forEach(function (h) {
+        var base = h.file.replace(/^generic\//, ''), n = h.newStart;
+        if (!FILEL[base]) return;
+        var s = ADDED[base] || (ADDED[base] = new Set());
+        h.lines.forEach(function (l) { var c = l[0]; if (c === '+') s.add(n - 1); if (c === ' ' || c === '+') n++; });
+      });
+    }
+    return (chgOn && ADDED[tab]) || new Set();
+  }
+  function fnRegions(tab, fn) {
+    var inner = foldRegions(FILEL[tab].slice(fn.b0, fn.b1 + 1)).map(function (r) { return {s: r.s + fn.b0, e: r.e + fn.b0}; });
+    inner.forEach(function (r) { r.lvl = inner.filter(function (o) { return o !== r && o.s <= r.s && o.e >= r.e; }).length; });
+    return {outer: {s: fn.b0 + 1, e: fn.b1 - 1, lvl: -1}, inner: inner};
+  }
+  function renderCode() {
+    var tg = stepTarget(), s = tg.s;
+    var names = BASE_TABS;
+    if (codeStep !== i) { codeTab = tg.tab; codeStep = i; codeHit = null; codeMark = null; codeStack = []; codeExtra = []; codeCur.fn = null; closedFolds.clear(); }
+    if (pendingJump) { codeWant = pendingJump.tab; codeHit = {tab: pendingJump.tab, k: pendingJump.line - 1, quiet: true}; pendingJump = null; }
+    if (codeWant && names.indexOf(codeWant) >= 0) codeTab = codeWant; codeWant = null;
+    var L = FILEL[codeTab], isH = codeTab === 'tcl.h';
+    $('code-h').textContent = fromReview ? 'Code opened from the diff review' : 'Code for step ' + (i + 1) + ': ' + s.h;
+    $('ctabs').innerHTML = names.map(function (n) { return '<button data-n="' + n + '" aria-pressed="' + (!codeCur.fn && n === codeTab) + '">' + n + (n === tg.tab ? ' \u2022' : '') + '</button>'; }).join('')
+      + codeExtra.map(function (n) { return '<button data-n="' + n + '" data-fn="1" class="' + (KIND.get(n) || '') + '" aria-pressed="' + (n === codeCur.fn) + '">' + n + '</button>'; }).join('');
+    var hitK = (codeTab === tg.tab) ? tg.k : -1;
+    if (codeHit && codeHit.tab === codeTab && codeHit.k >= 0) hitK = codeHit.k;
+    var markK = (codeMark && codeMark.tab === codeTab) ? codeMark.k : -1;
+    var focusK = [hitK, markK];
+    var inside = function (a, b) { return focusK.some(function (q) { return q >= a && q <= b; }); };
+    /* regions: every function is folded except the one that holds the hit or the clicked name; inside an open function, blocks fold as before */
+    var regAt = [], openAt = [];
+    if (foldOn && !isH) {
+      fileFuncs(codeTab).forEach(function (fn) {
+        var outerKey = codeTab + ':' + (fn.b0 + 1);
+        var outerOpen = !closedFolds.has(outerKey) && (inside(fn.b0, fn.b1) || openFolds.has(outerKey));
+        var all = [{s: fn.b0 + 1, e: fn.b1 - 1, lvl: -1}];
+        if (outerOpen) all = all.concat(fnRegions(codeTab, fn).inner);
+        all.sort(function (p, q) { return p.s - q.s || q.e - p.e; });   /* outer blocks before the blocks inside them */
+        all.forEach(function (r) {
+          var key = codeTab + ':' + r.s;
+          r.open = !closedFolds.has(key) && (inside(r.s, r.e) || openFolds.has(key) || r.lvl === 0);   /* the blocks directly in an open function start open */
+          if (r.open) { openAt[r.s] = r; return; }
+          for (var q2 = r.s; q2 <= r.e; q2++) if (!regAt[q2]) regAt[q2] = r;   /* the outermost closed block wins */
+        });
+      });
+    }
+    var cst = {inBlock: false}, out = [], addSet = addedFor(codeTab), quiet = !!(codeHit && codeHit.tab === codeTab && codeHit.quiet);
+    L.forEach(function (l, k) {
+      var rg = regAt[k], cls = 'ln', pre0 = '';
+      if (rg) {
+        if (colorOn) lineHtml(l, cst, null, false);
+        if (k !== rg.s) return;
+        out.push('<span class="ln fold" data-fs="' + rg.s + '" title="click to open, double-click to open everything below"><i></i>\u25b8 \u2026 ' + (rg.e - rg.s + 1) + ' lines</span>');
+        return;
+      }
+      if (openAt[k]) pre0 = '<span class="ln fold open" data-fs="' + k + '" title="click to close, double-click to close everything below"><i></i>\u25be</span>';
+      if (addSet.has(k)) cls += ' add';
+      if (k === hitK) cls += (quiet && codeHit.k === k) ? ' target' : ' hit';
+      var mk = markK === k ? codeMark : null;
+      var body = colorOn ? lineHtml(l, cst, mk, true) : (mk ? esc(l.slice(0, mk.col)) + '<mark class="clicked">' + esc(l.slice(mk.col, mk.col + mk.len)) + '</mark>' + esc(l.slice(mk.col + mk.len)) : esc(l));
+      out.push(pre0 + '<span class="' + cls + '" data-k="' + k + '"><i>' + (k + 1) + '</i>' + body + '</span>');
+    });
+    $('codepre').innerHTML = out.join('');
+    var pre = $('codepre'), mEl = pre.querySelector('mark.clicked'), hEl = pre.querySelector('.ln.hit, .ln.target');
+    if (mEl) pre.scrollTop = Math.max(0, mEl.parentElement.offsetTop - pre.clientHeight / 3);
+    else if (hEl) pre.scrollTop = Math.max(0, hEl.offsetTop - pre.clientHeight / 3);
+    else pre.scrollTop = 0;
+    $('b-back').textContent = codeStack.length ? '\u2190 Back (' + codeStack.length + ')' : '\u2190 Back';
+    $('cnote').innerHTML = 'This is the whole file from the modified trunk (' + L.length + ' lines). '
+      + (foldOn && !isH ? 'With Fold on, every function is closed except the one that holds the highlighted line. Inside it the blocks directly in the function are open, and deeper if / else / for / while / do / switch blocks and switch cases are closed unless they hold that line. Click a fold row to open or close it; double-click one to open it and everything below it, or, if it is open, to close it and everything below it. ' : '')
+      + (colorOn ? 'Bold names can be double-clicked: <span class="k-fn">functions</span>, <span class="k-mac">macros</span>, <span class="k-ty">types</span>; <span class="k-fn new">underlined</span> ones are new in this change; comments are <span class="cm">green</span>, strings <span class="st">red</span>. ' : '')
+      + (chgOn ? 'Lines this change adds have a green bar and tint; the yellow line is where the current step points. ' : '')
+      + 'A double-click jumps to the definition (also in tcl.h). To go back: the Back button, Backspace, a double-click on the name you just jumped to, or a double-click on blank space.';
+    $('codepre').parentNode.dataset.tab = codeTab;
+  }
+  var fromReview = null;   /* set when the code view was opened from "Review the diff": closing it returns there */
+  function setCode(on) {
+    var back = (!on && codeOpen && fromReview) ? fromReview : null;
+    if (!on) fromReview = null;
+    codeOpen = on; window.__codeOpen = on;
+    $('codeview').hidden = !on;
+    document.querySelector('.panes').style.display = on ? 'none' : '';
+    $('b-code').textContent = on ? 'Show panes' : 'Show code';
+    if (on) { codeStep = -1; renderCode(); }
+    if (back) { setView('review'); window.scrollTo(0, back.y); }
+  }
+  $('b-code').onclick = function () { setCode(!codeOpen); };
+  $('codepre').addEventListener('mousedown', function (e) { if (e.detail > 1) e.preventDefault(); });
+  function wordAt(x, y) {
+    var node = null, off = 0;
+    if (document.caretPositionFromPoint) { var c = document.caretPositionFromPoint(x, y); if (c) { node = c.offsetNode; off = c.offset; } }
+    else if (document.caretRangeFromPoint) { var r = document.caretRangeFromPoint(x, y); if (r) { node = r.startContainer; off = r.startOffset; } }
+    if (!node || node.nodeType !== 3) return null;
+    if (node.parentElement && (node.parentElement.tagName === 'I' || node.parentElement.closest('.fold'))) return null;
+    var ln = node.parentElement && node.parentElement.closest('.ln'); if (!ln) return null;
+    var txt = node.data, a = off, b = off;
+    while (a > 0 && /\w/.test(txt[a - 1])) a--;
+    while (b < txt.length && /\w/.test(txt[b])) b++;
+    if (a === b) return null;
+    var rg = document.createRange(); rg.setStartAfter(ln.querySelector('i')); rg.setEnd(node, a);
+    return {word: txt.slice(a, b), k: +ln.dataset.k, col: rg.toString().length, len: b - a};
+  }
+  $('codepre').addEventListener('click', function (e) {
+    var r = e.target.closest('.fold'); if (!r) return;
+    if (e.detail > 1) return;   /* the second click of a double-click: the dblclick handler does the work */
+    var key = codeTab + ':' + r.dataset.fs, wasOpen = r.classList.contains('open');
+    clearTimeout(foldTimer);   /* wait a moment so a double-click is not first taken as a single click */
+    foldTimer = setTimeout(function () {
+      if (wasOpen) { openFolds.delete(key); closedFolds.add(key); }   /* an open block (even one held open by the highlighted line) closes */
+      else { closedFolds.delete(key); openFolds.add(key); }
+      var pre = $('codepre'), top = pre.scrollTop; renderCode(); pre.scrollTop = top;
+    }, 230);
+  });
+  var foldTimer = 0;
+  $('codepre').addEventListener('dblclick', function (e) {
+    var frow = e.target.closest('.fold');
+    if (frow) {
+      clearTimeout(foldTimer);   /* double-click on a fold row: closed -> open it and everything below it; open -> close it and everything below it */
+      var s0 = +frow.dataset.fs, wasOpen = frow.classList.contains('open');
+      var fn0 = fileFuncs(codeTab).filter(function (f) { return s0 >= f.b0 + 1 && s0 <= f.b1 - 1; })[0];
+      if (fn0) {
+        var fr = fnRegions(codeTab, fn0), all0 = [fr.outer].concat(fr.inner);
+        var me = all0.filter(function (x) { return x.s === s0; })[0];
+        if (me) {
+          all0.filter(function (x) { return x.s >= me.s && x.e <= me.e; }).forEach(function (x) {
+            var key = codeTab + ':' + x.s;
+            if (wasOpen) { openFolds.delete(key); closedFolds.add(key); } else { closedFolds.delete(key); openFolds.add(key); }
+          });
+          var pre0 = $('codepre'), top0 = pre0.scrollTop; renderCode(); pre0.scrollTop = top0;
+        }
+      }
+      return;
+    }
+    var say = function (m) { $('cmsg').textContent = m; };
+    var hit = wordAt(e.clientX, e.clientY);
+    var sel = window.getSelection(); if (sel) sel.removeAllRanges();
+    if (!hit) { say(''); $('b-back').click(); return; }
+    var w = hit.word, d = DEFS.get(w);
+    if (!d) { say('"' + w + '" is not a function, macro or type that this page has the definition of (it is C, or a local name).'); return; }
+    if (d.tab === codeTab && hit.k === d.line - 1) {   /* the name we just jumped to: a shortcut for Back */
+      if (codeStack.length) { say(''); $('b-back').click(); } else say('"' + w + '" is defined here.');
+      return;
+    }
+    say('');
+    codeStack.push({tab: codeTab, fn: codeCur.fn, mark: {tab: codeTab, k: hit.k, col: hit.col, len: hit.len}});
+    if (codeExtra.indexOf(w) < 0) codeExtra.push(w);   /* an oval for what we jumped to; Back removes it */
+    codeCur.fn = w;
+    codeWant = d.tab; codeMark = null; codeHit = {tab: d.tab, k: d.line - 1};
+    renderCode();
+  });
+  $('codeview').addEventListener('dblclick', function (e) { if (e.target === $('codeview')) { $('cmsg').textContent = ''; $('b-back').click(); } });
+  $('b-back').onclick = function () {
+    var sn = codeStack.pop(); if (!sn) { setCode(false); return; }
+    var left = codeCur.fn;
+    codeCur.fn = sn.fn;
+    if (left && !codeStack.some(function (x) { return x.fn === left; }) && left !== codeCur.fn) codeExtra = codeExtra.filter(function (n) { return n !== left; });
+    codeWant = sn.tab; codeMark = sn.mark; codeHit = null; renderCode();
+  };
+  $('ctabs').addEventListener('click', function (e) {
+    var b = e.target.closest('button'); if (!b) return;
+    var n = b.dataset.n;
+    if (b.dataset.fn) { var d = DEFS.get(n); codeCur.fn = n; codeWant = d.tab; codeHit = {tab: d.tab, k: d.line - 1}; codeMark = null; }
+    else { codeCur.fn = null; codeWant = n; codeHit = null; codeMark = null; }
+    renderCode();
+  });
+  document.addEventListener('keydown', function (e) {
+    if (e.key === 'Escape' && codeOpen) setCode(false);
+    if (e.key === 'Backspace' && codeOpen && e.target.tagName !== 'INPUT') { e.preventDefault(); $('b-back').click(); }
+  });
+  var applyColor = function () { colorOn = $('colorOn').checked; var pre = $('codepre'), top = pre.scrollTop; renderCode(); pre.scrollTop = top; };
+  var applyFold = function () { foldOn = $('foldOn').checked; openFolds.clear(); closedFolds.clear(); renderCode(); };
+  $('chgOn').addEventListener('change', function () { chgOn = $('chgOn').checked; var pre = $('codepre'), top = pre.scrollTop; renderCode(); pre.scrollTop = top; });
+  $('colorOn').addEventListener('change', applyColor); $('foldOn').addEventListener('change', applyFold);
+  HDR = indexTclHeader(FILES['tcl.h']); buildDefs();
+
+
+  /* ================= review view ================= */
+  var REVIEW = __REVIEW__;
+  var pendingJump = null;
+  function hunkTarget(h) {
+    var n = h.newStart, first = null;
+    for (var q = 0; q < h.lines.length; q++) { var c = h.lines[q][0]; if (c === '+' && first === null) first = n; if (c === ' ' || c === '+') n++; }
+    var base = h.file.replace(/^generic\//, '');
+    return FILEL[base] ? {tab: base, line: first || h.newStart} : null;
+  }
+  function renderReview() {
+    var QH = REVIEW.qhunks, tagOf = {};
+    QH.forEach(function (hs, qi) { hs.forEach(function (n) { (tagOf[n] = tagOf[n] || []).push(qi + 1); }); });
+    function links(hs) { return hs.map(function (n) { return '<button class="hl" data-h="' + n + '">' + n + '</button>'; }).join(', '); }
+    var h = '<div class="rtop"><div class="qbox"><h2>Questions for the reviewer</h2><ol>' + REVIEW.questions.map(function (q, n) { return '<li' + (n === 0 ? ' class="first"' : '') + '><b>' + esc(q[0]) + '</b>' + esc(q[1]) + '</li>'; }).join('') + '</ol></div>';
+    h += '<div class="rside"><div class="rmap"><h2>Which hunks each question is about</h2><table>' + REVIEW.questions.map(function (q, n) { return '<tr><td>' + (n + 1) + '</td><td>' + esc(q[0]) + '</td><td>hunk' + (QH[n].length > 1 ? 's' : '') + ' ' + links(QH[n]) + '</td></tr>'; }).join('') + '</table></div>';
+    h += '<div class="rlist"><h2>The ' + REVIEW.hunks.length + ' hunks, in file order</h2><ol>' + REVIEW.hunks.map(function (x, n) { return '<li><span class="fl">' + esc(x.file.replace(/^generic\//, '')) + '</span><span><button class="hl" data-h="' + (n + 1) + '">' + (n + 1) + '. ' + esc(x.title) + '</button>' + (tagOf[n + 1] ? '<span class="qchip">Q' + tagOf[n + 1].join(', Q') + '</span>' : '') + '</span></li>'; }).join('') + '</ol></div></div></div>';
+    h += '<p class="fine">' + REVIEW.hunks.length + ' hunks in 7 source files, in file order. The test files, docs and the mutation, memory-checker and instruction-count results are in the zip next to this page.</p>';
+    REVIEW.hunks.forEach(function (x, n) {
+      var tg = hunkTarget(x);
+      h += '<article class="hunk" id="hunk-' + (n + 1) + '"><h3>' + (n + 1) + '. ' + esc(x.title) + (tagOf[n + 1] ? '<span class="qchip">Q' + tagOf[n + 1].join(', Q') + '</span>' : '') + '</h3><div class="where">' + esc(x.file) + ' &middot; ' + esc(x.hdr) + '</div>'
+        + '<dl><dt>What</dt><dd>' + esc(x.what) + '</dd><dt>Check</dt><dd>' + esc(x.check) + '</dd><dt>Tests</dt><dd>' + esc(x.tests) + '</dd></dl>'
+        + '<pre class="diff" tabindex="0">' + x.lines.map(function (l) { return '<span class="' + (l[0] === '+' ? 'add' : l[0] === '-' ? 'del' : 'ctx') + '">' + esc(l || ' ') + '</span>'; }).join('') + '</pre>'
+        + (tg ? '<button class="hbtn" data-n="' + n + '">Open in the code view (' + esc(tg.tab) + ')</button> ' : '') + '<button class="hbtn totop">Back to top</button></article>';
+    });
+    $('review').innerHTML = h;
+  }
+  function setView(v) {
+    if (!window.__walkLede) window.__walkLede = $('ledeT').innerHTML;
+    $('ledeT').innerHTML = v === 'review'
+      ? 'The review shows the change as you would hand it to the core team: first the questions for the reviewer, then each of the ' + REVIEW.hunks.length + ' hunks of the C and header diff, with what it does, what to check and the tests that cover it. Each hunk has a button that opens the full source file at that spot.'
+      : window.__walkLede;
+    $('ttlw').textContent = v === 'review' ? 'Review' : 'Stepper';
+    $('walk').hidden = v !== 'walk'; $('review').hidden = v !== 'review';
+    $('v-walk').setAttribute('aria-pressed', v === 'walk'); $('v-review').setAttribute('aria-pressed', v === 'review');
+    if (v === 'review') stop();
+  }
+  $('v-walk').onclick = function () { fromReview = null; setView('walk'); }; $('v-review').onclick = function () { fromReview = null; setView('review'); };
+  $('review').addEventListener('click', function (e) {
+    if (e.target.closest('.totop')) { var vb = document.querySelector('.viewbar'); window.scrollTo(0, vb ? Math.max(0, vb.getBoundingClientRect().top + (window.pageYOffset || 0) - 8) : 0); return; }
+    var hl = e.target.closest('.hl');
+    if (hl) { var el = document.getElementById('hunk-' + hl.dataset.h); if (el) { el.scrollIntoView({block: 'start'}); } return; }
+    var b = e.target.closest('.hbtn:not(.totop)'); if (!b) return;
+    var tg = hunkTarget(REVIEW.hunks[+b.dataset.n]); if (!tg) return;
+    var y = window.pageYOffset || document.documentElement.scrollTop || 0;
+    setView('walk'); pendingJump = tg; fromReview = {y: y}; setCode(true);
+    var cv = $('codeview'); window.scrollTo(0, Math.max(0, cv.getBoundingClientRect().top + (window.pageYOffset || 0) - 12));   /* the code box, just below the step dots */
+  });
+  renderReview();
+
+  reload();
+  setView('review');   /* the review is the first view; the walkthrough is one click away */
+})();
+</script>
+</body>
+</html>

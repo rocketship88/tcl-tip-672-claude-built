@@ -1,0 +1,3 @@
+parseExpr.test:	Total	286	Passed	285	Skipped	1	Failed	0
+Number of tests skipped for each constraint:
+	1	testexprparser && !ieeeFloatingPoint

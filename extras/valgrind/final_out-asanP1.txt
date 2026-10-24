@@ -1,0 +1,4 @@
+all.tcl:	Total	1064	Passed	1028	Skipped	36	Failed	0
+Direct leak of 48 byte(s) in 1 object(s) allocated from:
+SUMMARY: AddressSanitizer: 48 byte(s) leaked in 1 allocation(s).
+rc=1

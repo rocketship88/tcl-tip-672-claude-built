@@ -1,0 +1,8 @@
+compile.test:	Total	181	Passed	170	Skipped	11	Failed	0
+Number of tests skipped for each constraint:
+	9	knownBug
+	2	memory
+
+real	0m8.889s
+user	0m8.720s
+sys	0m0.143s

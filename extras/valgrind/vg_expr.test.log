@@ -1,0 +1,5 @@
+expr.test:	Total	2168	Passed	2152	Skipped	16	Failed	0
+Number of tests skipped for each constraint:
+	5	!ieeeFloatingPoint
+	1	knownBug
+	10	longIs32bit
