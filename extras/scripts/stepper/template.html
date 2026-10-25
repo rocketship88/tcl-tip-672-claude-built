@@ -32,7 +32,10 @@ code, .mono { font-family:var(--mono); font-size:.88em; }
 header.top { display:flex; gap:16px; align-items:flex-start; justify-content:space-between; flex-wrap:wrap; }
 header.top .topl { flex:1 1 420px; min-width:0; }
 kbd { font-family:var(--mono); font-size:.75rem; border:1px solid var(--line); border-bottom-width:2px; border-radius:4px; padding:0 5px; background:var(--bg); color:var(--fg); }
-.keys { flex:0 1 300px; min-width:220px; border:1px solid var(--line); border-radius:6px; background:var(--panel); padding:6px 12px; font-size:.8rem; color:var(--muted); }
+.keycol { flex:0 1 300px; min-width:220px; }
+.keycol .keys { min-width:0; }
+.keycol .tipline { margin-top:6px; font-size:.8rem; color:var(--muted); }
+.keys { border:1px solid var(--line); border-radius:6px; background:var(--panel); padding:6px 12px; font-size:.8rem; color:var(--muted); }
 .keys b { color:var(--fg); font-size:.78rem; text-transform:uppercase; letter-spacing:.05em; }
 .keys div { margin-top:2px; }
 @media (max-width:760px) { header.top { flex-direction:column; } .keys { flex:none; width:100%; box-sizing:border-box; } }
@@ -149,6 +152,10 @@ pre.code .ln.hit { background:var(--on); }
 :root[data-theme="dark"] { --g0:#6c8389; --g1:#5b86b8; --g2:#a874b8; --g3:#b98d45; --red:#f06a6a; --green:#4cc473; --dia:#b5c4c9; --diabg:#1b2427; }
 pre.code { overflow-anchor:none; }
 pre.code { --cw:16px; }
+.ftipbox { position:fixed; z-index:60; max-width:340px; padding:6px 9px; font:.78rem/1.4 system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--fg); background:var(--panel); border:1px solid var(--line); border-radius:6px; box-shadow:0 3px 10px rgba(0,0,0,.2); pointer-events:none; }
+.ftipbox[hidden] { display:none; }
+.foldhelp { font-size:.8rem; color:var(--muted); margin:0 0 6px; line-height:1.6; }
+.foldhelp svg { vertical-align:-3px; } .foldhelp b { color:var(--fg); font-weight:600; }
 body.touch pre.code { --cw:24px; }
 pre.code .ln b.g { display:inline-block; position:relative; width:calc(var(--gn, 1) * var(--cw)); height:1.45em; vertical-align:top; font-weight:400; }
 pre.code .ln b.v { position:absolute; top:0; bottom:0; left:calc(var(--c) * var(--cw) + var(--cw) / 2 - .5px); width:1px; background:var(--g0); }
@@ -231,16 +238,17 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
 <main>
   <header class="top">
     <div class="topl">
-    <p class="ver mono">Version 2.1 &middot; Oct 24, 2026</p>
+    <p class="ver mono">Version 2.6 &middot; Oct 25, 2026</p>
     <h1>Tcl Expression Substitution <span id="ttlw">Stepper</span></h1>
     <p class="lede"><u class="choose">Choose either the review of the code changes or the step-by-step walkthrough.</u><br><span id="ledeT">Follow the parser through <code>$((expr))</code>, a shortcut for <code>[expr {expr}]</code>. Step through the real C code in <code>Tcl_ParseVarName</code> and the scanner that finds the closing parenthesis, watch the token array grow, then see the bytecode and result. The panes show the actual source lines and real output from a build of the modified trunk.</span></p>
     </div>
-    <div class="keys" aria-label="keyboard and mouse shortcuts"><b>Shortcuts</b>
+    <div class="keycol"><div class="keys" aria-label="keyboard and mouse shortcuts"><b>Shortcuts</b>
       <div><kbd>&rarr;</kbd> next step <kbd>&larr;</kbd> back</div>
       <div><kbd>Space</kbd> start / pause auto-play</div>
       <div><kbd>Esc</kbd> close the code view</div>
       <div>code view: double-click a name to jump; double-click that name again, or blank space, or press <kbd>&#9003;</kbd>, to go back</div>
     </div>
+    <label class="tipline"><input type="checkbox" id="tipOn2" checked> Tooltips</label></div>
   </header>
 
   <div class="viewbar"><span class="lbl" style="margin:0">View</span><div class="seg" role="group" aria-label="View"><button id="v-review" aria-pressed="false">Review the diff</button><button id="v-walk" aria-pressed="true">Walkthrough</button></div></div>
@@ -282,8 +290,9 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
 
   <section class="pane" id="codeview" hidden>
     <div class="codehead"><h2 id="code-h">Code for this step</h2><div><button class="bkbtn" id="b-back">&larr; Back</button></div>
-      <div class="copts"><label class="colorbox" title="colour the names you can double-click, the comments and the strings"><input type="checkbox" id="colorOn" checked> Color</label><label class="colorbox" title="tint the lines this change adds green, as in the diff"><input type="checkbox" id="chgOn" checked> Changes</label><label class="colorbox" title="show the fold squares: click opens a level, right-click closes one, double-click opens or closes all. Unticked, the code is fully open with no squares or guide lines"><input type="checkbox" id="foldOn" checked> Fold</label></div></div>
+      <div class="copts"><label class="colorbox" title="colour the names you can double-click, the comments and the strings"><input type="checkbox" id="colorOn" checked> Color</label><label class="colorbox" title="tint the lines this change adds green, as in the diff"><input type="checkbox" id="chgOn" checked> Changes</label><label class="colorbox" title="show the fold squares: click opens a level, right-click closes one, double-click opens or closes all. Unticked, the code is fully open with no squares or guide lines"><input type="checkbox" id="foldOn" checked> Fold</label><label class="colorbox" title="show a short explanation after the pointer rests on a fold square for a moment"><input type="checkbox" id="tipOn" checked> Tooltips</label></div></div>
     <div class="ctabs" id="ctabs"></div><div id="cmsg" class="cmsg"></div>
+    <div class="foldhelp" id="foldhelp" hidden></div>
     <pre class="code" id="codepre" tabindex="0"></pre>
     <p class="cnote" id="cnote"></p>
   </section>
@@ -885,7 +894,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
   function curD() { return scen === 'subst' ? DATA[build].substall[sset] : DATA[build][scen]; }
 
   /* ---- rendering ---- */
-  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
+  function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;').replace(/"/g, '&quot;'); }
   function renderSrc(s, src) {
     var cls = new Array(src.length), k;
     (s.reg || []).forEach(function (r) { for (k = r.a; k < r.b && k < src.length; k++) cls[k] = r.c; });
@@ -986,7 +995,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
   function startTimer() { timer = setInterval(tick, speed * 1000); }
   function stop() { if (timer) { clearInterval(timer); timer = null; $('b-play').textContent = 'Auto-play'; } }
   function reload(keep) { stop(); steps = build_trace(); if (!keep) i = 0; if (i >= steps.length) i = steps.length - 1; render(); }
-  $('scenSeg').innerHTML = SCEN.map(function (s) { return '<button data-k="' + s[0] + '" title="' + esc(NOTES[s[0]]) + '" aria-pressed="false">' + esc(s[1]) + '</button>'; }).join('');
+  $('scenSeg').innerHTML = SCEN.map(function (s) { return '<button data-k="' + s[0] + '" data-tip="' + esc(NOTES[s[0]]).replace(/"/g, '&quot;') + '" aria-pressed="false">' + esc(s[1]) + '</button>'; }).join('');
   $('scenSeg').onclick = function (e) { var k = e.target.dataset && e.target.dataset.k; if (k) { scen = k; reload(); } };
   $('optSeg').innerHTML = '<button data-k="none" aria-pressed="false">(none)</button>';
   [['optSegP', false], ['optSegN', true]].forEach(function (g) {
@@ -1296,8 +1305,71 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     }
     bar.classList.add('on');
   }
-  $('codepre').addEventListener('scroll', function () { updateBar(); }, {passive: true});
-  function ftip() { return touchUI ? 'tap: open a level · hold: close a level · double tap: open or close all' : 'click: open a level · right click: close a level · double click: open or close all'; }
+  $('codepre').addEventListener('scroll', function () { updateBar(); hideTip(); }, {passive: true});
+  /* tooltips of our own: the browser's title tooltips do not show everywhere (not in the Claude side panel), so anything with data-tip gets this box */
+  var tipEl = document.createElement('div'); tipEl.className = 'ftipbox'; tipEl.hidden = true; tipEl.setAttribute('role', 'tooltip'); document.body.appendChild(tipEl);
+  var tipTimer = 0, tipOn = true;
+  try { tipOn = localStorage.getItem('stepperTips') !== '0'; } catch (e) {}
+  /* two checkboxes (one under the shortcuts, one in the code view) kept in step with each other */
+  ['tipOn', 'tipOn2'].forEach(function (id) {
+    $(id).checked = tipOn;
+    $(id).addEventListener('change', function () { tipOn = this.checked; $('tipOn').checked = $('tipOn2').checked = tipOn; hideTip(); try { localStorage.setItem('stepperTips', tipOn ? '1' : '0'); } catch (e) {} });
+  });
+  function showTip(el, now) {
+    clearTimeout(tipTimer);
+    if (!tipOn) return;
+    if (!now) { tipTimer = setTimeout(function () { showTip(el, true); }, 700); return; }
+    var t = el.getAttribute('data-tip'); if (!t) return;
+    tipEl.textContent = t; tipEl.hidden = false;
+    var r = el.getBoundingClientRect(), w = tipEl.offsetWidth, h = tipEl.offsetHeight;
+    var x = Math.min(Math.max(8, r.left), window.innerWidth - w - 8), y = r.bottom + 6;
+    if (y + h > window.innerHeight - 8) y = Math.max(8, r.top - h - 6);
+    tipEl.style.left = x + 'px'; tipEl.style.top = y + 'px';
+  }
+  function hideTip() { clearTimeout(tipTimer); tipEl.hidden = true; }
+  /* every tooltip in the page: anything with data-tip, and any plain title (moved to data-tip the first time the pointer reaches it, so the browser's own tooltip never doubles up) */
+  var TIPS = {
+    'v-review': 'Review the diff: go through the changes TIP 672 makes to the Tcl sources, item by item, with a note on each.',
+    'v-walk': 'Walkthrough: follow the real parser through one script, a step at a time, with the code that runs at each step.',
+    'bld2': 'The default build: the trigger is $(( ... )). Nothing that works today changes meaning.',
+    'bld1': 'The shorter build: the trigger is $( ... ). A script that used $(index) for an array with an empty name would need set (index).',
+    'b-reset': 'Go back to the first step.',
+    'b-prev': 'Go back one step.',
+    'b-next': 'Go forward one step.',
+    'b-play': 'Step automatically at the speed chosen beside it. Press again to pause.',
+    'b-code': 'Show the Tcl source code for the step you are on.',
+    'b-back': 'Return to the walkthrough or review.'
+  };
+  var OPTTIP = {'(none)': 'No options: everything is substituted, as plain subst does.',
+    '-backslashes': 'Positive form: substitute only backslash sequences, leave everything else alone.',
+    '-commands': 'Positive form: substitute only [commands].',
+    '-variables': 'Positive form: substitute only $variables.',
+    '-expressions': 'Positive form: substitute only expressions, $(...).',
+    '-nobackslashes': 'Negative form: substitute everything except backslash sequences.',
+    '-nocommands': 'Negative form: substitute everything except [commands]. Expressions are also left alone, as they can contain commands.',
+    '-novariables': 'Negative form: substitute everything except $variables. Expressions are also left alone, as they can contain variables.',
+    '-noexpressions': 'Negative form: substitute everything except expressions, $(...).'};
+  Object.keys(TIPS).forEach(function (id) { var b = $(id); if (b) b.setAttribute('data-tip', TIPS[id]); });
+  Array.prototype.forEach.call(document.querySelectorAll('#optbar button'), function (b) { var t = OPTTIP[b.textContent.trim()]; if (t) b.setAttribute('data-tip', t); });
+  function tipOf(e) {
+    var el = e.target.closest && e.target.closest('[data-tip],[title]');
+    if (el && !el.hasAttribute('data-tip')) { el.setAttribute('data-tip', el.getAttribute('title')); el.removeAttribute('title'); }
+    return el;
+  }
+  document.addEventListener('pointerover', function (e) { if (e.pointerType === 'touch') return; var el = tipOf(e); if (el) showTip(el); });
+  document.addEventListener('pointerout', function (e) { if (e.target.closest && e.target.closest('[data-tip]')) hideTip(); });
+  document.addEventListener('pointerdown', hideTip);
+  document.addEventListener('focusin', function (e) { var el = e.target.closest && e.target.closest('[data-tip]'); if (el && el.matches(':focus-visible')) showTip(el, true); });
+  document.addEventListener('focusout', hideTip);
+  window.addEventListener('scroll', hideTip, {passive: true});
+  function ftip(st, x) {
+    var full = ffull(x), any = fany(x), lv = flevels(st, x);
+    var what = x.open ? (full ? 'Everything below is open (red dot).' : 'Open to level ' + lv[0] + ' of ' + lv[1] + ' (green dot: more to open).') : 'Closed (' + (x.e - x.s + 1) + ' lines hidden; green dot: more to open).';
+    var how = touchUI
+      ? 'Tap: open one more level. Hold: close the innermost open level. Double-tap: ' + (any ? 'close everything below.' : 'open everything below.')
+      : 'Click: open one more level. Right-click: close the innermost open level. Double-click: ' + (any ? 'close everything below.' : 'open everything below.');
+    return what + ' ' + how;
+  }
   function fpopOpts(st) { var o = ''; for (var d = 1; d <= st.DMAX; d++) o += '<option value="' + d + '"' + (d === st.cap ? ' selected' : '') + '>' + (d === st.DMAX ? 'all' : d) + '</option>'; return o; }
   /* the gutter of one line: guide lines for the open blocks around it, and the square if the line starts a block */
   function fgutter(st, k) {
@@ -1309,10 +1381,10 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     if (!(seen & 1) && n0.open && k > n0.hdr && k <= st.fn.b1) v += '<b class="v c0" style="--c:0"></b>';   /* the function's own line runs from its name to its closing brace */
     var extra = '';
     if (hd) {
-      dia = '<button class="dia" data-fk="' + st.key + '" data-ni="' + hd.id + '" style="--c:' + Math.min(hd.depth, st.cap - 1) + '" aria-label="fold control" title="' + ftip() + '">' + fsvg(ffull(hd)) + '</button>';
+      dia = '<button class="dia" data-fk="' + st.key + '" data-ni="' + hd.id + '" style="--c:' + Math.min(hd.depth, st.cap - 1) + '" aria-label="' + esc(ftip(st, hd)) + '" data-tip="' + esc(ftip(st, hd)) + '">' + fsvg(ffull(hd)) + '</button>';
       if (!hd.open) extra += '<span class="ell">⋯ ' + (hd.e - hd.s + 1) + ' lines</span>';
-      if (hd.id === 0 || (hd.open && !ffull(hd))) { var lv = flevels(st, hd); extra += '<span class="lvl" title="levels open below this fold">level ' + lv[0] + ' of ' + lv[1] + '</span>'; }
-      if (hd.id === 0) extra += '<select class="pop" data-fk="' + st.key + '" title="how many clicks open everything" aria-label="maximum depth">' + fpopOpts(st) + '</select>';
+      if (hd.id === 0 || (hd.open && !ffull(hd))) { var lv = flevels(st, hd); extra += '<span class="lvl" data-tip="Levels open below this fold: ' + lv[0] + ' of ' + lv[1] + '. Each click on its square opens one more.">level ' + lv[0] + ' of ' + lv[1] + '</span>'; }
+      if (hd.id === 0) extra += '<select class="pop" data-fk="' + st.key + '" data-tip="How many clicks open everything below this function. A smaller number opens the deepest blocks together." aria-label="maximum depth">' + fpopOpts(st) + '</select>';
     }
     return {html: v + dia, extra: extra ? '<span class="fx"> ' + extra + '</span>' : ''};
   }
@@ -1320,7 +1392,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     var tg = stepTarget(), s = tg.s;
     var names = BASE_TABS;
     if (codeStep !== i) { codeTab = tg.tab; codeStep = i; codeHit = null; codeMark = null; codeStack = []; codeExtra = []; codeCur.fn = null; }
-    if (pendingJump) { codeWant = pendingJump.tab; codeHit = {tab: pendingJump.tab, k: pendingJump.line - 1, quiet: true}; pendingJump = null; }
+    if (pendingJump) { codeWant = pendingJump.tab; codeHit = {tab: pendingJump.tab, k: pendingJump.line - 1, quiet: true, adds: pendingJump.adds || []}; pendingJump = null; }
     if (codeWant && names.indexOf(codeWant) >= 0) codeTab = codeWant; codeWant = null;
     var L = FILEL[codeTab], isH = codeTab === 'tcl.h';
     $('code-h').textContent = fromReview ? 'Code opened from the diff review' : 'Code for step ' + (i + 1) + ': ' + s.h;
@@ -1329,14 +1401,14 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     var hitK = (codeTab === tg.tab) ? tg.k : -1;
     if (codeHit && codeHit.tab === codeTab && codeHit.k >= 0) hitK = codeHit.k;
     var markK = (codeMark && codeMark.tab === codeTab) ? codeMark.k : -1;
-    var focusK = [hitK, markK];
+    var focusK = [hitK, markK].concat((codeHit && codeHit.tab === codeTab && codeHit.adds) || []);   /* a jump from the review also opens the folds around every line the change adds */
     var inside = function (a, b) { return focusK.some(function (q) { return q >= a && q <= b; }); };
     /* folds: one tree of blocks per function; the squares open and close its levels */
     var hid = [], lineSt = [], gcols = 0, funcs = [];
     if (foldOn && !isH) {
       funcs = fileFuncs(codeTab).map(function (f) { return foldState(codeTab, f); });
       funcs.forEach(function (st) { gcols = Math.max(gcols, st.DMAX); });
-      var sig = codeTab + '|' + hitK + '|' + markK + '|' + i + '|' + codeCur.fn;
+      var sig = codeTab + '|' + hitK + '|' + markK + '|' + i + '|' + codeCur.fn + '|' + (codeHit && codeHit.adds ? codeHit.adds.length + ':' + codeHit.adds[0] : '');
       if (sig !== focusSig) { focusSig = sig; funcs.forEach(function (st) { openToFocus(st, focusK); }); }
       funcs.forEach(function (st) {
         for (var q = st.nodes[0].hdr; q <= st.fn.b1; q++) lineSt[q] = st;
@@ -1366,6 +1438,13 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     else if (mEl) pre.scrollTop = Math.max(0, mEl.parentElement.offsetTop - pre.clientHeight / 3);
     else if (hEl) pre.scrollTop = Math.max(0, hEl.offsetTop - pre.clientHeight / 3);
     else pre.scrollTop = 0;
+    hideTip();
+    var fh = $('foldhelp');
+    fh.hidden = !(foldOn && !isH);
+    if (!fh.hidden) fh.innerHTML = '<b>Fold squares</b> (' + fsvg(false).replace('width="14" height="14"', 'width="12" height="12"') + ' green = more to open, ' + fsvg(true).replace('width="14" height="14"', 'width="12" height="12"') + ' red = everything below is open): '
+      + (touchUI ? '<b>tap</b> opens one more level, <b>hold</b> closes the innermost level, <b>double-tap</b> opens everything or, if anything is open, closes everything.'
+                 : '<b>click</b> opens one more level, <b>right-click</b> closes the innermost level, <b>double-click</b> opens everything or, if anything is open, closes everything.')
+      + ' The menu beside a function name sets how many clicks open everything. Hover a square for what it will do now.';
     updateBar();
     $('b-back').textContent = codeStack.length ? '\u2190 Back (' + codeStack.length + ')' : '\u2190 Back';
     $('cnote').innerHTML = 'This is the whole file from the modified trunk (' + L.length + ' lines). '
@@ -1532,8 +1611,9 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
   function hunkTarget(h) {
     var n = h.newStart, first = null;
     for (var q = 0; q < h.lines.length; q++) { var c = h.lines[q][0]; if (c === '+' && first === null) first = n; if (c === ' ' || c === '+') n++; }
-    var base = h.file.replace(/^generic\//, '');
-    return FILEL[base] ? {tab: base, line: first || h.newStart} : null;
+    var base = h.file.replace(/^generic\//, ''), adds = [], m = h.newStart;
+    for (var q2 = 0; q2 < h.lines.length; q2++) { var c2 = h.lines[q2][0]; if (c2 === '+') adds.push(m - 1); if (c2 === ' ' || c2 === '+') m++; }
+    return FILEL[base] ? {tab: base, line: first || h.newStart, adds: adds} : null;
   }
   function renderReview() {
     var QH = REVIEW.qhunks, tagOf = {};
