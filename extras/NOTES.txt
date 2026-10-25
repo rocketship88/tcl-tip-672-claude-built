@@ -128,3 +128,9 @@ v2.4 (Oct 25, 2026): tooltips wait 0.7 s of resting on the square before showing
 v2.5 (Oct 25, 2026): tooltips (0.7 s delay, Tooltips checkbox) now cover the whole page: View buttons, script buttons, Build buttons, subst options, Reset/Back/Next/Auto-play/Show code, speed, step dots and checkboxes. Plain title attributes are turned into the page's tooltips the first time the pointer reaches them. Bug fixed: esc() did not escape double quotes, so script-button tooltips containing " were cut off.
 
 v2.6 (Oct 25, 2026): a second "Tooltips" checkbox under the Shortcuts box at the top of the page, kept in step with the one in the code view (both remembered in the browser). Version date updated.
+
+v2.7 (Oct 25, 2026): the docked function-name bar now also shows with Fold unticked (name line only: line number and name, no square, level or menu).
+
+v2.8 (Oct 25, 2026): docked function-name bar fixes. It now covers every function, including ones with a one-line body (just a return) that have no fold square, and it also shows while the top of the view is the comment block above a function. Checked at every scroll position of six source files: no gaps.
+
+v2.9 (Oct 25, 2026): the docked function-name bar has a "go there" button beside the name that scrolls to the first line of the function (works with Fold on or off; a double click on it does not trigger Back).

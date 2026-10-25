@@ -173,6 +173,8 @@ pre.code .fnbar.on .fb { display:block; }
 pre.code .cb { display:inline-block; vertical-align:top; }   /* tab stops count from the left edge of the code, not of the gutter */
 pre.code .fx { font-family:var(--mono); font-style:normal; user-select:none; -webkit-user-select:none; }
 pre.code .fx .ell { color:var(--muted); font-style:italic; font-size:.92em; }
+pre.code .fnbar .goto { all:unset; cursor:pointer; margin-left:12px; font:600 .78em system-ui,-apple-system,Segoe UI,Roboto,sans-serif; color:var(--accent-fg); background:var(--accent); border-radius:9px; padding:0 9px; line-height:1.5; vertical-align:1px; }
+pre.code .fnbar .goto:hover { filter:brightness(1.12); } pre.code .fnbar .goto:focus-visible { outline:2px solid var(--accent); outline-offset:2px; }
 pre.code .fx .lvl { margin-left:12px; font-size:.86em; color:var(--muted); background:var(--bg); border:1px solid var(--line); border-radius:9px; padding:0 7px; }
 pre.code .fx .toast { margin-left:10px; font-weight:600; font-size:.88em; color:var(--accent-fg); background:var(--accent); border-radius:9px; padding:1px 8px; animation:ftoast 2.2s ease-out forwards; }
 pre.code .fx .pop { margin-left:14px; font:inherit; font-size:.85em; padding:0 2px; color:var(--fg); background:var(--panel); border:1px solid var(--line); border-radius:4px; }
@@ -238,7 +240,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
 <main>
   <header class="top">
     <div class="topl">
-    <p class="ver mono">Version 2.6 &middot; Oct 25, 2026</p>
+    <p class="ver mono">Version 2.9 &middot; Oct 25, 2026</p>
     <h1>Tcl Expression Substitution <span id="ttlw">Stepper</span></h1>
     <p class="lede"><u class="choose">Choose either the review of the code changes or the step-by-step walkthrough.</u><br><span id="ledeT">Follow the parser through <code>$((expr))</code>, a shortcut for <code>[expr {expr}]</code>. Step through the real C code in <code>Tcl_ParseVarName</code> and the scanner that finds the closing parenthesis, watch the token array grow, then see the bytecode and result. The panes show the actual source lines and real output from a build of the modified trunk.</span></p>
     </div>
@@ -1229,6 +1231,30 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
 
   /* ---- folds: one tree of blocks per function; every block has a square on its first line ---- */
   var GCOL = ['--g0', '--g1', '--g2', '--g3'], SQ = 'M2 2H12V12H2Z';
+  /* every function of a file for the docked name bar, foldable or not (a function whose body is a single return has nothing to fold, but still has a name to show) */
+  var BARF = {};
+  function barFuncs(tab) {
+    if (BARF[tab]) return BARF[tab];
+    var L = FILEL[tab], R = [], k = 0;
+    while (k < L.length) {
+      if (L[k] === '{') {
+        var e = k + 1; while (e < L.length && L[e][0] !== '}') e++;
+        var nm = -1; for (var q = k - 1; q >= 0 && k - q <= 40 && L[q].trim() !== '' && L[q][0] !== '}'; q--) if (/^[A-Za-z_]\w*\s*\(/.test(L[q])) { nm = q; break; }
+        if (nm >= 0 && e < L.length) {
+          var c0 = nm, t;   /* the type line(s) just above the name, then the comment block, up to the first blank line: the bar also names the function while you read its comment */
+          while (c0 > 0 && (t = L[c0 - 1]).trim() !== '' && t[0] !== '}' && t[0] !== '#' && !/;\s*$/.test(t)) c0--;
+          if (c0 > 1 && L[c0 - 1].trim() === '' && /\*\/\s*$/.test(L[c0 - 2])) {   /* a comment block ending just above (one blank line between): take all of it */
+            var c1 = c0 - 2; while (c1 > 0 && c0 - c1 <= 200 && !/^\/\*/.test(L[c1])) c1--;
+            if (/^\/\*/.test(L[c1])) c0 = c1;
+          }
+          R.push({hdr: nm, b1: e, c0: c0});
+        }
+        k = e;
+      }
+      k++;
+    }
+    return (BARF[tab] = R);
+  }
   function foldState(tab, fn) {
     if (fn.st) return fn.st;
     var fr = fnRegions(tab, fn), L = FILEL[tab], nm = fn.b0;
@@ -1291,7 +1317,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
   function barTarget(pre) {
     var ln = LINEST && rowAt(pre, pre.scrollTop + 1); if (!ln || ln.dataset.k === undefined) return null;
     var k = +ln.dataset.k, st = LINEST[k];
-    return (st && k > st.nodes[0].hdr && k <= st.fn.b1) ? st : null;
+    return (st && k !== st.nodes[0].hdr && k <= st.fn.b1) ? st : null;
   }
   function updateBar(force) {
     var pre = $('codepre'), bar = pre.firstElementChild;
@@ -1299,8 +1325,9 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     var st = barTarget(pre);
     if (!st) { bar.classList.remove('on'); bar.dataset.key = ''; return; }
     if (force || bar.dataset.key !== st.key) {
-      var g = fgutter(st, st.nodes[0].hdr), k0 = st.nodes[0].hdr;
-      bar.firstChild.innerHTML = '<b class="g">' + g.html + '</b><i>' + (k0 + 1) + '</i><span class="cb">' + esc(FILEL[st.tab][k0]) + '</span>' + g.extra;
+      var k0 = st.nodes[0].hdr;
+      if (!foldOn || st.light) bar.firstChild.innerHTML = '<i>' + (k0 + 1) + '</i><span class="cb">' + esc(FILEL[st.tab][k0]) + '</span><button class="goto" data-go="' + k0 + '" aria-label="go to the top of this function" data-tip="Scroll to the first line of this function.">go there</button>';
+      else { var g = fgutter(st, k0); bar.firstChild.innerHTML = '<b class="g">' + g.html + '</b><i>' + (k0 + 1) + '</i><span class="cb">' + esc(FILEL[st.tab][k0]) + '</span><button class="goto" data-go="' + k0 + '" aria-label="go to the top of this function" data-tip="Scroll to the first line of this function.">go there</button>' + g.extra; }
       bar.dataset.key = st.key;
     }
     bar.classList.add('on');
@@ -1405,6 +1432,8 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     var inside = function (a, b) { return focusK.some(function (q) { return q >= a && q <= b; }); };
     /* folds: one tree of blocks per function; the squares open and close its levels */
     var hid = [], lineSt = [], gcols = 0, funcs = [];
+    var barSt = [], c0of = {};   /* for the docked bar: every function, foldable or not, and the comment above it */
+    if (!isH) barFuncs(codeTab).forEach(function (f) { c0of[f.hdr] = f.c0; var o = {key: codeTab + ':n' + f.hdr, tab: codeTab, light: true, nodes: [{hdr: f.hdr}], fn: {b1: f.b1}}; for (var q = f.c0; q <= f.b1; q++) barSt[q] = o; });
     if (foldOn && !isH) {
       funcs = fileFuncs(codeTab).map(function (f) { return foldState(codeTab, f); });
       funcs.forEach(function (st) { gcols = Math.max(gcols, st.DMAX); });
@@ -1412,6 +1441,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
       if (sig !== focusSig) { focusSig = sig; funcs.forEach(function (st) { openToFocus(st, focusK); }); }
       funcs.forEach(function (st) {
         for (var q = st.nodes[0].hdr; q <= st.fn.b1; q++) lineSt[q] = st;
+        for (var q3 = (c0of[st.nodes[0].hdr] !== undefined ? c0of[st.nodes[0].hdr] : st.nodes[0].hdr); q3 <= st.fn.b1; q3++) barSt[q3] = st;
         st.nodes.forEach(function (x) { if (!x.open) for (var q2 = x.s; q2 <= x.e; q2++) hid[q2] = true; });
       });
     }
@@ -1429,9 +1459,9 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
       var body = colorOn ? lineHtml(l, cst, mk, true) : (mk ? esc(l.slice(0, mk.col)) + '<mark class="clicked">' + esc(l.slice(mk.col, mk.col + mk.len)) + '</mark>' + esc(l.slice(mk.col + mk.len)) : esc(l));
       out.push('<span class="' + cls + '" data-k="' + k + '">' + gut + '<i>' + (k + 1) + '</i><span class="cb">' + body + '</span>' + fx + '</span>');
     });
-    LINEST = lineSt;
+    LINEST = barSt;
     out.unshift('<div class="sp"></div>'); out.push('<div class="sp"></div>');
-    if (foldOn && !isH) out.unshift('<div class="fnbar"><div class="fb ln"></div></div>');
+    if (!isH) out.unshift('<div class="fnbar"><div class="fb ln"></div></div>');
     $('codepre').innerHTML = out.join('');
     var pre = $('codepre'), mEl = pre.querySelector('mark.clicked'), hEl = pre.querySelector('.ln.hit, .ln.target');
     if (keepScroll) { /* a fold click: the caller keeps the square where it was */ }
@@ -1531,6 +1561,12 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     flastTap = {k: h.st.key + '#' + h.x.id, t: Date.now(), s: sn};   /* the time is taken after the redraw, so a slow redraw does not use up the double-tap window */
   });
   $('codepre').addEventListener('pointercancel', fendHold);
+  $('codepre').addEventListener('click', function (e) {   /* the bar's "go there": scroll to the name line of the function you are in */
+    var b = e.target.closest && e.target.closest('.goto'); if (!b) return;
+    var pre = $('codepre'), row = pre.querySelector('.ln[data-k="' + b.dataset.go + '"]'); if (!row) return;
+    pre.scrollTop = row.offsetTop; updateBar();
+    row.classList.remove('flash'); void row.offsetWidth; row.classList.add('flash'); setTimeout(function () { row.classList.remove('flash'); }, 1500);
+  });
   $('codepre').addEventListener('click', function (e) {
     var h = diaOf(e); if (!h) return;
     if (fptype === 'touch') { e.preventDefault(); return; }   /* touch is handled by the pointer events */
@@ -1561,7 +1597,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
       if (fbefore && fbefore.k === dh.st.key) frestore(dh.st, fbefore.s);
       foldDo(dh, function () { fall(dh.st, dh.x); }); fbefore = null; e.preventDefault(); return;
     }
-    if (e.target.closest('.fx, .g')) return;
+    if (e.target.closest('.fx, .g, .goto')) return;
     var say = function (m) { $('cmsg').textContent = m; };
     var hit = wordAt(e.clientX, e.clientY);
     var sel = window.getSelection(); if (sel) sel.removeAllRanges();
