@@ -187,6 +187,16 @@ so nothing is substituted twice.
 `subst` gets `-expressions` and `-noexpressions`. `-nocommands` and
 `-novariables` also switch expression substitution off (see above).
 
+The `subst` command in current trunk (TIP 712) also has positive forms:
+`-backslashes`, `-commands`, `-variables` and `-expressions` turn on only the
+substitutions named and leave every other kind off. For example,
+`subst -variables $s` substitutes variables and nothing else. This makes
+`-expressions` an explicit opt-in: a list of positive options that does not
+name it does not substitute expressions. Positive and negative options cannot
+be mixed in one call; `subst -expressions -novariables $s` is the error
+`cannot combine positive and negative options`. With no options at all,
+everything is substituted, including expressions, as before.
+
 ## C interface
 
 `Tcl_ParseVarName` (and so `Tcl_ParseCommand` and `Tcl_ParseVar`) can

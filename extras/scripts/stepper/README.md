@@ -3,3 +3,5 @@
 The code viewer (colour, Fold, double-click definitions, Back) follows the design of extras/bitarray_stepper.html in the bitarray repository.
 
 Since stepper v1.8 `build_page.py` also needs `gen_substall.tcl`, `substall1.json` and `substall2.json` (the real results of every combination of subst options). They are in `extras2/stepper_subst_options/` because `extras/` is at the 100-file upload limit; copy them next to `build_page.py`.
+
+Since stepper v2.0 the code view uses nested fold squares (see the NOTES.txt entry); the fold model is the functions foldState / fopen / fclose / fall in `template.html`, and the controls are the pointer, click, contextmenu, dblclick and keydown handlers on `#codepre`.
