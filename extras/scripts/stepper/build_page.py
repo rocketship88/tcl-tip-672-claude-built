@@ -60,14 +60,15 @@ for k,v in [('s_objc',('TclNRSubstObjCmd','if (objc < 2)')),('s_call',('TclNRSub
   ('o_init',('TclSubstOptions','int flags = numOpts')),('o_or',('TclSubstOptions','flags |= optionFlags')),('o_neg',('TclSubstOptions','if (flags >> 16)')),
   ('o_mask',('TclSubstOptions','flags = TCL_SUBST_ALL & ~')),('o_clearif',('TclSubstOptions','if ((flags & (TCL_SUBST_VARIABLES')),('o_clear',('TclSubstOptions','flags &= ~TCL_SUBST_EXPRESSIONS')),('o_mix',('TclSubstOptions','if (flags & 0xFFFF)')),('o_err',('TclSubstOptions','"cannot combine positive and negative options"')),
   ('p_dollar',('ParseTokens',"} else if (*src == '$') {")),('p_exprsyn',('ParseTokens','int exprSyntax')),('p_gate',('ParseTokens','if (exprSyntax ?')),('p_lit',('ParseTokens','Substitution of this kind is disabled')),
-  ('p_call',('ParseTokens','Tcl_ParseVarName(parsePtr->interp')),('p_brack',('ParseTokens',"} else if (*src == '[') {")),('p_cgate',('ParseTokens','if (!(flags & TCL_SUBST_COMMANDS))'))]:
+  ('p_call',('ParseTokens','Tcl_ParseVarName(parsePtr->interp')),('p_brack',('ParseTokens',"} else if (*src == '[') {")),('p_cgate',('ParseTokens','if (!(flags & TCL_SUBST_COMMANDS))')),('p_bs',('ParseTokens',"} else if (*src == '\\\\') {")),('p_bsgate',('ParseTokens','if (!(flags & TCL_SUBST_BACKSLASHES))')),('p_bscall',('ParseTokens','TclParseBackslash(src, numBytes, &tokenPtr->size'))]:
     LN[k]=find(*v)
 for n,k,a,z in (('subc','TclNRSubstObjCmd',0,None),('subo','TclSubstOptions',0,None)):
     snips[n]={'title':k,'file':FUNCS[k]['file'],'lines':[[FUNCS[k]['a']+x,y] for x,y in enumerate(FUNCS[k]['lines'])]}
+LN['p_bslit']=LN['p_bsgate']+1
 LN['p_lit']+=3   # the TEXT token line after the comment
 assert 'TCL_TOKEN_TEXT' in lines('tclParse.c',LN['p_lit'],LN['p_lit'])[0][1]
-pd=LN['p_dollar']; pb=LN['p_cgate']
-snips['ptok']={'title':'ParseTokens: the $ and [ cases','file':'tclParse.c','lines':[[x,y] for x,y in lines('tclParse.c',pd,pb+3)]}
+pd=LN['p_dollar']; pb=LN['p_bscall']-3
+snips['ptok']={'title':'ParseTokens: the $, [ and \\ cases','file':'tclParse.c','lines':[[x,y] for x,y in lines('tclParse.c',pd,pb+3)]}
 for n,k in (('cexpr','TclCompileExpr'),('cexcmd','TclCompileExprCmd'),('cexw','TclCompileExprWords')):
     snips[n]={'title':k,'file':FUNCS[k]['file'],'lines':[[FUNCS[k]['a']+x,y] for x,y in enumerate(FUNCS[k]['lines'])]}
 print(LN)

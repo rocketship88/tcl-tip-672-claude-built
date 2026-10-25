@@ -204,7 +204,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
 <main>
   <header class="top">
     <div class="topl">
-    <p class="ver mono">Version 1.10 &middot; Oct 24, 2026</p>
+    <p class="ver mono">Version 1.12 &middot; Oct 24, 2026</p>
     <h1>Tcl Expression Substitution <span id="ttlw">Stepper</span></h1>
     <p class="lede"><u class="choose">Choose either the review of the code changes or the step-by-step walkthrough.</u><br><span id="ledeT">Follow the parser through <code>$((expr))</code>, a shortcut for <code>[expr {expr}]</code>. Step through the real C code in <code>Tcl_ParseVarName</code> and the scanner that finds the closing parenthesis, watch the token array grow, then see the bytecode and result. The panes show the actual source lines and real output from a build of the modified trunk.</span></p>
     </div>
@@ -337,7 +337,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
   ];
   var SETUP = {
     'var': 'Already run before this script: <code>set x 5</code>, so <code>$x</code> is 5.',
-    subst: '<p>Already run before this command: <code>set x 5</code>, so <code>$x</code> is 5. The command <code>[set y 7]</code> sets y itself.</p>'
+    subst: '<p>Already run before this command: <code>set x 5</code>, so <code>$x</code> is 5. The command <code>[set y 7]</code> sets y itself. The last word, <code>\\$x</code>, has a backslash in front of the dollar sign, which is what <code>-nobackslashes</code> changes.</p>'
       + '<p>The rule: with no option everything is on. A <code>-no...</code> option removes what it names from "everything". '
       + '<span class="rulehot"><code>-novariables</code> or <code>-nocommands</code> also turn expressions off</span> '
       + '(a <code>$((...))</code> body can read variables and run commands, so scripts that use those options to make text safe stay safe). '
@@ -823,11 +823,16 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     }
     E('subc', LN.s_nr, 'Substitute with these flags', 'The mask is handed to Tcl_NRSubstObj, which parses the string with ParseTokens and then evaluates the tokens. The next steps look at the three places in ParseTokens where a flag decides.',
       {pos: null, reg: [reg(off, off + T.length, 'scan')], kv: {flags: flagText(flags)}});
-    var parts = [['$((1+2))', 8, 'expr'], ['$x', 2, 'var'], ['[set y 7]', 1, 'cmd']], pred = T;
+    var parts = [['$((1+2))', 8, 'expr'], ['$x', 2, 'var'], ['[set y 7]', 1, 'cmd'], ['\\$x', 4, 'bs']], pred = T;
     parts.forEach(function (pt) {
-      var p = T.indexOf(pt[0]), a = off + p, z = a + pt[0].length, on = !!(flags & pt[1]), isE = pt[2] === 'expr', isC = pt[2] === 'cmd';
+      var p = T.indexOf(pt[0]), a = off + p, z = a + pt[0].length, on = !!(flags & pt[1]), isE = pt[2] === 'expr', isC = pt[2] === 'cmd', isB = pt[2] === 'bs';
       var rg = [reg(a, z, on ? 'body' : 'skip')];
-      if (!isC) {
+      if (isB) {
+        E('ptok', LN.p_bsgate, 'A "\\" is met: is BACKSLASHES on?', on
+          ? 'The BACKSLASHES bit is set, so TclParseBackslash reads the backslash and the "$" after it as one escape sequence. The "$" turns into plain text, so it never starts a variable.'
+          : 'The BACKSLASHES bit is clear, so the backslash becomes a one-byte TEXT token and parsing goes on right after it. The "$x" that follows is then an ordinary variable' + ((flags & 2) ? ', so it is replaced by 5.' : ', but VARIABLES is off as well, so it stays as text.'),
+          {pos: a, reg: rg, cond: [['flags & BACKSLASHES', on], ['=> ' + (on ? 'escape sequence' : 'literal "\\"'), on]], kv: {flags: flagText(flags)}});
+      } else if (!isC) {
         E('ptok', LN.p_exprsyn, 'A "$" is met: is it the expression form?', isE
           ? 'exprSyntax is true when the next characters are "((" (or "(" in the single-paren build). Here they are.'
           : 'exprSyntax is true when the next characters are "((" (or "(" in the single-paren build). After "$x" they are not, so this is an ordinary variable.',
@@ -842,7 +847,8 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
         E('ptok', LN.p_cgate, 'A "[" is met: is COMMANDS on?', on ? 'The COMMANDS bit is set, so the bracketed script is parsed as a command substitution.' : 'The COMMANDS bit is clear, so the "[" is literal text.',
           {pos: a, reg: rg, cond: [['flags & COMMANDS', on], ['=> ' + (on ? 'command substitution' : 'literal "["'), on]], kv: {flags: flagText(flags)}});
       }
-      if (on) pred = pred.replace(pt[0], isE ? '3' : isC ? '7' : '5');
+      if (isB) pred = pred.replace(pt[0], on ? '$x' : ((flags & 2) ? '\\5' : '\\$x'));
+      else if (on) pred = pred.replace(pt[0], isE ? '3' : isC ? '7' : '5');
     });
     var ok = pred === D.res;
     E('subc', LN.s_nr, 'Result', 'The tokens are evaluated. x was 5 before the command ran, and [set y 7] sets y and returns 7; the result is the real one from this build.',
@@ -959,13 +965,14 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
   [['optSegP', false], ['optSegN', true]].forEach(function (g) {
     $(g[0]).innerHTML = OPTS.map(function (o, k) { return o.neg === g[1] ? '<button data-k="' + k + '" aria-pressed="false">' + esc(o.n) + '</button>' : ''; }).join('');
   });
-  $('optbar').onclick = function (e) { var k = e.target.dataset && e.target.dataset.k; if (k === undefined) return; if (k === 'none') sset = 0;
+  $('optbar').onclick = function (e) { var k = e.target.dataset && e.target.dataset.k; if (k === undefined) return; var atEnd = steps.length > 0 && i === steps.length - 1; if (k === 'none') sset = 0;
     else {
       var bk = 1 << +k;
       if (!(sset & bk)) sset &= OPTS[+k].neg ? 0xF0 : 0x0F;   /* turning one on clears every option of the other kind: Tcl does not allow mixing them */
       sset ^= bk;
     }
-    reload(); };   /* each option toggles; any number of the same kind can be on */
+    if (atEnd) i = 1e9;   /* on the last step: stay on the last step of the new trace, so the change in the result shows at once */
+    reload(atEnd); };   /* each option toggles; any number of the same kind can be on */
   $('bld1').onclick = function () { build = 1; reload(); };
   $('bld2').onclick = function () { build = 2; reload(); };
   $('b-next').onclick = function () { stop(); if (i < steps.length - 1) { i++; render(); } };

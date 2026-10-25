@@ -42,7 +42,7 @@ foreach s $scen {
 # subst options: the same text with each option, real results
 set x 5
 foreach {key opt} {d {} ne -noexpressions e -expressions nc -nocommands nv -novariables nb -nobackslashes} {
-  set cmd [string map {"subst  " "subst "} "subst $opt \{\$((1+2)) \$x \[set y 7\]\}"]
+  set cmd [string map {"subst  " "subst "} "subst $opt \{\$((1+2)) \$x \[set y 7\] \\\$x\}"]
   set r [catch {eval $cmd} res]
   lappend out "\"subst_$key\":{\"src\":\"[js $cmd]\",\"rc\":$r,\"res\":\"[js $res]\"}"
 }

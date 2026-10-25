@@ -109,3 +109,5 @@ the TIP edits, gcov/fuzz/NUL results, section 10, and these notes).
 
 STEPPER v1.9 (Oct 24, 2026): in the subst options bar, picking a positive option clears all negative ones and vice versa (Tcl rejects mixing: "cannot combine positive and negative options"). "(none)" clears everything. The "all" playlist no longer includes the mixing-error run.
 STEPPER v1.10 (Oct 24, 2026): Auto-play with "all" runs subst once, with only the options currently selected (none by default), and stops there; it no longer cycles through option combinations and does not wrap back to the first script.
+STEPPER v1.11 (Oct 24, 2026): clicking a subst option while on the last step stays on the last step of the new trace (so the change in the result shows at once); from any other step it still goes back to step 1.
+STEPPER v1.12 (Oct 24, 2026): the subst example is now subst {$((1+2)) $x [set y 7] \$x}; the new last word \$x makes -backslashes / -nobackslashes visible (default result ends in $x, with -nobackslashes it ends in \5). Data regenerated from both real builds (gen.tcl, gen_substall.tcl); new "BACKSLASHES on?" step with the real ParseTokens line 1214 in the code view.
