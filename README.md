@@ -15,10 +15,13 @@ This goes with TIP 672. A build switch, `TCL_EXPR_SUBST_PARENS`, chooses the tri
 |---|---|
 | `orig/` | the original Tcl files that were changed |
 | `new/` | the changed files (source, docs, tests), same paths as in the Tcl tree |
-| `extras/` | notes, the patch, test and mutation results, memory-check logs, scripts, and the interactive parser stepper (`extras/parser_stepper.html`) |
+| `extras/` | notes, the patch, test, mutation and gcov coverage results, fuzz/NUL-sweep and memory-check scripts and logs, and the interactive parser stepper (`extras/parser_stepper.html`) |
 
 Start with `extras/NOTES.txt` and `extras/design_and_results.md`.
 
 ## Licence
 
 The Tcl files carry the Tcl licence (`tcl_license.terms`). The rest is under the MIT licence (`LICENSE`).
+
+Interactive review and step-by-step walkthrough of the parser changes (served by GitHub Pages):
+https://rocketship88.github.io/tcl-tip-672-claude-built/extras/parser_stepper.html
