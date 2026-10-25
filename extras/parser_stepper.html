@@ -47,6 +47,9 @@ kbd { font-family:var(--mono); font-size:.75rem; border:1px solid var(--line); b
 .ctl button { font:inherit; padding:7px 14px; border:1px solid var(--line); background:var(--panel); color:var(--fg); border-radius:6px; cursor:pointer; }
 .ctl button.primary { background:var(--accent); color:var(--accent-fg); border-color:var(--accent); font-weight:600; }
 .ctl button:disabled { opacity:.4; cursor:default; }
+.ctl select { font:inherit; padding:6px 4px; border:1px solid var(--line); background:var(--panel); color:var(--fg); border-radius:6px; cursor:pointer; }
+.ctl .allbox { align-self:center; display:inline-flex; align-items:center; gap:4px; cursor:pointer; user-select:none; }
+.ctl .spd { align-self:center; margin-left:-4px; font-size:.85rem; color:var(--muted); }
 button:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
 .steps { display:flex; gap:3px; flex-wrap:wrap; }
 .steps i { width:12px; height:6px; border-radius:3px; background:var(--line); cursor:pointer; position:relative; }
@@ -68,6 +71,7 @@ pre.code .ln.add.hit { background:var(--on); }
 .src .err { background:var(--errbg); outline:2px solid var(--errb); outline-offset:0; font-weight:700; color:var(--errb); }
 .src .cur { background:var(--pc); outline:2px solid var(--pc-b); outline-offset:0; font-weight:700; }
 .src .tick { position:absolute; left:0; right:0; top:-1.15em; text-align:center; font-size:.62rem; color:var(--muted); line-height:1; font-family:var(--font); }
+.setup { margin-top:2px; font-size:.85rem; color:var(--muted); }
 .legend { display:flex; gap:12px; flex-wrap:wrap; font-size:.78rem; color:var(--muted); margin-top:6px; }
 .legend b { display:inline-block; width:12px; height:12px; border-radius:2px; vertical-align:-2px; margin-right:4px; border:1px solid var(--line); }
 
@@ -192,7 +196,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
 <main>
   <header class="top">
     <div class="topl">
-    <p class="ver mono">Version 1.4 &middot; Oct 24, 2026</p>
+    <p class="ver mono">Version 1.6 &middot; Oct 24, 2026</p>
     <h1>Tcl Expression Substitution <span id="ttlw">Stepper</span></h1>
     <p class="lede"><u class="choose">Choose either the review of the code changes or the step-by-step walkthrough.</u><br><span id="ledeT">Follow the parser through <code>$((expr))</code>, a shortcut for <code>[expr {expr}]</code>. Step through the real C code in <code>Tcl_ParseVarName</code> and the scanner that finds the closing parenthesis, watch the token array grow, then see the bytecode and result. The panes show the actual source lines and real output from a build of the modified trunk.</span></p>
     </div>
@@ -219,6 +223,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
   <div class="srcbox">
     <span class="lbl">Tcl script being parsed</span>
     <div class="src" id="src" aria-label="The script text"></div>
+    <div class="setup" id="setup" hidden></div>
     <div class="legend"><span><b style="background:var(--dollar)"></b>the <code>$</code></span><span><b style="background:var(--pc)"></b>character being examined</span><span><b style="background:var(--scan)"></b>already scanned</span><span><b style="background:var(--skip)"></b>skipped as a unit</span><span><b style="background:var(--body)"></b>the body</span><span><b style="background:var(--errbg);outline:1px solid var(--errb)"></b>where the error is</span></div>
   </div>
 
@@ -228,7 +233,9 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
       <button id="b-reset">Reset</button>
       <button id="b-prev">Back</button>
       <button id="b-next" class="primary">Next step</button>
+      <select id="speed" title="Seconds per step during Auto-play" aria-label="Seconds per step"><option>0.5</option><option>1</option><option selected>1.5</option><option>2</option><option>3</option><option>5</option></select><span class="spd">s/step</span>
       <button id="b-play">Auto-play</button>
+      <label class="allbox" title="Auto-play carries on from one script to the next: basic, missing paren, ... subst options (and each of its options)"><input type="checkbox" id="playall"> all</label>
       <button id="b-code">Show code</button>
     </div>
   </div>
@@ -315,12 +322,16 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     ['typo',    'typo'],
     ['subst',   'subst options']
   ];
+  var SETUP = {
+    'var': 'Already run before this script: <code>set x 5</code>, so <code>$x</code> is 5.',
+    subst: 'Already run before this command: <code>set x 5</code>, so <code>$x</code> is 5. The command <code>[set y 7]</code> sets y itself.'
+  };
   var NOTES = {
     basic: 'A plain command. The whole expression is constant, so the compiler folds it to a literal.',
     missing: 'One opening parenthesis left out of $(((1+2)*3)). Default build: the scanner ends the body at the first balancing ")", the look-ahead finds "*" instead of a second ")" and reports a syntax error. Single-paren build: this is a perfectly good $(expr) with body (1+2)*3.',
     nested: 'Inside a quoted word, with nested parentheses and trailing text.',
     braces: 'A ) hidden in braces: the scanner must not stop there.',
-    'var': 'A variable in the body is read by expr, not by the word parser.',
+    'var': 'A variable in the body is read by expr, not by the word parser. x was set to 5 beforehand.',
     runtime: 'Substituted at run time with subst $var, so a command in the body returns an error code.',
     unterm: 'No closing parenthesis, so the parse fails with "missing )".',
     single: 'Only one parenthesis after the $. Different in the two builds.',
@@ -878,10 +889,29 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     $('bld2').setAttribute('aria-pressed', build === 2);
     Array.prototype.forEach.call($('scenSeg').children, function (b) { b.setAttribute('aria-pressed', b.dataset.k === scen); });
     $('optbar').hidden = scen !== 'subst';
+    var su = SETUP[scen]; $('setup').hidden = !su; if (su) $('setup').innerHTML = su;
     Array.prototype.forEach.call($('optSeg').children, function (b) { b.setAttribute('aria-pressed', b.dataset.k === sopt); });
-    if (i === steps.length - 1) stop();
+    if (i === steps.length - 1 && !$('playall').checked) stop();   /* with "all" the timer runs one more pause, then tick() moves on or stops */
     if (window.__codeOpen) renderCode();
   }
+  var speed = 1.5;   /* seconds per step during Auto-play */
+  /* "all": the next script in the list. subst options runs through each of its options. Returns false after the last one. */
+  function nextScript() {
+    if (scen === 'subst') {
+      var o = SOPTS.map(function (x) { return x[0]; }).indexOf(sopt);
+      if (o < SOPTS.length - 1) { sopt = SOPTS[o + 1][0]; return true; }
+      return false;
+    }
+    var k = SCEN.map(function (x) { return x[0]; }).indexOf(scen);
+    if (k < SCEN.length - 1) { scen = SCEN[k + 1][0]; if (scen === 'subst') sopt = SOPTS[0][0]; return true; }
+    return false;
+  }
+  function tick() {
+    if (i < steps.length - 1) { i++; render(); }
+    else if ($('playall').checked && nextScript()) { steps = build_trace(); i = 0; render(); }   /* the last step has been on screen for one pause */
+    else stop();
+  }
+  function startTimer() { timer = setInterval(tick, speed * 1000); }
   function stop() { if (timer) { clearInterval(timer); timer = null; $('b-play').textContent = 'Auto-play'; } }
   function reload(keep) { stop(); steps = build_trace(); if (!keep) i = 0; if (i >= steps.length) i = steps.length - 1; render(); }
   $('scenSeg').innerHTML = SCEN.map(function (s) { return '<button data-k="' + s[0] + '" title="' + esc(NOTES[s[0]]) + '" aria-pressed="false">' + esc(s[1]) + '</button>'; }).join('');
@@ -893,11 +923,21 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
   $('b-next').onclick = function () { stop(); if (i < steps.length - 1) { i++; render(); } };
   $('b-prev').onclick = function () { stop(); if (i > 0) { i--; render(); } };
   $('b-reset').onclick = function () { stop(); i = 0; render(); };
+  try { var sv = localStorage.getItem('stepperSpeed'); if (sv && /^(0\.5|1|1\.5|2|3|5)$/.test(sv)) { $('speed').value = sv; speed = +sv; } } catch (e) { }
+  $('speed').onchange = function () {
+    speed = +this.value;
+    try { localStorage.setItem('stepperSpeed', this.value); } catch (e) { }
+    if (timer) { clearInterval(timer); startTimer(); }   /* new pace takes effect at once */
+    this.blur();
+  };
   $('b-play').onclick = function () {
     if (timer) { stop(); return; }
-    if (i === steps.length - 1) i = 0;
+    if (i === steps.length - 1) {
+      if ($('playall').checked) { if (!nextScript()) { scen = SCEN[0][0]; sopt = SOPTS[0][0]; } steps = build_trace(); }   /* carry on, or start over after the last one */
+      i = 0;
+    }
     $('b-play').textContent = 'Pause'; render();
-    timer = setInterval(function () { if (i < steps.length - 1) { i++; render(); } else stop(); }, 1500);
+    startTimer();
   };
   $('dots').addEventListener('click', function (e) {
     var d = e.target.closest('i[data-n]'); if (!d) return;
