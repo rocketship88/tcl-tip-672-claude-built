@@ -47,3 +47,15 @@ whether -nocommands should keep disabling the arithmetic). I will draft it when 
 
 ## E. Open decisions for the core team
 `$((` vs `$(`; option names; `TCL_SUBST_ALL` 7 or 15; behaviour of -nocommands.
+
+## Conditional to-do (only if the core team reacts positively)
+
+- Add two tests to tests/parse.test to reach 100% line coverage of the new code on the default
+  (`$((`) build: (1) a stray "]" in the body, e.g. `subst {$((1 ] 2))}` (line 1424 of tclParse.c);
+  (2) the syntax error with no interpreter, e.g. `info complete {puts $((1+2)x)}` (the
+  `parsePtr->interp != NULL` branch). Both were confirmed in a scratch run to hit those spots.
+  Doing it means a new check-in on tip-672-v2, a GitHub commit and a new zip, so do it only if
+  there is real interest in the feature. Do not do it before then.
+- Optional, same condition: prototype replacing the `{`, `"` and `[` cases of SkipExprSubstScan with
+  Tcl_ParseBraces / Tcl_ParseQuotedString / Tcl_ParseCommand (see design_and_results.md section 10),
+  checking it with extras/scripts/fuzz and measuring the cost.

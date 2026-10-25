@@ -31,3 +31,57 @@ Update (Oct 24, evening): code is unchanged since the message change above (tclP
   * Mutation testing second pass: 88.1% killed in the default build, 69.4% in the $( build (dead code there). See mutation_testing.md.
   * Full Linux suites: 509,471 tests ($((, 0 failed) and 508,717 ($(, 0 failed; binary.test killed by the system in that run).
   * Stepper (extras/parser_stepper.html) now opens on "Review the diff", with the questions-to-hunks map, hunk list, "Back to top" buttons.
+
+==================================================================================
+SITUATION AND STRATEGY (from the user, Oct 24 2026; keep this up to date)
+==================================================================================
+Who/what: user is rocketship98 (Fossil user; GitHub rocketship88; Tcl core fossil user also "core5"
+appears in old timelines). This project is the implementation of TIP 672 ($(expr) / $((expr)) = [expr {expr}])
+in the real parser; code frozen (generic/tclParse.c md5 7d9e28c9543e3d739b3ea5a4ed696489).
+
+Why 672: the user's other expression-related efforts are unlikely to be accepted:
+ * TIP 759 (the only other core expression TIP) - user expects it will not be accepted, "way too complex".
+ * The previous expression TIP, 676, was voted down.
+ * The user has a better alternative that needs no TIP and no core change, but it relies on the
+   unsupported "assemble" command; TIP 760 (the user's TIP) would make that supported. 760 has no sponsor,
+   so it probably will not succeed either.
+ * So the user had 672 done "properly". The code is believed approvable; approval of the NEW SYNTAX is a
+   different matter and is the core team's decision. Do not promise approval.
+Preferences: user prefers "$(" (accepts breaking the empty-name array $(index), which can be written
+[set (index)]); the core decides "$((" vs "$(". Keep the mailing-list message about the open decisions,
+not about what the core "needs to do".
+
+Where things are:
+ * Fossil: branch tip-672-v2 in the Tcl repo (check-in b6eed8b994, pushed). (An older public branch tip-672
+   exists from Jan Nijtmans / dkf 2025, left alone.)
+ * GitHub: https://github.com/rocketship88/tcl-tip-672-claude-built (122 files; zip content identical).
+ * TIP text: D:\repos\tips-work\tip\672.md, committed locally as 2e3b38360b (trunk/main), NOT pushed:
+   fossil login for https://core.tcl-lang.org/tips fails for rocketship98 (same password works on the
+   Tcl repo; the user pushed TIP 760 there on 2026-09-02). Password reset requested from core admins on
+   Oct 24. When fixed:  fossil sync https://rocketship98:NEWPW@core.tcl-lang.org/tips ; fossil update ;
+   fossil timeline -n 5 ; fossil push.   (autosync is set to 0 in that checkout.)
+ * After the TIP is pushed: send the mailing-list message (draft in the chat; open decisions: spelling,
+   subst option names, TCL_SUBST_ALL 7 -> 15, -nocommands/-novariables also disabling expressions,
+   new public token type TCL_TOKEN_EXPR_SUBST; thank Jan Nijtmans and Griffin, the TIP's author).
+ * Stepper (review + walkthrough) is served by GitHub Pages at
+   https://rocketship88.github.io/tcl-tip-672-claude-built/extras/parser_stepper.html
+   (verified: the file in the repo is identical to the final build, git blob a0ca8fd05f).
+ * The user wants the 8-ish GitHub pinned repos reordered (only 6 allowed); not our job.
+
+Verification done on the frozen code: full Linux suites 0 failed (both builds); Windows parse/compile/subst
+0 failed; Valgrind, ASan, TCL_MEM_DEBUG clean (known 48-byte core leak in TclArgumentBCEnter); mutation
+testing (88.1% default, 69.4% "$("); gcov 147/148 changed lines on the default build (99.3%);
+400,000-input differential fuzz vs an independent reference scanner (0 mismatches); 240,000 value
+comparisons vs [expr] (0 differences); raw-NUL / exact-size-buffer sweep (no over-read in our code;
+two pre-existing core one-past-the-end reads exist in Tcl_ParseCommand:294 and Tcl_ParseQuotedString:2148).
+
+Conventions the user wants: braces on every if/while/for body (checked with clang-tidy; clean);
+defensive checks welcome (user asked about NUL/NULL checks: scan is bounded by end = src + numBytes, no
+NUL check added; an optional NULL/src>end guard at the top of SkipExprSubstScan is offered, would need
+re-running verification); the core prefers reuse of existing code (see design_and_results.md section 10:
+nothing in the core finds the matching ")", but Tcl_ParseBraces/QuotedString/Command could replace the
+inner cases; not tried).
+
+Pending / conditional (see NEXT_STEPS.md): add 2 tests for 100% line coverage ONLY IF the core reacts
+positively; optional reuse prototype under the same condition; resend the zip (last full send predates
+the TIP edits, gcov/fuzz/NUL results, section 10, and these notes).

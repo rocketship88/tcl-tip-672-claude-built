@@ -1,0 +1,35 @@
+gcov coverage of the lines changed by this feature
+==================================================
+Method: gcc 13.3 --coverage -O0, one build per spelling, running only the four
+test files we changed (parse.test parseOld.test subst.test compile.test;
+778 tests, 0 failed in both builds). Counts are for the 148-ish lines in the diff.
+Scripts: extras/scripts/gcov/ (buildCov.sh, covreport.py, covbranch.py).
+
+Build 2 (default, "$((" trigger)
+  tclParse.c       127 of 128 executable changed lines run
+  tclCmdMZ.c, tclCompCmdsSZ.c, tclCompExpr.c, tclCompile.c   all changed lines run
+  Never run: line 1424 (the "break" after a stray "]" in the body of a "$((" while
+  scanning for ")").  Reachable:  subst {$((1 ] 2))}
+  Branches taken on changed lines: 100/110 in tclParse.c.  The rest:
+    1120   TCL_EXPR_SUBST_PARENS==1 side (compile-time constant, dead in this build)
+    1421   same stray-"]" case as above
+    1493/1503  UTF-8 back-off loops, the "ran all the way to start" exit (defensive)
+    1675/1685  one end-of-input combination
+    1677   interp == NULL on the syntax-error path.  Reachable: info complete {puts $((1+2)x)}
+    1868, 2570, 2573  macro-expanded refcount/TclGetString branches
+Build 1 ("$(" trigger)
+  tclParse.c  98 of 126 run; the 28 not run are the second-")" error path, which
+  cannot exist when the trigger is "$(" (compiled-out by constants), plus line 1424.
+
+Added-test candidates (not yet in parse.test): stray "]" in the body; the
+no-interpreter syntax error via "info complete"; both confirmed to hit 1424 and 1677.
+
+Embedded raw NUL / over-read check
+----------------------------------
+See extras/scripts/nul_sweep/. 3084 parses per spelling with raw 0 bytes injected at every
+position and exact-size heap buffers under ASan: no over-read in our code.
+
+Random-garbage testing of the scanner
+-------------------------------------
+See extras/scripts/fuzz/README.txt: 400,000 random inputs under ASan checked against an independent
+reference scanner (0 mismatches), and 240,000 value comparisons against [expr] (0 different).
