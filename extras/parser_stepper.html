@@ -11,16 +11,16 @@
 :root {
   --bg:#f3f5f6; --panel:#ffffff; --fg:#1c2528; --muted:#5d6b70; --line:#d3dade;
   --accent:#0b6e7a; --accent-fg:#ffffff; --hot:#b3261e; --ok:#1f7a3a;
-  --pc:#fff3c4; --pc-b:#b9770e; --scan:#dbe8fb; --skip:#e8def8; --body:#d6efdc; --dollar:#fbe9c8;
+  --errbg:#fde0dc; --errb:#b3261e; --pc:#fff3c4; --pc-b:#b9770e; --scan:#dbe8fb; --skip:#e8def8; --body:#d6efdc; --dollar:#fbe9c8;
   --font:"Source Sans 3", system-ui, sans-serif;
   --mono:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg:#12191b; --panel:#1b2427; --fg:#e3eaec; --muted:#94a3a8; --line:#33434a; --accent:#4fc3d0; --accent-fg:#0a1a1d;
-  --hot:#ff8a80; --ok:#7bd88f; --pc:#4a4318; --pc-b:#e5a53d; --scan:#1d3354; --skip:#35285a; --body:#1b3d27; --dollar:#4a3510; color-scheme:dark; } }
+  --hot:#ff8a80; --ok:#7bd88f; --errbg:#5a2420; --errb:#ff8a80; --pc:#4a4318; --pc-b:#e5a53d; --scan:#1d3354; --skip:#35285a; --body:#1b3d27; --dollar:#4a3510; color-scheme:dark; } }
 :root[data-theme="dark"] {
   --bg:#12191b; --panel:#1b2427; --fg:#e3eaec; --muted:#94a3a8; --line:#33434a; --accent:#4fc3d0; --accent-fg:#0a1a1d;
-  --hot:#ff8a80; --ok:#7bd88f; --pc:#4a4318; --pc-b:#e5a53d; --scan:#1d3354; --skip:#35285a; --body:#1b3d27; --dollar:#4a3510; color-scheme:dark; }
+  --hot:#ff8a80; --ok:#7bd88f; --errbg:#5a2420; --errb:#ff8a80; --pc:#4a4318; --pc-b:#e5a53d; --scan:#1d3354; --skip:#35285a; --body:#1b3d27; --dollar:#4a3510; color-scheme:dark; }
 * { box-sizing:border-box; }
 body { background:var(--bg); color:var(--fg); font-family:var(--font); font-size:16px; line-height:1.5; margin:0; padding-block:20px 40px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
 main { max-width:1060px; margin-inline:auto; display:flex; flex-direction:column; gap:18px; }
@@ -65,6 +65,7 @@ pre.code .ln.add.hit { background:var(--on); }
 .src .skip { background:var(--skip); }
 .src .body { background:var(--body); }
 .src .dollar { background:var(--dollar); font-weight:700; }
+.src .err { background:var(--errbg); outline:2px solid var(--errb); outline-offset:0; font-weight:700; color:var(--errb); }
 .src .cur { background:var(--pc); outline:2px solid var(--pc-b); outline-offset:0; font-weight:700; }
 .src .tick { position:absolute; left:0; right:0; top:-1.15em; text-align:center; font-size:.62rem; color:var(--muted); line-height:1; font-family:var(--font); }
 .legend { display:flex; gap:12px; flex-wrap:wrap; font-size:.78rem; color:var(--muted); margin-top:6px; }
@@ -191,7 +192,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
 <main>
   <header class="top">
     <div class="topl">
-    <p class="ver mono">Version 1.3 &middot; Oct 23, 2026</p>
+    <p class="ver mono">Version 1.4 &middot; Oct 24, 2026</p>
     <h1>Tcl Expression Substitution <span id="ttlw">Stepper</span></h1>
     <p class="lede"><u class="choose">Choose either the review of the code changes or the step-by-step walkthrough.</u><br><span id="ledeT">Follow the parser through <code>$((expr))</code>, a shortcut for <code>[expr {expr}]</code>. Step through the real C code in <code>Tcl_ParseVarName</code> and the scanner that finds the closing parenthesis, watch the token array grow, then see the bytecode and result. The panes show the actual source lines and real output from a build of the modified trunk.</span></p>
     </div>
@@ -218,7 +219,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
   <div class="srcbox">
     <span class="lbl">Tcl script being parsed</span>
     <div class="src" id="src" aria-label="The script text"></div>
-    <div class="legend"><span><b style="background:var(--dollar)"></b>the <code>$</code></span><span><b style="background:var(--pc)"></b>character being examined</span><span><b style="background:var(--scan)"></b>already scanned</span><span><b style="background:var(--skip)"></b>skipped as a unit</span><span><b style="background:var(--body)"></b>the body</span></div>
+    <div class="legend"><span><b style="background:var(--dollar)"></b>the <code>$</code></span><span><b style="background:var(--pc)"></b>character being examined</span><span><b style="background:var(--scan)"></b>already scanned</span><span><b style="background:var(--skip)"></b>skipped as a unit</span><span><b style="background:var(--body)"></b>the body</span><span><b style="background:var(--errbg);outline:1px solid var(--errb)"></b>where the error is</span></div>
   </div>
 
   <div class="bar">
@@ -604,7 +605,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
         found < 0
           ? 'FindExprSubstEnd returned NULL, so there is no balancing parenthesis. The parser sets the error message "missing )" and the error type TCL_PARSE_MISSING_PAREN, and marks the parse incomplete. Incomplete matters: an interactive tclsh, or info complete, treats the text as unfinished and waits for more lines.'
           : 'The scan found the first ")" but the text ends right after it, so the second ")" that $(( requires is not there yet. The message is the same one as for a wrong character there (missing second ")" at _@_, with the text around the marker), but the error type is still TCL_PARSE_MISSING_PAREN and the parse is marked incomplete, so an interactive tclsh waits for more input.',
-        {pos: null, reg: [reg(d, N, 'scan')], tokens: tt, tokNote: 'discarded (parse failed)', cond: condRows,
+        {pos: null, reg: [reg(d, N, 'scan'), found < 0 ? reg(d + 1, d + 2, 'err') : reg(found, found + 1, 'err')], tokens: tt, tokNote: 'discarded (parse failed)', cond: condRows,
          res: {text: D.res, bad: true, label: 'Result (real, error)'}});
       return finish(out);
     }
@@ -619,7 +620,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
           {pos: found + 1, reg: la, tokens: [tokVar], tokNote: 'being built', cond: condRows, kv: {'bodyEnd[1]': JSON.stringify(nextc)}});
         E('hook', 1678, 'Syntax error: missing second ")"',
           'ExprSubstSyntaxError builds the message in the style of expr: the position is marked with _@_ and the text around it is quoted (long text is shortened with "..."). The error type is TCL_PARSE_SYNTAX and the parse is not marked incomplete, because more input could not fix it.',
-          {pos: null, reg: [reg(d, N, 'scan')], tokens: [tokVar], tokNote: 'discarded (parse failed)', cond: condRows,
+          {pos: null, reg: [reg(d, N, 'scan'), reg(found + 1, found + 2, 'err')], tokens: [tokVar], tokNote: 'discarded (parse failed)', cond: condRows,
            res: {text: D.res, bad: true, label: 'Result (real, error)'}});
         return finish(out);
       }
