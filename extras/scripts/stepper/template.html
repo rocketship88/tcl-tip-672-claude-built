@@ -11,16 +11,16 @@
 :root {
   --bg:#f3f5f6; --panel:#ffffff; --fg:#1c2528; --muted:#5d6b70; --line:#d3dade;
   --accent:#0b6e7a; --accent-fg:#ffffff; --hot:#b3261e; --ok:#1f7a3a;
-  --pc:#fff3c4; --pc-b:#b9770e; --scan:#dbe8fb; --skip:#e8def8; --body:#d6efdc; --dollar:#fbe9c8;
+  --errbg:#fde0dc; --errb:#b3261e; --pc:#fff3c4; --pc-b:#b9770e; --scan:#dbe8fb; --skip:#e8def8; --body:#d6efdc; --dollar:#fbe9c8;
   --font:"Source Sans 3", system-ui, sans-serif;
   --mono:"JetBrains Mono", ui-monospace, Menlo, Consolas, monospace;
 }
 @media (prefers-color-scheme: dark) { :root:not([data-theme="light"]) {
   --bg:#12191b; --panel:#1b2427; --fg:#e3eaec; --muted:#94a3a8; --line:#33434a; --accent:#4fc3d0; --accent-fg:#0a1a1d;
-  --hot:#ff8a80; --ok:#7bd88f; --pc:#4a4318; --pc-b:#e5a53d; --scan:#1d3354; --skip:#35285a; --body:#1b3d27; --dollar:#4a3510; color-scheme:dark; } }
+  --hot:#ff8a80; --ok:#7bd88f; --errbg:#5a2420; --errb:#ff8a80; --pc:#4a4318; --pc-b:#e5a53d; --scan:#1d3354; --skip:#35285a; --body:#1b3d27; --dollar:#4a3510; color-scheme:dark; } }
 :root[data-theme="dark"] {
   --bg:#12191b; --panel:#1b2427; --fg:#e3eaec; --muted:#94a3a8; --line:#33434a; --accent:#4fc3d0; --accent-fg:#0a1a1d;
-  --hot:#ff8a80; --ok:#7bd88f; --pc:#4a4318; --pc-b:#e5a53d; --scan:#1d3354; --skip:#35285a; --body:#1b3d27; --dollar:#4a3510; color-scheme:dark; }
+  --hot:#ff8a80; --ok:#7bd88f; --errbg:#5a2420; --errb:#ff8a80; --pc:#4a4318; --pc-b:#e5a53d; --scan:#1d3354; --skip:#35285a; --body:#1b3d27; --dollar:#4a3510; color-scheme:dark; }
 * { box-sizing:border-box; }
 body { background:var(--bg); color:var(--fg); font-family:var(--font); font-size:16px; line-height:1.5; margin:0; padding-block:20px 40px; padding-left:max(16px, env(safe-area-inset-left, 0px)); padding-right:max(16px, env(safe-area-inset-right, 0px)); }
 main { max-width:1060px; margin-inline:auto; display:flex; flex-direction:column; gap:18px; }
@@ -47,6 +47,9 @@ kbd { font-family:var(--mono); font-size:.75rem; border:1px solid var(--line); b
 .ctl button { font:inherit; padding:7px 14px; border:1px solid var(--line); background:var(--panel); color:var(--fg); border-radius:6px; cursor:pointer; }
 .ctl button.primary { background:var(--accent); color:var(--accent-fg); border-color:var(--accent); font-weight:600; }
 .ctl button:disabled { opacity:.4; cursor:default; }
+.ctl select { font:inherit; padding:6px 4px; border:1px solid var(--line); background:var(--panel); color:var(--fg); border-radius:6px; cursor:pointer; }
+.ctl .allbox { align-self:center; display:inline-flex; align-items:center; gap:4px; cursor:pointer; user-select:none; }
+.ctl .spd { align-self:center; margin-left:-4px; font-size:.85rem; color:var(--muted); }
 button:focus-visible { outline:3px solid var(--accent); outline-offset:2px; }
 .steps { display:flex; gap:3px; flex-wrap:wrap; }
 .steps i { width:12px; height:6px; border-radius:3px; background:var(--line); cursor:pointer; position:relative; }
@@ -65,8 +68,18 @@ pre.code .ln.add.hit { background:var(--on); }
 .src .skip { background:var(--skip); }
 .src .body { background:var(--body); }
 .src .dollar { background:var(--dollar); font-weight:700; }
+.src .err { background:var(--errbg); outline:2px solid var(--errb); outline-offset:0; font-weight:700; color:var(--errb); }
 .src .cur { background:var(--pc); outline:2px solid var(--pc-b); outline-offset:0; font-weight:700; }
 .src .tick { position:absolute; left:0; right:0; top:-1.15em; text-align:center; font-size:.62rem; color:var(--muted); line-height:1; font-family:var(--font); }
+#optbar:not([hidden]) { display:flex; flex-wrap:wrap; gap:8px 12px; }
+#optbar .seg button { padding:6px 8px; font-size:.92rem; }
+.optnote { flex-basis:100%; font-size:.82rem; color:var(--muted); }
+.srcrow { display:flex; flex-wrap:wrap; align-items:baseline; column-gap:24px; }
+.srcnote { font-family:var(--mono); font-size:.82rem; color:var(--muted); white-space:pre; }
+.srcnote.hot { color:var(--errb); font-weight:600; }
+.setup { margin-top:2px; font-size:.85rem; color:var(--muted); }
+.setup p { margin:2px 0 0; }
+.setup .rulehot.on { color:var(--errb); font-weight:600; }
 .legend { display:flex; gap:12px; flex-wrap:wrap; font-size:.78rem; color:var(--muted); margin-top:6px; }
 .legend b { display:inline-block; width:12px; height:12px; border-radius:2px; vertical-align:-2px; margin-right:4px; border:1px solid var(--line); }
 
@@ -191,7 +204,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
 <main>
   <header class="top">
     <div class="topl">
-    <p class="ver mono">Version 1.3 &middot; Oct 23, 2026</p>
+    <p class="ver mono">Version 1.10 &middot; Oct 24, 2026</p>
     <h1>Tcl Expression Substitution <span id="ttlw">Stepper</span></h1>
     <p class="lede"><u class="choose">Choose either the review of the code changes or the step-by-step walkthrough.</u><br><span id="ledeT">Follow the parser through <code>$((expr))</code>, a shortcut for <code>[expr {expr}]</code>. Step through the real C code in <code>Tcl_ParseVarName</code> and the scanner that finds the closing parenthesis, watch the token array grow, then see the bytecode and result. The panes show the actual source lines and real output from a build of the modified trunk.</span></p>
     </div>
@@ -208,7 +221,12 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
   <div id="walk">
   <div class="bar">
     <div><span class="lbl">Script</span><div class="seg" id="scenSeg" role="group" aria-label="Scenario"></div></div>
-    <div id="optbar" hidden><span class="lbl">subst option</span><div class="seg" id="optSeg" role="group" aria-label="subst option"></div></div>
+    <div id="optbar" hidden>
+      <div><span class="lbl" title="Click any number of options. Positive and negative ones cannot be mixed.">subst options</span><div class="seg" id="optSeg" role="group" aria-label="no options"></div></div>
+      <div><span class="lbl">positive: only these on</span><div class="seg" id="optSegP" role="group" aria-label="positive options"></div></div>
+      <div><span class="lbl">negative: all but these on</span><div class="seg" id="optSegN" role="group" aria-label="negative options"></div></div>
+      <div class="optnote">Picking one kind clears the other, because subst does not allow mixing them (the error is <code>cannot combine positive and negative options</code>).</div>
+    </div>
     <div><span class="lbl">Build</span><div class="seg" role="group" aria-label="Build">
       <button id="bld2" aria-pressed="true">$(( default</button>
       <button id="bld1" aria-pressed="false">$( single paren</button>
@@ -217,8 +235,9 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
 
   <div class="srcbox">
     <span class="lbl">Tcl script being parsed</span>
-    <div class="src" id="src" aria-label="The script text"></div>
-    <div class="legend"><span><b style="background:var(--dollar)"></b>the <code>$</code></span><span><b style="background:var(--pc)"></b>character being examined</span><span><b style="background:var(--scan)"></b>already scanned</span><span><b style="background:var(--skip)"></b>skipped as a unit</span><span><b style="background:var(--body)"></b>the body</span></div>
+    <div class="srcrow"><div class="src" id="src" aria-label="The script text"></div><div class="srcnote" id="srcnote" hidden></div></div>
+    <div class="setup" id="setup" hidden></div>
+    <div class="legend"><span><b style="background:var(--dollar)"></b>the <code>$</code></span><span><b style="background:var(--pc)"></b>character being examined</span><span><b style="background:var(--scan)"></b>already scanned</span><span><b style="background:var(--skip)"></b>skipped as a unit</span><span><b style="background:var(--body)"></b>the body</span><span><b style="background:var(--errbg);outline:1px solid var(--errb)"></b>where the error is</span></div>
   </div>
 
   <div class="bar">
@@ -227,7 +246,9 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
       <button id="b-reset">Reset</button>
       <button id="b-prev">Back</button>
       <button id="b-next" class="primary">Next step</button>
+      <select id="speed" title="Seconds per step during Auto-play" aria-label="Seconds per step"><option>0.5</option><option>1</option><option selected>1.5</option><option>2</option><option>3</option><option>5</option></select><span class="spd">s/step</span>
       <button id="b-play">Auto-play</button>
+      <label class="allbox" title="Auto-play carries on from one script to the next: basic, missing paren, ... subst options"><input type="checkbox" id="playall"> all</label>
       <button id="b-code">Show code</button>
     </div>
   </div>
@@ -314,12 +335,20 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     ['typo',    'typo'],
     ['subst',   'subst options']
   ];
+  var SETUP = {
+    'var': 'Already run before this script: <code>set x 5</code>, so <code>$x</code> is 5.',
+    subst: '<p>Already run before this command: <code>set x 5</code>, so <code>$x</code> is 5. The command <code>[set y 7]</code> sets y itself.</p>'
+      + '<p>The rule: with no option everything is on. A <code>-no...</code> option removes what it names from "everything". '
+      + '<span class="rulehot"><code>-novariables</code> or <code>-nocommands</code> also turn expressions off</span> '
+      + '(a <code>$((...))</code> body can read variables and run commands, so scripts that use those options to make text safe stay safe). '
+      + 'A positive option turns on only what you name, so <code>-expressions</code> is an explicit opt-in. Positive and negative options cannot be mixed.</p>'
+  };
   var NOTES = {
     basic: 'A plain command. The whole expression is constant, so the compiler folds it to a literal.',
     missing: 'One opening parenthesis left out of $(((1+2)*3)). Default build: the scanner ends the body at the first balancing ")", the look-ahead finds "*" instead of a second ")" and reports a syntax error. Single-paren build: this is a perfectly good $(expr) with body (1+2)*3.',
     nested: 'Inside a quoted word, with nested parentheses and trailing text.',
     braces: 'A ) hidden in braces: the scanner must not stop there.',
-    'var': 'A variable in the body is read by expr, not by the word parser.',
+    'var': 'A variable in the body is read by expr, not by the word parser. x was set to 5 beforehand.',
     runtime: 'Substituted at run time with subst $var, so a command in the body returns an error code.',
     unterm: 'No closing parenthesis, so the parse fails with "missing )".',
     single: 'Only one parenthesis after the $. Different in the two builds.',
@@ -327,8 +356,11 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     typo: 'The same mistake with spaces: $((  (1+2)*3  )) was meant. Default build: error, as above. Single-paren build: accepted, giving 9 followed by a literal ")" that the user did not intend.'
   };
   var $ = function (id) { return document.getElementById(id); };
-  var scen = 'basic', build = 2, i = 0, timer = null, steps = [], sopt = 'd';
-  var SOPTS = [['d', '(none)', ''], ['ne', '-noexpressions', '-noexpressions'], ['e', '-expressions', '-expressions'], ['nc', '-nocommands', '-nocommands'], ['nv', '-novariables', '-novariables'], ['nb', '-nobackslashes', '-nobackslashes']];
+  var scen = 'basic', build = 2, i = 0, timer = null, steps = [], sset = 0;   /* sset: bit k set = OPTS[k] is on the subst command line */
+  /* the eight options of subst; bit is the TCL_SUBST_* value (commands 1, variables 2, backslashes 4, expressions 8) */
+  var OPTS = [{n: '-backslashes', neg: false, bit: 4}, {n: '-commands', neg: false, bit: 1}, {n: '-variables', neg: false, bit: 2}, {n: '-expressions', neg: false, bit: 8},
+              {n: '-nobackslashes', neg: true, bit: 4}, {n: '-nocommands', neg: true, bit: 1}, {n: '-novariables', neg: true, bit: 2}, {n: '-noexpressions', neg: true, bit: 8}];
+  function selOpts(m) { return OPTS.filter(function (o, k) { return m & (1 << k); }); }
 
   /* ---- minimal Tcl list parser, for the testparser output ---- */
   function tclList(s) {
@@ -604,7 +636,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
         found < 0
           ? 'FindExprSubstEnd returned NULL, so there is no balancing parenthesis. The parser sets the error message "missing )" and the error type TCL_PARSE_MISSING_PAREN, and marks the parse incomplete. Incomplete matters: an interactive tclsh, or info complete, treats the text as unfinished and waits for more lines.'
           : 'The scan found the first ")" but the text ends right after it, so the second ")" that $(( requires is not there yet. The message is the same one as for a wrong character there (missing second ")" at _@_, with the text around the marker), but the error type is still TCL_PARSE_MISSING_PAREN and the parse is marked incomplete, so an interactive tclsh waits for more input.',
-        {pos: null, reg: [reg(d, N, 'scan')], tokens: tt, tokNote: 'discarded (parse failed)', cond: condRows,
+        {pos: null, reg: [reg(d, N, 'scan'), found < 0 ? reg(d + 1, d + 2, 'err') : reg(found, found + 1, 'err')], tokens: tt, tokNote: 'discarded (parse failed)', cond: condRows,
          res: {text: D.res, bad: true, label: 'Result (real, error)'}});
       return finish(out);
     }
@@ -619,7 +651,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
           {pos: found + 1, reg: la, tokens: [tokVar], tokNote: 'being built', cond: condRows, kv: {'bodyEnd[1]': JSON.stringify(nextc)}});
         E('hook', 1678, 'Syntax error: missing second ")"',
           'ExprSubstSyntaxError builds the message in the style of expr: the position is marked with _@_ and the text around it is quoted (long text is shortened with "..."). The error type is TCL_PARSE_SYNTAX and the parse is not marked incomplete, because more input could not fix it.',
-          {pos: null, reg: [reg(d, N, 'scan')], tokens: [tokVar], tokNote: 'discarded (parse failed)', cond: condRows,
+          {pos: null, reg: [reg(d, N, 'scan'), reg(found + 1, found + 2, 'err')], tokens: [tokVar], tokNote: 'discarded (parse failed)', cond: condRows,
            res: {text: D.res, bad: true, label: 'Result (real, error)'}});
         return finish(out);
       }
@@ -738,40 +770,56 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
   var FLN = ['COMMANDS', 'VARIABLES', 'BACKSLASHES', 'EXPRESSIONS'];
   function flagText(v) { var n = FLN.filter(function (_, k) { return v & (1 << k); }); return v + ' = ' + (n.length ? n.join('|') : 'none'); }
   function substTrace() {
-    var D = DATA[build]['subst_' + sopt], cmd = D.src, out = [];
+    var D = DATA[build].substall[sset], cmd = D.src, out = [];
+    var sel = selOpts(sset), posBits = 0, negBits = 0;
+    sel.forEach(function (o) { if (o.neg) negBits |= o.bit; else posBits |= o.bit; });
     var off = cmd.indexOf('{') + 1, T = cmd.slice(off, -1);
-    var opt = SOPTS.filter(function (o) { return o[0] === sopt; })[0][2], neg = /^-no/.test(opt);
+    var names = sel.map(function (o) { return o.n; }).join(' ');
     var base = {tokens: [], frames: [], reg: [], pos: null, kv: {}, cond: null, outs: null, res: null, tokNote: ''};
     function E(sn, ln, h, p, o) { var s = JSON.parse(JSON.stringify(base)); for (var k in (o || {})) s[k] = o[k]; s.sn = sn; s.ln = ln; s.h = h; s.p = p; out.push(s); return s; }
     function reg(a, b, c) { return {a: a, b: b, c: c}; }
+    function bitNames(v) { return FLN.filter(function (_, k) { return v & (1 << k); }).join('|'); }
+    function accText(pos, neg) { var a = bitNames(pos), b = bitNames(neg); return [a, b ? '(' + b + ') << 16' : ''].filter(Boolean).join(' | ') || '0'; }
     var whole = [reg(0, cmd.length, 'scan')];
-    var bit = {'-commands': 1, '-variables': 2, '-backslashes': 4, '-expressions': 8, '-nocommands': 1, '-novariables': 2, '-nobackslashes': 4, '-noexpressions': 8}[opt] || 0;
-    var objc = opt ? 3 : 2, flags;
+    var objc = 2 + sel.length, flags;
     E('subc', LN.s_objc, 'subst is called', 'The command procedure checks that there is at least a string argument. objc counts the command name, the options and the string.',
-      {pos: 0, reg: whole, kv: {objc: String(objc), options: opt || 'none'}});
+      {pos: 0, reg: whole, kv: {objc: String(objc), options: names || 'none'}});
     E('subc', LN.s_call, 'Ask TclSubstOptions for the flags', 'Everything between the command name and the last argument is an option. TclSubstOptions turns the list into a bit mask. Its result is what ParseTokens will consult for each $ and [.',
-      {pos: 0, reg: whole, kv: {numOpts: String(objc - 2)}});
-    flags = opt ? 0 : 15;
-    E('subo', LN.o_init, opt ? 'No option yet: flags starts at 0' : 'No options: every substitution is on', opt ? 'With at least one option, flags starts at 0 and the options add or (for the -no forms) later remove bits.' : 'Without options the mask is TCL_SUBST_ALL, which now includes TCL_SUBST_EXPRESSIONS (value 8, so ALL is 15).',
+      {pos: 0, reg: whole, kv: {numOpts: String(sel.length)}});
+    flags = sel.length ? 0 : 15;
+    E('subo', LN.o_init, sel.length ? 'No option yet: flags starts at 0' : 'No options: every substitution is on', sel.length ? 'With at least one option, flags starts at 0 and the options add or (for the -no forms) later remove bits.' : 'Without options the mask is TCL_SUBST_ALL, which now includes TCL_SUBST_EXPRESSIONS (value 8, so ALL is 15).',
       {pos: 0, reg: whole, kv: {flags: flagText(flags)}});
-    if (opt) {
-      flags = neg ? bit << 16 : bit;
-      E('subo', LN.o_or, 'The option is looked up and its flag OR-ed in', 'Tcl_GetIndexFromObj finds "' + opt + '" in the table (unique prefixes work). A positive option contributes its bit. A negated one contributes the bit shifted left by 16, so the two kinds can be told apart afterwards.',
-        {pos: 0, reg: whole, kv: {option: opt, flags: neg ? FLN[Math.log2(bit)] + ' << 16' : flagText(flags)}});
-    }
-    if (neg) {
+    var accP = 0, accN = 0;
+    sel.forEach(function (o, k) {
+      if (o.neg) accN |= o.bit; else accP |= o.bit;
+      E('subo', LN.o_or, sel.length > 1 ? 'Option ' + (k + 1) + ' of ' + sel.length + ' is looked up and its flag OR-ed in' : 'The option is looked up and its flag OR-ed in',
+        'Tcl_GetIndexFromObj finds "' + o.n + '" in the table (unique prefixes work). A positive option contributes its bit. A negated one contributes the bit shifted left by 16, so the two kinds can be told apart afterwards.',
+        {pos: 0, reg: whole, kv: {option: o.n, flags: accText(accP, accN)}});
+    });
+    if (negBits) {
       E('subo', LN.o_neg, 'A negated option was given', 'flags >> 16 is not zero, so this is the "turn things off" form. (Mixing it with a positive option is the error "cannot combine positive and negative options".)',
-        {pos: 0, reg: whole, cond: [['flags >> 16', true]], kv: {flags: FLN[Math.log2(bit)] + ' << 16'}});
-      flags = 15 & ~bit;
-      E('subo', LN.o_mask, 'Start from ALL and remove the negated bit', 'The mask becomes TCL_SUBST_ALL with the named kind cleared.',
+        {pos: 0, reg: whole, cond: [['flags >> 16', true]], kv: {flags: accText(accP, accN)}});
+      if (posBits) {
+        E('subo', LN.o_mix, 'Positive options too: error', 'flags & 0xFFFF is not zero as well, so both kinds were given. "Everything except..." and "only..." cannot be combined, so TclSubstOptions reports an error and subst stops here. Nothing is substituted.',
+          {pos: 0, reg: whole, cond: [['flags >> 16', true], ['flags & 0xFFFF', true], ['=> error', true]], kv: {flags: accText(accP, accN)}});
+        E('subo', LN.o_err, 'The error', 'The message is "cannot combine positive and negative options" and TclSubstOptions returns TCL_ERROR, so subst returns that error.',
+          {pos: null, reg: [], res: {text: D.res, bad: true, label: 'Result (real, error)'}, check: D.res === 'cannot combine positive and negative options' ? 'ok' : 'trace predicts the mixing error', kv: {}});
+        return out;
+      }
+      flags = 15 & ~negBits;
+      E('subo', LN.o_mask, 'Start from ALL and remove the negated bit' + ((negBits & (negBits - 1)) ? 's' : ''), 'The mask becomes TCL_SUBST_ALL with the named kinds cleared.',
         {pos: 0, reg: whole, kv: {flags: flagText(flags)}});
       var both = (flags & 3) === 3;
       E('subo', LN.o_clearif, 'Are variables and commands both still on?', 'An expression body can contain [commands], and $(( is "$" syntax. So if variables or commands are off, expressions are turned off too. That keeps scripts that use -nocommands or -novariables to make text safe exactly as safe as before.',
         {pos: 0, reg: whole, cond: [['flags & VARIABLES', !!(flags & 2)], ['flags & COMMANDS', !!(flags & 1)], ['=> clear the EXPRESSIONS bit', !both]], kv: {flags: flagText(flags)}});
       if (!both) {
         flags &= ~8;
-        E('subo', LN.o_clear, 'Clear the EXPRESSIONS bit', 'flags &= ~TCL_SUBST_EXPRESSIONS.', {pos: 0, reg: whole, kv: {flags: flagText(flags)}});
+        E('subo', LN.o_clear, 'Clear the EXPRESSIONS bit', 'flags &= ~TCL_SUBST_EXPRESSIONS.' + ((negBits & 8) ? ' (It was already off here because -noexpressions was given too.)' : ''), {pos: 0, reg: whole, kv: {flags: flagText(flags)}});
       }
+    } else if (sel.length) {
+      flags = accP;
+      E('subo', LN.o_neg, 'No negated option', 'flags >> 16 is zero, so every option was a positive one and the flags are exactly the kinds that were named. Nothing else is on. That is how subst has always treated positive options, and it is why -expressions is an explicit opt-in.',
+        {pos: 0, reg: whole, cond: [['flags >> 16', false]], kv: {flags: flagText(flags)}});
     }
     E('subc', LN.s_nr, 'Substitute with these flags', 'The mask is handed to Tcl_NRSubstObj, which parses the string with ParseTokens and then evaluates the tokens. The next steps look at the three places in ParseTokens where a flag decides.',
       {pos: null, reg: [reg(off, off + T.length, 'scan')], kv: {flags: flagText(flags)}});
@@ -797,11 +845,11 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
       if (on) pred = pred.replace(pt[0], isE ? '3' : isC ? '7' : '5');
     });
     var ok = pred === D.res;
-    E('subc', LN.s_nr, 'Result', 'The tokens are evaluated. $x was set to 5 and [set y 7] returns 7 beforehand in the test run; the result is the real one from this build.',
+    E('subc', LN.s_nr, 'Result', 'The tokens are evaluated. x was 5 before the command ran, and [set y 7] sets y and returns 7; the result is the real one from this build.',
       {pos: null, reg: [], res: {text: D.res, bad: Number(D.rc) !== 0, label: 'Result (real)'}, check: ok ? 'ok' : 'trace predicts "' + pred + '"', kv: {flags: flagText(flags)}});
     return out;
   }
-  function curD() { return scen === 'subst' ? DATA[build]['subst_' + sopt] : DATA[build][scen]; }
+  function curD() { return scen === 'subst' ? DATA[build].substall[sset] : DATA[build][scen]; }
 
   /* ---- rendering ---- */
   function esc(s) { return String(s).replace(/&/g, '&amp;').replace(/</g, '&lt;').replace(/>/g, '&gt;'); }
@@ -877,26 +925,67 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     $('bld2').setAttribute('aria-pressed', build === 2);
     Array.prototype.forEach.call($('scenSeg').children, function (b) { b.setAttribute('aria-pressed', b.dataset.k === scen); });
     $('optbar').hidden = scen !== 'subst';
-    Array.prototype.forEach.call($('optSeg').children, function (b) { b.setAttribute('aria-pressed', b.dataset.k === sopt); });
-    if (i === steps.length - 1) stop();
+    var su = SETUP[scen]; $('setup').hidden = !su; if (su) $('setup').innerHTML = su;
+    var pb = 0, nb = 0;
+    (scen === 'subst' ? selOpts(sset) : []).forEach(function (o) { if (o.neg) nb |= o.bit; else pb |= o.bit; });
+    var mixedOpt = !!(pb && nb), implied = !!(nb && !pb && (nb & 3) && !(nb & 8)), only = !!(pb && !nb);
+    var rh = $('setup').querySelector('.rulehot'); if (rh) rh.classList.toggle('on', implied);
+    $('srcnote').hidden = !(implied || only || mixedOpt);
+    $('srcnote').className = 'srcnote' + (implied || mixedOpt ? ' hot' : '');
+    $('srcnote').textContent = mixedOpt ? ';# error: positive and negative options cannot be mixed' : implied ? ';# -noexpressions on by rule' : only ? ';# only the options named are on' : '';
+    Array.prototype.forEach.call($('optbar').querySelectorAll('button'), function (b) { b.setAttribute('aria-pressed', b.dataset.k === 'none' ? sset === 0 : !!(sset & (1 << +b.dataset.k))); });
+    if (i === steps.length - 1 && !$('playall').checked) stop();   /* with "all" the timer runs one more pause, then tick() moves on or stops */
     if (window.__codeOpen) renderCode();
   }
+  var speed = 1.5;   /* seconds per step during Auto-play */
+  /* "all": the next script in the list. Returns false after the last one. */
+  function nextScript() {
+    if (scen === 'subst') return false;   /* subst plays once, with whatever options are selected (none by default) */
+    var k = SCEN.map(function (x) { return x[0]; }).indexOf(scen);
+    if (k < SCEN.length - 1) { scen = SCEN[k + 1][0]; return true; }
+    return false;
+  }
+  function tick() {
+    if (i < steps.length - 1) { i++; render(); }
+    else if ($('playall').checked && nextScript()) { steps = build_trace(); i = 0; render(); }   /* the last step has been on screen for one pause */
+    else stop();
+  }
+  function startTimer() { timer = setInterval(tick, speed * 1000); }
   function stop() { if (timer) { clearInterval(timer); timer = null; $('b-play').textContent = 'Auto-play'; } }
   function reload(keep) { stop(); steps = build_trace(); if (!keep) i = 0; if (i >= steps.length) i = steps.length - 1; render(); }
   $('scenSeg').innerHTML = SCEN.map(function (s) { return '<button data-k="' + s[0] + '" title="' + esc(NOTES[s[0]]) + '" aria-pressed="false">' + esc(s[1]) + '</button>'; }).join('');
   $('scenSeg').onclick = function (e) { var k = e.target.dataset && e.target.dataset.k; if (k) { scen = k; reload(); } };
-  $('optSeg').innerHTML = SOPTS.map(function (o) { return '<button data-k="' + o[0] + '" aria-pressed="false">' + esc(o[1]) + '</button>'; }).join('');
-  $('optSeg').onclick = function (e) { var k = e.target.dataset && e.target.dataset.k; if (k) { sopt = k; reload(); } };
+  $('optSeg').innerHTML = '<button data-k="none" aria-pressed="false">(none)</button>';
+  [['optSegP', false], ['optSegN', true]].forEach(function (g) {
+    $(g[0]).innerHTML = OPTS.map(function (o, k) { return o.neg === g[1] ? '<button data-k="' + k + '" aria-pressed="false">' + esc(o.n) + '</button>' : ''; }).join('');
+  });
+  $('optbar').onclick = function (e) { var k = e.target.dataset && e.target.dataset.k; if (k === undefined) return; if (k === 'none') sset = 0;
+    else {
+      var bk = 1 << +k;
+      if (!(sset & bk)) sset &= OPTS[+k].neg ? 0xF0 : 0x0F;   /* turning one on clears every option of the other kind: Tcl does not allow mixing them */
+      sset ^= bk;
+    }
+    reload(); };   /* each option toggles; any number of the same kind can be on */
   $('bld1').onclick = function () { build = 1; reload(); };
   $('bld2').onclick = function () { build = 2; reload(); };
   $('b-next').onclick = function () { stop(); if (i < steps.length - 1) { i++; render(); } };
   $('b-prev').onclick = function () { stop(); if (i > 0) { i--; render(); } };
   $('b-reset').onclick = function () { stop(); i = 0; render(); };
+  try { var sv = localStorage.getItem('stepperSpeed'); if (sv && /^(0\.5|1|1\.5|2|3|5)$/.test(sv)) { $('speed').value = sv; speed = +sv; } } catch (e) { }
+  $('speed').onchange = function () {
+    speed = +this.value;
+    try { localStorage.setItem('stepperSpeed', this.value); } catch (e) { }
+    if (timer) { clearInterval(timer); startTimer(); }   /* new pace takes effect at once */
+    this.blur();
+  };
   $('b-play').onclick = function () {
     if (timer) { stop(); return; }
-    if (i === steps.length - 1) i = 0;
+    if (i === steps.length - 1) {
+      if ($('playall').checked) { nextScript(); steps = build_trace(); }   /* carry on to the next script; after the last one, replay it rather than wrapping round */
+      i = 0;
+    }
     $('b-play').textContent = 'Pause'; render();
-    timer = setInterval(function () { if (i < steps.length - 1) { i++; render(); } else stop(); }, 1500);
+    startTimer();
   };
   $('dots').addEventListener('click', function (e) {
     var d = e.target.closest('i[data-n]'); if (!d) return;
@@ -911,7 +1000,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     else if (e.key === 'ArrowLeft') { e.preventDefault(); $('b-prev').click(); }
   });
   window.__stepper = {dump: function (b, s, o) {
-    build = b; scen = s; if (o) sopt = o;
+    build = b; scen = s; if (o !== undefined) sset = o;
     var D = (scen === 'subst') ? null : DATA[build][scen];
     var t = build_trace();
     return {src: D ? D.src : null, steps: t.map(function (x, k) {
@@ -922,7 +1011,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     })};
   }, all: function () {
     var r = {};
-    [1, 2].forEach(function (b) { SCEN.forEach(function (s) { build = b; scen = s[0]; if (scen === 'subst') { SOPTS.forEach(function (o) { sopt = o[0]; var t2 = build_trace(); r[b + ':subst:' + o[0]] = {n: t2.length, checks: t2.filter(function (x) { return x.check; }).map(function (x) { return x.check; })}; }); sopt = 'd'; return; } var t = build_trace(); r[b + ':' + s[0]] = {n: t.length, checks: t.filter(function (x) { return x.check; }).map(function (x) { return x.check; })}; }); });
+    [1, 2].forEach(function (b) { SCEN.forEach(function (s) { build = b; scen = s[0]; if (scen === 'subst') { for (var m = 0; m < 256; m++) { sset = m; var t2 = build_trace(); r[b + ':subst:' + m] = {n: t2.length, checks: t2.filter(function (x) { return x.check; }).map(function (x) { return x.check; })}; } sset = 0; return; } var t = build_trace(); r[b + ':' + s[0]] = {n: t.length, checks: t.filter(function (x) { return x.check; }).map(function (x) { return x.check; })}; }); });
     return r;
   }};
   /* ================= full code view: coloured, foldable, double-click to follow a name ================= */

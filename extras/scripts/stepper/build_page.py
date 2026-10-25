@@ -58,7 +58,7 @@ LN['cmdcase']=find('TclSubstTokens','case TCL_TOKEN_COMMAND:')
 LN['exprstk']=find('TclCompileExprWords','EXPR_STK')
 for k,v in [('s_objc',('TclNRSubstObjCmd','if (objc < 2)')),('s_call',('TclNRSubstObjCmd','TclSubstOptions(interp')),('s_nr',('TclNRSubstObjCmd','Tcl_NRSubstObj(')),
   ('o_init',('TclSubstOptions','int flags = numOpts')),('o_or',('TclSubstOptions','flags |= optionFlags')),('o_neg',('TclSubstOptions','if (flags >> 16)')),
-  ('o_mask',('TclSubstOptions','flags = TCL_SUBST_ALL & ~')),('o_clearif',('TclSubstOptions','if ((flags & (TCL_SUBST_VARIABLES')),('o_clear',('TclSubstOptions','flags &= ~TCL_SUBST_EXPRESSIONS')),
+  ('o_mask',('TclSubstOptions','flags = TCL_SUBST_ALL & ~')),('o_clearif',('TclSubstOptions','if ((flags & (TCL_SUBST_VARIABLES')),('o_clear',('TclSubstOptions','flags &= ~TCL_SUBST_EXPRESSIONS')),('o_mix',('TclSubstOptions','if (flags & 0xFFFF)')),('o_err',('TclSubstOptions','"cannot combine positive and negative options"')),
   ('p_dollar',('ParseTokens',"} else if (*src == '$') {")),('p_exprsyn',('ParseTokens','int exprSyntax')),('p_gate',('ParseTokens','if (exprSyntax ?')),('p_lit',('ParseTokens','Substitution of this kind is disabled')),
   ('p_call',('ParseTokens','Tcl_ParseVarName(parsePtr->interp')),('p_brack',('ParseTokens',"} else if (*src == '[') {")),('p_cgate',('ParseTokens','if (!(flags & TCL_SUBST_COMMANDS))'))]:
     LN[k]=find(*v)
@@ -94,6 +94,7 @@ for l in raw.split('\n'):
 assert len(hunks)==len(NOTES),(len(hunks),len(NOTES))
 REVIEW={'hunks':hunks,'questions':QUESTIONS,'qhunks':QHUNKS}
 d1=json.load(open('data1.json')); d2=json.load(open('data2.json'))
+d1['substall']=json.load(open('substall1.json')); d2['substall']=json.load(open('substall2.json'))
 FILESD={n:open(G+n).read().replace('\r\n','\n') for n in ['tclParse.c','tclCompile.c','tclCompCmdsSZ.c','tclCompExpr.c','tclCmdMZ.c','tclCompCmds.c','tclTest.c','tcl.h']}
 import re as _re
 _raw=subprocess.run(['git','diff','-U0','--','generic/'],cwd='/root/tcl-trunk',capture_output=True,text=True).stdout

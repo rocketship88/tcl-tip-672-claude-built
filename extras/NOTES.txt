@@ -65,7 +65,15 @@ Where things are:
    new public token type TCL_TOKEN_EXPR_SUBST; thank Jan Nijtmans and Griffin, the TIP's author).
  * Stepper (review + walkthrough) is served by GitHub Pages at
    https://rocketship88.github.io/tcl-tip-672-claude-built/extras/parser_stepper.html
-   (verified: the file in the repo is identical to the final build, git blob a0ca8fd05f).
+   (Version 1.8, Oct 24: git blob 08858b021d: any combination of the eight subst options can be picked (positive
+   group / negative group, each button toggles); real results for all 256 combinations from both builds; mixing
+   shows the real error; Auto-play 'all' plays 9 option sets for subst. Sources: extras/scripts/stepper/ plus the new
+   files in extras2/stepper_subst_options/ (extras/ is at the 100-file limit, so new files go to extras2/).
+   Version 1.7, Oct 24: git blob f4c9960bc9: subst options shows the rule under the line about x, plus a red
+   comment ";# -noexpressions on by rule" beside the statement for -novariables / -nocommands. Version 1.6, blob e829736d67: an "all" checkbox between Auto-play and Show code makes Auto-play
+   carry on through all 10 scripts (and the 6 options of subst options), then stop. Version 1.5, blob dd1a8f289c: Auto-play speed selector (0.5 to 5 s/step, remembered), a line
+   saying x was set to 5 beforehand for the variable and subst scripts. Version 1.4 (blob 76adfa18ba): the final error
+   step marks where the error is in the script line. Version 1.3 was blob a0ca8fd05f. After any stepper change: copy extras/parser_stepper.html to the repo.)
  * The user wants the 8-ish GitHub pinned repos reordered (only 6 allowed); not our job.
 
 Verification done on the frozen code: full Linux suites 0 failed (both builds); Windows parse/compile/subst
@@ -74,6 +82,17 @@ testing (88.1% default, 69.4% "$("); gcov 147/148 changed lines on the default b
 400,000-input differential fuzz vs an independent reference scanner (0 mismatches); 240,000 value
 comparisons vs [expr] (0 differences); raw-NUL / exact-size-buffer sweep (no over-read in our code;
 two pre-existing core one-past-the-end reads exist in Tcl_ParseCommand:294 and Tcl_ParseQuotedString:2148).
+
+Upload workflow: the user uploads whole folders to GitHub (drag and drop) and lets GitHub work out what
+changed; a single upload is limited to 100 files. extras/ has 99 files now (Oct 24). If new material would
+push extras/ over 100 files, put it in a NEW top-level folder extras2/ (then extras3/ ...), never into extras/,
+so extras/ stays exactly as uploaded and each folder can be re-uploaded whole. Mention this in the README
+when extras2/ is first created. Compare repo vs package by downloading the repo zip and diffing in Beyond
+Compare (quick size/time compare flags the .bat line-ending difference; ignore it).
+
+ZIP NAME: always send the package as expr_dollar_sub.zip (files at the top level, no wrapper folder). Never
+rename it or add suffixes (_stepper_only, _part1 ...): the user's workflow depends on the exact name. If a
+zip must contain only some changes, still call it expr_dollar_sub.zip.
 
 Conventions the user wants: braces on every if/while/for body (checked with clang-tidy; clean);
 defensive checks welcome (user asked about NUL/NULL checks: scan is bounded by end = src + numBytes, no
@@ -85,3 +104,8 @@ inner cases; not tried).
 Pending / conditional (see NEXT_STEPS.md): add 2 tests for 100% line coverage ONLY IF the core reacts
 positively; optional reuse prototype under the same condition; resend the zip (last full send predates
 the TIP edits, gcov/fuzz/NUL results, section 10, and these notes).
+
+(NOTES.txt was brought up to date together with the stepper v1.8 package, Oct 24.)
+
+STEPPER v1.9 (Oct 24, 2026): in the subst options bar, picking a positive option clears all negative ones and vice versa (Tcl rejects mixing: "cannot combine positive and negative options"). "(none)" clears everything. The "all" playlist no longer includes the mixing-error run.
+STEPPER v1.10 (Oct 24, 2026): Auto-play with "all" runs subst once, with only the options currently selected (none by default), and stops there; it no longer cycles through option combinations and does not wrap back to the first script.
