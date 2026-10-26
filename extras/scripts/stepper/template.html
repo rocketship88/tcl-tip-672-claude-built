@@ -240,7 +240,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
 <main>
   <header class="top">
     <div class="topl">
-    <p class="ver mono">Version 2.9 &middot; Oct 25, 2026</p>
+    <p class="ver mono">Version 2.11 &middot; Oct 25, 2026</p>
     <h1>Tcl Expression Substitution <span id="ttlw">Stepper</span></h1>
     <p class="lede"><u class="choose">Choose either the review of the code changes or the step-by-step walkthrough.</u><br><span id="ledeT">Follow the parser through <code>$((expr))</code>, a shortcut for <code>[expr {expr}]</code>. Step through the real C code in <code>Tcl_ParseVarName</code> and the scanner that finds the closing parenthesis, watch the token array grow, then see the bytecode and result. The panes show the actual source lines and real output from a build of the modified trunk.</span></p>
     </div>
@@ -739,8 +739,8 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
 
     /* compile and run */
     if (scen !== 'runtime') {
-      E('comp', 2890, 'Compile: the body goes to the expression compiler',
-        'When the script is compiled, TclCompileTokens meets the EXPR_SUBST token. It flushes any pending literal text, then calls TclCompileExpr on the stored body. The result is the same bytecode as for [expr {body}] with the same body text. Here is the real disassembly of this script.',
+      E('comp', 2909, 'Compile: the body goes to the expression compiler',
+        'When the script is compiled, TclCompileTokens meets the EXPR_SUBST token. It flushes any pending literal text, checks the nesting depth against the interpreter limit (the same check TclCompileScript makes, so $((...)) nested inside itself ends in an error instead of overflowing the C stack), then calls TclCompileExpr on the stored body. The result is the same bytecode as for [expr {body}] with the same body text. Here is the real disassembly of this script.',
         {pos: null, reg: bodyReg, tokens: realT ? realT.map(function (t) { return {type: t.type, text: t.text, nc: t.nc, cls: t.type === 'exprsubst' ? 'hl' : ''}; }) : [t1f, t2], tokNote: 'real testparser output',
          outs: D.dis});
     } else {

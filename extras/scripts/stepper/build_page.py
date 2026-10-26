@@ -10,7 +10,7 @@ SN=[('pvn','Tcl_ParseVarName: start','tclParse.c',1578,1593),
     ('scan','SkipExprSubstScan','tclParse.c',1345,1429),
     ('arr','Tcl_ParseVarName: ordinary name path','tclParse.c',1710,1716),
     ('arr2','Tcl_ParseVarName: array index','tclParse.c',1737,1753),
-    ('comp','TclCompileTokens','tclCompile.c',2876,2897),
+    ('comp','TclCompileTokens','tclCompile.c',2876,2918),
     ('run','TclSubstTokens','tclParse.c',2523,2588)]
 snips={}
 for n,t,f,a,b in SN:
@@ -25,7 +25,7 @@ chk={('scan',1353):'while (src < end)',('scan',1354):'switch',('scan',1355):"cas
  ('hook',1672):'skip',('hook',1673):'FindExprSubstEnd',('hook',1675):'bodyEnd',('hook',1681):'TCL_PARSE_SYNTAX',('hook',1678):'ExprSubstSyntaxError',('hook',1685):'bodyEnd == NULL',('hook',1705):'EXPR_SUBST',('hook',1706):'start',('hook',1707):'size',('hook',1708):'numTokens',('hook',1709):'bodyEnd + skip',('pvn',1581):'TCL_TOKEN_VARIABLE',('pvn',1586):'src++',
  
  ('fin',1776):'size',('fin',1777):'numComponents',('arr',1711):'TCL_TOKEN_TEXT',('arr2',1737):'array =',('arr2',1750):'ParseTokens',
- ('comp',2876):'EXPR_SUBST',('comp',2889):'envPtr->line',('comp',2890):'TclCompileExpr',('run',2558):'EXPR_SUBST',('run',2564):'Tcl_NewStringObj',('run',2569):'Tcl_ExprObj'}
+ ('comp',2876):'EXPR_SUBST',('comp',2889):'envPtr->line',('comp',2900):'numLevels',('comp',2909):'TclCompileExpr',('run',2558):'EXPR_SUBST',('run',2564):'Tcl_NewStringObj',('run',2569):'Tcl_ExprObj'}
 for (n,l),sub in chk.items():
     txt=dict((a,b) for a,b in snips[n]['lines']).get(l)
     assert txt is not None and sub in txt,(n,l,txt,sub)
