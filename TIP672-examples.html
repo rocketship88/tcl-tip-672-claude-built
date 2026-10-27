@@ -1,0 +1,825 @@
+<!DOCTYPE html>
+<html xmlns="http://www.w3.org/1999/xhtml" lang="" xml:lang="">
+<head>
+  <meta charset="utf-8" />
+  <meta name="generator" content="pandoc" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=yes" />
+  <title>TIP 672 examples</title>
+  <style>
+    html {
+      color: #1a1a1a;
+      background-color: #fdfdfd;
+    }
+    body {
+      margin: 0 auto;
+      max-width: 36em;
+      padding-left: 50px;
+      padding-right: 50px;
+      padding-top: 50px;
+      padding-bottom: 50px;
+      hyphens: auto;
+      overflow-wrap: break-word;
+      text-rendering: optimizeLegibility;
+      font-kerning: normal;
+    }
+    @media (max-width: 600px) {
+      body {
+        font-size: 0.9em;
+        padding: 12px;
+      }
+      h1 {
+        font-size: 1.8em;
+      }
+    }
+    @media print {
+      html {
+        background-color: white;
+      }
+      body {
+        background-color: transparent;
+        color: black;
+        font-size: 12pt;
+      }
+      p, h2, h3 {
+        orphans: 3;
+        widows: 3;
+      }
+      h2, h3, h4 {
+        page-break-after: avoid;
+      }
+    }
+    p {
+      margin: 1em 0;
+    }
+    a {
+      color: #1a1a1a;
+    }
+    a:visited {
+      color: #1a1a1a;
+    }
+    img {
+      max-width: 100%;
+    }
+    h1, h2, h3, h4, h5, h6 {
+      margin-top: 1.4em;
+    }
+    h5, h6 {
+      font-size: 1em;
+      font-style: italic;
+    }
+    h6 {
+      font-weight: normal;
+    }
+    ol, ul {
+      padding-left: 1.7em;
+      margin-top: 1em;
+    }
+    li > ol, li > ul {
+      margin-top: 0;
+    }
+    blockquote {
+      margin: 1em 0 1em 1.7em;
+      padding-left: 1em;
+      border-left: 2px solid #e6e6e6;
+      color: #606060;
+    }
+    code {
+      font-family: Menlo, Monaco, Consolas, 'Lucida Console', monospace;
+      font-size: 85%;
+      margin: 0;
+      hyphens: manual;
+    }
+    pre {
+      margin: 1em 0;
+      overflow: auto;
+    }
+    pre code {
+      padding: 0;
+      overflow: visible;
+      overflow-wrap: normal;
+    }
+    .sourceCode {
+     background-color: transparent;
+     overflow: visible;
+    }
+    hr {
+      background-color: #1a1a1a;
+      border: none;
+      height: 1px;
+      margin: 1em 0;
+    }
+    table {
+      margin: 1em 0;
+      border-collapse: collapse;
+      width: 100%;
+      overflow-x: auto;
+      display: block;
+      font-variant-numeric: lining-nums tabular-nums;
+    }
+    table caption {
+      margin-bottom: 0.75em;
+    }
+    tbody {
+      margin-top: 0.5em;
+      border-top: 1px solid #1a1a1a;
+      border-bottom: 1px solid #1a1a1a;
+    }
+    th {
+      border-top: 1px solid #1a1a1a;
+      padding: 0.25em 0.5em 0.25em 0.5em;
+    }
+    td {
+      padding: 0.125em 0.5em 0.25em 0.5em;
+    }
+    header {
+      margin-bottom: 4em;
+      text-align: center;
+    }
+    #TOC li {
+      list-style: none;
+    }
+    #TOC ul {
+      padding-left: 1.3em;
+    }
+    #TOC > ul {
+      padding-left: 0;
+    }
+    #TOC a:not(:hover) {
+      text-decoration: none;
+    }
+    code{white-space: pre-wrap;}
+    span.smallcaps{font-variant: small-caps;}
+    div.columns{display: flex; gap: min(4vw, 1.5em);}
+    div.column{flex: auto; overflow-x: auto;}
+    div.hanging-indent{margin-left: 1.5em; text-indent: -1.5em;}
+    /* The extra [class] is a hack that increases specificity enough to
+       override a similar rule in reveal.js */
+    ul.task-list[class]{list-style: none;}
+    ul.task-list li input[type="checkbox"] {
+      font-size: inherit;
+      width: 0.8em;
+      margin: 0 0.8em 0.2em -1.6em;
+      vertical-align: middle;
+    }
+    .display.math{display: block; text-align: center; margin: 0.5rem auto;}
+    /* CSS for syntax highlighting */
+    pre > code.sourceCode { white-space: pre; position: relative; }
+    pre > code.sourceCode > span { line-height: 1.25; }
+    pre > code.sourceCode > span:empty { height: 1.2em; }
+    .sourceCode { overflow: visible; }
+    code.sourceCode > span { color: inherit; text-decoration: inherit; }
+    div.sourceCode { margin: 1em 0; }
+    pre.sourceCode { margin: 0; }
+    @media screen {
+    div.sourceCode { overflow: auto; }
+    }
+    @media print {
+    pre > code.sourceCode { white-space: pre-wrap; }
+    pre > code.sourceCode > span { text-indent: -5em; padding-left: 5em; }
+    }
+    pre.numberSource code
+      { counter-reset: source-line 0; }
+    pre.numberSource code > span
+      { position: relative; left: -4em; counter-increment: source-line; }
+    pre.numberSource code > span > a:first-child::before
+      { content: counter(source-line);
+        position: relative; left: -1em; text-align: right; vertical-align: baseline;
+        border: none; display: inline-block;
+        -webkit-touch-callout: none; -webkit-user-select: none;
+        -khtml-user-select: none; -moz-user-select: none;
+        -ms-user-select: none; user-select: none;
+        padding: 0 4px; width: 4em;
+        color: #aaaaaa;
+      }
+    pre.numberSource { margin-left: 3em; border-left: 1px solid #aaaaaa;  padding-left: 4px; }
+    div.sourceCode
+      {   }
+    @media screen {
+    pre > code.sourceCode > span > a:first-child::before { text-decoration: underline; }
+    }
+    code span.al { color: #ff0000; font-weight: bold; } /* Alert */
+    code span.an { color: #60a0b0; font-weight: bold; font-style: italic; } /* Annotation */
+    code span.at { color: #7d9029; } /* Attribute */
+    code span.bn { color: #40a070; } /* BaseN */
+    code span.bu { color: #008000; } /* BuiltIn */
+    code span.cf { color: #007020; font-weight: bold; } /* ControlFlow */
+    code span.ch { color: #4070a0; } /* Char */
+    code span.cn { color: #880000; } /* Constant */
+    code span.co { color: #60a0b0; font-style: italic; } /* Comment */
+    code span.cv { color: #60a0b0; font-weight: bold; font-style: italic; } /* CommentVar */
+    code span.do { color: #ba2121; font-style: italic; } /* Documentation */
+    code span.dt { color: #902000; } /* DataType */
+    code span.dv { color: #40a070; } /* DecVal */
+    code span.er { color: #ff0000; font-weight: bold; } /* Error */
+    code span.ex { } /* Extension */
+    code span.fl { color: #40a070; } /* Float */
+    code span.fu { color: #06287e; } /* Function */
+    code span.im { color: #008000; font-weight: bold; } /* Import */
+    code span.in { color: #60a0b0; font-weight: bold; font-style: italic; } /* Information */
+    code span.kw { color: #007020; font-weight: bold; } /* Keyword */
+    code span.op { color: #666666; } /* Operator */
+    code span.ot { color: #007020; } /* Other */
+    code span.pp { color: #bc7a00; } /* Preprocessor */
+    code span.sc { color: #4070a0; } /* SpecialChar */
+    code span.ss { color: #bb6688; } /* SpecialString */
+    code span.st { color: #4070a0; } /* String */
+    code span.va { color: #19177c; } /* Variable */
+    code span.vs { color: #4070a0; } /* VerbatimString */
+    code span.wa { color: #60a0b0; font-weight: bold; font-style: italic; } /* Warning */
+  </style>
+  <style>
+   body{max-width:56em;margin:2em auto;padding:0 1em;font-family:system-ui,Segoe UI,Helvetica,Arial,sans-serif;line-height:1.5;color:#1b1f23;background:#fff}
+   pre{background:#f4f5f7;padding:.8em 1em;overflow-x:auto;border-radius:6px}
+   code{font-family:Consolas,Menlo,monospace;font-size:.95em}
+   table{border-collapse:collapse} td,th{border:1px solid #c8ccd0;padding:.3em .7em}
+   hr{border:0;border-top:1px solid #c8ccd0;margin:2em 0}
+   @media (prefers-color-scheme:dark){body{background:#16181d;color:#e4e6ea} pre{background:#20232a} td,th,hr{border-color:#444a55}}
+  </style>
+</head>
+<body>
+<header id="title-block-header">
+<h1 class="title">TIP 672 examples</h1>
+</header>
+<h1 id="what-tcl-looks-like-with-...-tip-672">What Tcl looks like with
+<code>$((...))</code> (TIP 672)</h1>
+<p><strong>These examples were generated by Claude (an AI assistant made
+by Anthropic) at Eric T.’s request.</strong> Florent asked for more
+examples than three, so that people can judge how <code>$((...))</code>
+reads when it is used a lot. Eric did not want to edit the TIP 759 wiki
+page, so they are collected in this file instead. Claude wrote and ran
+the code; Eric asked for it and is sending it on.</p>
+<p><strong>The rule in one line.</strong> <code>$((expr))</code> means
+exactly <code>[expr {expr}]</code>. It can be used wherever
+<code>$</code> substitution works: a word, a quoted string, an array
+index, <code>subst</code>. Variables inside still need their own
+<code>$</code>, as in <code>expr</code>. (The TIP’s default spelling is
+<code>$((...))</code>; a build switch selects <code>$(...)</code>
+instead.)</p>
+<p><strong>How these were checked.</strong> Every plain-Tcl and
+<code>$((...))</code> pair below was run by Claude on a build of the TIP
+672 branch, and the outputs shown are what came out. For the one example
+written in TIP 759 syntax, Claude ran the code from section E of TIP 759
+on a build of the <code>tip-759b_tcl90</code> branch (check-in
+<code>6e5df9de10</code>, Oct 13) and got the same number. The
+Calc-module version in section 9 was run with the module’s current
+GitHub version on the same 672 build and gives the same number.</p>
+<hr />
+<h2 id="cross-product">1. Cross product</h2>
+<div class="sourceCode" id="cb1"><pre
+class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb1-1"><a href="#cb1-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plain Tcl</span></span>
+<span id="cb1-2"><a href="#cb1-2" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span> crossPlain <span class="kw">{</span>U V<span class="kw">}</span> <span class="kw">{</span></span>
+<span id="cb1-3"><a href="#cb1-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lassign</span> <span class="dt">$U</span> <span class="ot">x</span> <span class="ot">y</span> z</span>
+<span id="cb1-4"><a href="#cb1-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lassign</span> <span class="dt">$V</span> u v w</span>
+<span id="cb1-5"><a href="#cb1-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">list</span> <span class="kw">[expr</span> <span class="kw">{</span><span class="dt">$y</span>*<span class="dt">$w</span> - <span class="dt">$v</span>*<span class="dt">$z</span><span class="kw">}]</span> <span class="kw">[expr</span> <span class="kw">{</span><span class="dt">$w</span>*<span class="dt">$x</span> - <span class="dt">$u</span>*<span class="dt">$z</span><span class="kw">}]</span> <span class="kw">[expr</span> <span class="kw">{</span><span class="dt">$x</span>*<span class="dt">$v</span> - <span class="dt">$u</span>*<span class="dt">$y</span><span class="kw">}]</span></span>
+<span id="cb1-6"><a href="#cb1-6" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb1-7"><a href="#cb1-7" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb1-8"><a href="#cb1-8" aria-hidden="true" tabindex="-1"></a><span class="co"># TIP 672</span></span>
+<span id="cb1-9"><a href="#cb1-9" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span> cross672 <span class="kw">{</span>U V<span class="kw">}</span> <span class="kw">{</span></span>
+<span id="cb1-10"><a href="#cb1-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lassign</span> <span class="dt">$U</span> <span class="ot">x</span> <span class="ot">y</span> z</span>
+<span id="cb1-11"><a href="#cb1-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lassign</span> <span class="dt">$V</span> u v w</span>
+<span id="cb1-12"><a href="#cb1-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">list</span> $((<span class="dt">$y</span>*<span class="dt">$w</span> - <span class="dt">$v</span>*<span class="dt">$z</span>)) $((<span class="dt">$w</span>*<span class="dt">$x</span> - <span class="dt">$u</span>*<span class="dt">$z</span>)) $((<span class="dt">$x</span>*<span class="dt">$v</span> - <span class="dt">$u</span>*<span class="dt">$y</span>))</span>
+<span id="cb1-13"><a href="#cb1-13" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
+<p><code>cross {1 2 3} {4 5 6}</code> gives <code>-3 -6 -3</code> in
+both.</p>
+<p><em>Honest note:</em> the TIP 759 <code>[( ... , ... , ... )]</code>
+list form is more compact here than three separate <code>$((...))</code>
+in a <code>list</code>. 672 does not have a list operator.</p>
+<h2 id="rectangle-from-a-centre-width-and-height-canvas-coordinates">2.
+Rectangle from a centre, width and height (canvas coordinates)</h2>
+<div class="sourceCode" id="cb2"><pre
+class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb2-1"><a href="#cb2-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plain Tcl</span></span>
+<span id="cb2-2"><a href="#cb2-2" aria-hidden="true" tabindex="-1"></a><span class="kw">list</span> <span class="kw">[expr</span> <span class="kw">{</span><span class="dt">$Cx</span>-<span class="dt">$L</span>/<span class="fl">2.0</span><span class="kw">}]</span> <span class="kw">[expr</span> <span class="kw">{</span><span class="dt">$Cy</span>-<span class="dt">$H</span>/<span class="fl">2.0</span><span class="kw">}]</span> <span class="kw">[expr</span> <span class="kw">{</span><span class="dt">$Cx</span>+<span class="dt">$L</span>/<span class="fl">2.0</span><span class="kw">}]</span> <span class="kw">[expr</span> <span class="kw">{</span><span class="dt">$Cy</span>+<span class="dt">$H</span>/<span class="fl">2.0</span><span class="kw">}]</span></span>
+<span id="cb2-3"><a href="#cb2-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb2-4"><a href="#cb2-4" aria-hidden="true" tabindex="-1"></a><span class="co"># TIP 672</span></span>
+<span id="cb2-5"><a href="#cb2-5" aria-hidden="true" tabindex="-1"></a><span class="kw">list</span> $((<span class="dt">$Cx</span>-<span class="dt">$L</span>/<span class="fl">2.0</span>)) $((<span class="dt">$Cy</span>-<span class="dt">$H</span>/<span class="fl">2.0</span>)) $((<span class="dt">$Cx</span>+<span class="dt">$L</span>/<span class="fl">2.0</span>)) $((<span class="dt">$Cy</span>+<span class="dt">$H</span>/<span class="fl">2.0</span>))</span></code></pre></div>
+<p>With Cx=100, Cy=50, L=40, H=20 both give
+<code>80.0 40.0 120.0 60.0</code>.</p>
+<h2 id="scalar-product-loop-body">3. Scalar product (loop body)</h2>
+<div class="sourceCode" id="cb3"><pre
+class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb3-1"><a href="#cb3-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plain Tcl</span></span>
+<span id="cb3-2"><a href="#cb3-2" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span> dotPlain <span class="kw">{</span>U V<span class="kw">}</span> <span class="kw">{set</span> s <span class="dv">0</span>; <span class="kw">foreach</span> u <span class="dt">$U</span> v <span class="dt">$V</span> <span class="kw">{set</span> s <span class="kw">[expr</span> <span class="kw">{</span><span class="dt">$s</span> + <span class="dt">$u</span>*<span class="dt">$v</span><span class="kw">}]}</span>; <span class="kw">set</span> s<span class="kw">}</span></span>
+<span id="cb3-3"><a href="#cb3-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb3-4"><a href="#cb3-4" aria-hidden="true" tabindex="-1"></a><span class="co"># TIP 672</span></span>
+<span id="cb3-5"><a href="#cb3-5" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span> dot672 <span class="kw">{</span>U V<span class="kw">}</span> <span class="kw">{set</span> s <span class="dv">0</span>; <span class="kw">foreach</span> u <span class="dt">$U</span> v <span class="dt">$V</span> <span class="kw">{set</span> s $((<span class="dt">$s</span> + <span class="dt">$u</span>*<span class="dt">$v</span>))<span class="kw">}</span>; <span class="kw">set</span> s<span class="kw">}</span></span></code></pre></div>
+<p><code>{1 2 3}</code> and <code>{4 5 6}</code> give <code>32</code> in
+both.</p>
+<h2 id="tensor-product">4. Tensor product</h2>
+<div class="sourceCode" id="cb4"><pre
+class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb4-1"><a href="#cb4-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plain Tcl</span></span>
+<span id="cb4-2"><a href="#cb4-2" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span> tensorPlain <span class="kw">{</span>U V<span class="kw">}</span> <span class="kw">{</span>lmap u <span class="dt">$U</span> <span class="kw">{</span>lmap v <span class="dt">$V</span> <span class="kw">{expr</span> <span class="kw">{</span><span class="dt">$u</span> * <span class="dt">$v</span><span class="kw">}}}}</span></span>
+<span id="cb4-3"><a href="#cb4-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb4-4"><a href="#cb4-4" aria-hidden="true" tabindex="-1"></a><span class="co"># TIP 672 (an lmap body is a script, so it needs a command around the value)</span></span>
+<span id="cb4-5"><a href="#cb4-5" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span> tensor672 <span class="kw">{</span>U V<span class="kw">}</span> <span class="kw">{</span>lmap u <span class="dt">$U</span> <span class="kw">{</span>lmap v <span class="dt">$V</span> <span class="kw">{set</span> _ $((<span class="dt">$u</span> * <span class="dt">$v</span>))<span class="kw">}}}</span></span></code></pre></div>
+<p>Both give <code>{4 5 6} {8 10 12} {12 15 18}</code>.</p>
+<p><em>Honest note:</em> here plain <code>expr</code> is shorter. A bare
+<code>$((...))</code> is not a command, so in an <code>lmap</code> body
+it needs <code>set _</code> or <code>return</code> in front of it.</p>
+<h2 id="rotation-matrix">5. Rotation matrix</h2>
+<div class="sourceCode" id="cb5"><pre
+class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb5-1"><a href="#cb5-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plain Tcl</span></span>
+<span id="cb5-2"><a href="#cb5-2" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span> rotPlain <span class="kw">{</span>deg<span class="kw">}</span> <span class="kw">{</span></span>
+<span id="cb5-3"><a href="#cb5-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">set</span> a <span class="kw">[expr</span> <span class="kw">{</span><span class="dt">$deg</span>/<span class="fl">180.0</span>*acos(-<span class="dv">1</span>)<span class="kw">}]</span></span>
+<span id="cb5-4"><a href="#cb5-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">list</span> <span class="kw">[expr</span> <span class="kw">{</span>cos(<span class="dt">$a</span>)<span class="kw">}]</span> <span class="kw">[expr</span> <span class="kw">{</span>sin(<span class="dt">$a</span>)<span class="kw">}]</span> <span class="kw">[expr</span> <span class="kw">{</span>-sin(<span class="dt">$a</span>)<span class="kw">}]</span> <span class="kw">[expr</span> <span class="kw">{</span>cos(<span class="dt">$a</span>)<span class="kw">}]</span> <span class="dv">0</span> <span class="dv">0</span></span>
+<span id="cb5-5"><a href="#cb5-5" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb5-6"><a href="#cb5-6" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb5-7"><a href="#cb5-7" aria-hidden="true" tabindex="-1"></a><span class="co"># TIP 672</span></span>
+<span id="cb5-8"><a href="#cb5-8" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span> rot672 <span class="kw">{</span>deg<span class="kw">}</span> <span class="kw">{</span></span>
+<span id="cb5-9"><a href="#cb5-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">set</span> a $((<span class="dt">$deg</span>/<span class="fl">180.0</span>*acos(-<span class="dv">1</span>)))</span>
+<span id="cb5-10"><a href="#cb5-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">list</span> $((cos(<span class="dt">$a</span>))) $((sin(<span class="dt">$a</span>))) $((-sin(<span class="dt">$a</span>))) $((cos(<span class="dt">$a</span>))) <span class="dv">0</span> <span class="dv">0</span></span>
+<span id="cb5-11"><a href="#cb5-11" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
+<p><code>rot 90</code> gives
+<code>6.123233995736766e-17 1.0 -1.0 6.123233995736766e-17 0 0</code> in
+both.</p>
+<h2 id="distance">6. Distance</h2>
+<div class="sourceCode" id="cb6"><pre
+class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb6-1"><a href="#cb6-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plain Tcl</span></span>
+<span id="cb6-2"><a href="#cb6-2" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span> distPlain <span class="kw">{</span>x0 y0 x1 y1<span class="kw">}</span> <span class="kw">{expr</span> <span class="kw">{</span>hypot(<span class="dt">$x1</span>-<span class="dt">$x0</span>, <span class="dt">$y1</span>-<span class="dt">$y0</span>)<span class="kw">}}</span></span>
+<span id="cb6-3"><a href="#cb6-3" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb6-4"><a href="#cb6-4" aria-hidden="true" tabindex="-1"></a><span class="co"># TIP 672 (a proc body ends with a command, so it needs `return`)</span></span>
+<span id="cb6-5"><a href="#cb6-5" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span> dist672 <span class="kw">{</span>x0 y0 x1 y1<span class="kw">}</span> <span class="kw">{return</span> $((hypot(<span class="dt">$x1</span>-<span class="dt">$x0</span>, <span class="dt">$y1</span>-<span class="dt">$y0</span>)))<span class="kw">}</span></span></code></pre></div>
+<p><code>dist 0 0 3 4</code> gives <code>5.0</code> in both.</p>
+<p><em>Honest note:</em> for a one-line numeric proc, plain
+<code>expr</code> is simply shorter.</p>
+<h2 id="values-inside-strings-array-indexes-and-conditions">7. Values
+inside strings, array indexes and conditions</h2>
+<div class="sourceCode" id="cb7"><pre
+class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb7-1"><a href="#cb7-1" aria-hidden="true" tabindex="-1"></a><span class="kw">puts</span> <span class="st">&quot;area=</span><span class="dt">$</span><span class="st">((</span><span class="dt">$</span><span class="st">w*</span><span class="dt">$</span><span class="st">h)) perimeter=</span><span class="dt">$</span><span class="st">((2*(</span><span class="dt">$</span><span class="st">w+</span><span class="dt">$</span><span class="st">h)))&quot;</span>      ;<span class="co"># area=21 perimeter=20</span></span>
+<span id="cb7-2"><a href="#cb7-2" aria-hidden="true" tabindex="-1"></a><span class="kw">puts</span> <span class="st">&quot;array: </span><span class="dt">$</span><span class="st">a(</span><span class="dt">$</span><span class="st">((1+1)))&quot;</span>                            ;<span class="co"># array: two</span></span>
+<span id="cb7-3"><a href="#cb7-3" aria-hidden="true" tabindex="-1"></a><span class="kw">if</span> <span class="kw">{</span>$((<span class="dt">$w</span> % <span class="dv">2</span>)) == <span class="dv">1</span><span class="kw">}</span> <span class="kw">{puts</span> <span class="st">&quot;w is odd&quot;</span><span class="kw">}</span>               ;<span class="co"># w is odd</span></span>
+<span id="cb7-4"><a href="#cb7-4" aria-hidden="true" tabindex="-1"></a><span class="kw">puts</span> <span class="kw">[format</span> <span class="st">&quot;%.2f&quot;</span> $((<span class="fl">3.14159</span>*<span class="dt">$w</span>*<span class="dt">$w</span>))<span class="kw">]</span>               ;<span class="co"># 153.94</span></span></code></pre></div>
+<p>This is the case where <code>$((...))</code> is shortest compared
+with <code>[expr {...}]</code>: inside quoted strings and indexes.</p>
+<h2
+id="polynomial-multiplication-inner-loops-adapted-from-tcllib-math">8.
+Polynomial multiplication (inner loops, adapted from tcllib math)</h2>
+<div class="sourceCode" id="cb8"><pre
+class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb8-1"><a href="#cb8-1" aria-hidden="true" tabindex="-1"></a><span class="co"># plain Tcl</span></span>
+<span id="cb8-2"><a href="#cb8-2" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span> polyPlain <span class="kw">{</span>c1 c2<span class="kw">}</span> <span class="kw">{</span></span>
+<span id="cb8-3"><a href="#cb8-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">set</span> out <span class="kw">[lrepeat</span> <span class="kw">[expr</span> <span class="kw">{[llength</span> <span class="dt">$c1</span><span class="kw">]</span>+<span class="kw">[llength</span> <span class="dt">$c2</span><span class="kw">]</span>-<span class="dv">1</span><span class="kw">}]</span> <span class="dv">0</span><span class="kw">]</span></span>
+<span id="cb8-4"><a href="#cb8-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">set</span> i <span class="dv">0</span></span>
+<span id="cb8-5"><a href="#cb8-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">foreach</span> a <span class="dt">$c1</span> <span class="kw">{</span></span>
+<span id="cb8-6"><a href="#cb8-6" aria-hidden="true" tabindex="-1"></a>        <span class="kw">set</span> j <span class="dv">0</span></span>
+<span id="cb8-7"><a href="#cb8-7" aria-hidden="true" tabindex="-1"></a>        <span class="kw">foreach</span> b <span class="dt">$c2</span> <span class="kw">{</span></span>
+<span id="cb8-8"><a href="#cb8-8" aria-hidden="true" tabindex="-1"></a>            <span class="kw">lset</span> out <span class="kw">[expr</span> <span class="kw">{</span><span class="dt">$i</span>+<span class="dt">$j</span><span class="kw">}]</span> <span class="kw">[expr</span> <span class="kw">{[lindex</span> <span class="dt">$out</span> <span class="kw">[expr</span> <span class="kw">{</span><span class="dt">$i</span>+<span class="dt">$j</span><span class="kw">}]]</span> + <span class="dt">$a</span>*<span class="dt">$b</span><span class="kw">}]</span></span>
+<span id="cb8-9"><a href="#cb8-9" aria-hidden="true" tabindex="-1"></a>            <span class="kw">incr</span> j</span>
+<span id="cb8-10"><a href="#cb8-10" aria-hidden="true" tabindex="-1"></a>        <span class="kw">}</span></span>
+<span id="cb8-11"><a href="#cb8-11" aria-hidden="true" tabindex="-1"></a>        <span class="kw">incr</span> i</span>
+<span id="cb8-12"><a href="#cb8-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">}</span></span>
+<span id="cb8-13"><a href="#cb8-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">set</span> out</span>
+<span id="cb8-14"><a href="#cb8-14" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb8-15"><a href="#cb8-15" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb8-16"><a href="#cb8-16" aria-hidden="true" tabindex="-1"></a><span class="co"># TIP 672</span></span>
+<span id="cb8-17"><a href="#cb8-17" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span> poly672 <span class="kw">{</span>c1 c2<span class="kw">}</span> <span class="kw">{</span></span>
+<span id="cb8-18"><a href="#cb8-18" aria-hidden="true" tabindex="-1"></a>    <span class="kw">set</span> out <span class="kw">[lrepeat</span> $((<span class="kw">[llength</span> <span class="dt">$c1</span><span class="kw">]</span>+<span class="kw">[llength</span> <span class="dt">$c2</span><span class="kw">]</span>-<span class="dv">1</span>)) <span class="dv">0</span><span class="kw">]</span></span>
+<span id="cb8-19"><a href="#cb8-19" aria-hidden="true" tabindex="-1"></a>    <span class="kw">set</span> i <span class="dv">0</span></span>
+<span id="cb8-20"><a href="#cb8-20" aria-hidden="true" tabindex="-1"></a>    <span class="kw">foreach</span> a <span class="dt">$c1</span> <span class="kw">{</span></span>
+<span id="cb8-21"><a href="#cb8-21" aria-hidden="true" tabindex="-1"></a>        <span class="kw">set</span> j <span class="dv">0</span></span>
+<span id="cb8-22"><a href="#cb8-22" aria-hidden="true" tabindex="-1"></a>        <span class="kw">foreach</span> b <span class="dt">$c2</span> <span class="kw">{</span></span>
+<span id="cb8-23"><a href="#cb8-23" aria-hidden="true" tabindex="-1"></a>            <span class="kw">lset</span> out $((<span class="dt">$i</span>+<span class="dt">$j</span>)) $((<span class="kw">[lindex</span> <span class="dt">$out</span> $((<span class="dt">$i</span>+<span class="dt">$j</span>))<span class="kw">]</span> + <span class="dt">$a</span>*<span class="dt">$b</span>))</span>
+<span id="cb8-24"><a href="#cb8-24" aria-hidden="true" tabindex="-1"></a>            <span class="kw">incr</span> j</span>
+<span id="cb8-25"><a href="#cb8-25" aria-hidden="true" tabindex="-1"></a>        <span class="kw">}</span></span>
+<span id="cb8-26"><a href="#cb8-26" aria-hidden="true" tabindex="-1"></a>        <span class="kw">incr</span> i</span>
+<span id="cb8-27"><a href="#cb8-27" aria-hidden="true" tabindex="-1"></a>    <span class="kw">}</span></span>
+<span id="cb8-28"><a href="#cb8-28" aria-hidden="true" tabindex="-1"></a>    <span class="kw">set</span> out</span>
+<span id="cb8-29"><a href="#cb8-29" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
+<p><code>{2 4 3}</code> times <code>{3 2 4 5}</code> gives
+<code>6 16 25 32 32 15</code> in both. Nested <code>$((...))</code>
+inside <code>[...]</code> inside <code>$((...))</code> works.</p>
+<hr />
+<h2
+id="a-longer-function-distance-from-a-point-to-the-edges-of-a-triangle">9.
+A longer function: distance from a point to the edges of a triangle</h2>
+<p>This is the function from section E of TIP 759, so the styles can be
+compared side by side.</p>
+<p><strong>Two helpers that were not in the originals.</strong> Section
+E calls <code>point_in_triangle</code> but TIP 759 never defines it.
+Claude wrote the two small helpers below (a standard sign test of the
+point against the three edges) so that every version could actually be
+run. All the versions of the edge function call the same helper; only
+the way the helper is written differs.</p>
+<p>Plain Tcl:</p>
+<div class="sourceCode" id="cb9"><pre
+class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb9-1"><a href="#cb9-1" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span> sgn <span class="kw">{</span>x1 y1 x2 y2 x3 y3<span class="kw">}</span> <span class="kw">{</span></span>
+<span id="cb9-2"><a href="#cb9-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">expr</span> <span class="kw">{</span>(<span class="dt">$x1</span>-<span class="dt">$x3</span>)*(<span class="dt">$y2</span>-<span class="dt">$y3</span>) - (<span class="dt">$x2</span>-<span class="dt">$x3</span>)*(<span class="dt">$y1</span>-<span class="dt">$y3</span>)<span class="kw">}</span></span>
+<span id="cb9-3"><a href="#cb9-3" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb9-4"><a href="#cb9-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb9-5"><a href="#cb9-5" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span> point_in_triangle <span class="kw">{</span>px py t1 t2 t3<span class="kw">}</span> <span class="kw">{</span></span>
+<span id="cb9-6"><a href="#cb9-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lassign</span> <span class="dt">$t1</span> ax ay</span>
+<span id="cb9-7"><a href="#cb9-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lassign</span> <span class="dt">$t2</span> bx by</span>
+<span id="cb9-8"><a href="#cb9-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lassign</span> <span class="dt">$t3</span> cx cy</span>
+<span id="cb9-9"><a href="#cb9-9" aria-hidden="true" tabindex="-1"></a>    <span class="kw">set</span> d1 <span class="kw">[</span>sgn <span class="dt">$px</span> <span class="dt">$py</span> <span class="dt">$ax</span> <span class="dt">$ay</span> <span class="dt">$bx</span> <span class="dt">$by</span><span class="kw">]</span></span>
+<span id="cb9-10"><a href="#cb9-10" aria-hidden="true" tabindex="-1"></a>    <span class="kw">set</span> d2 <span class="kw">[</span>sgn <span class="dt">$px</span> <span class="dt">$py</span> <span class="dt">$bx</span> <span class="dt">$by</span> <span class="dt">$cx</span> <span class="dt">$cy</span><span class="kw">]</span></span>
+<span id="cb9-11"><a href="#cb9-11" aria-hidden="true" tabindex="-1"></a>    <span class="kw">set</span> d3 <span class="kw">[</span>sgn <span class="dt">$px</span> <span class="dt">$py</span> <span class="dt">$cx</span> <span class="dt">$cy</span> <span class="dt">$ax</span> <span class="dt">$ay</span><span class="kw">]</span></span>
+<span id="cb9-12"><a href="#cb9-12" aria-hidden="true" tabindex="-1"></a>    <span class="kw">expr</span> <span class="kw">{</span>!(((<span class="dt">$d1</span> &lt; <span class="dv">0</span>) || (<span class="dt">$d2</span> &lt; <span class="dv">0</span>) || (<span class="dt">$d3</span> &lt; <span class="dv">0</span>)) &amp;&amp; ((<span class="dt">$d1</span> &gt; <span class="dv">0</span>) || (<span class="dt">$d2</span> &gt; <span class="dv">0</span>) || (<span class="dt">$d3</span> &gt; <span class="dv">0</span>)))<span class="kw">}</span></span>
+<span id="cb9-13"><a href="#cb9-13" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
+<p>The same two helpers in the Calc style (see the Calc note below).
+All-numeric arguments let <code>sgn</code> and the three <code>d</code>
+values be written as plain function calls:</p>
+<div class="sourceCode" id="cb10"><pre
+class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb10-1"><a href="#cb10-1" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span>= sgn <span class="kw">{</span>x1 y1 x2 y2 x3 y3<span class="kw">}</span> <span class="kw">{</span></span>
+<span id="cb10-2"><a href="#cb10-2" aria-hidden="true" tabindex="-1"></a>    : (x1-x3)*(y2-y3) - (x2-x3)*(y1-y3)</span>
+<span id="cb10-3"><a href="#cb10-3" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span>
+<span id="cb10-4"><a href="#cb10-4" aria-hidden="true" tabindex="-1"></a></span>
+<span id="cb10-5"><a href="#cb10-5" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span>= point_in_triangle <span class="kw">{</span>px py t1 t2 t3<span class="kw">}</span> <span class="kw">{</span></span>
+<span id="cb10-6"><a href="#cb10-6" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lassign</span> <span class="dt">$t1</span> ax ay</span>
+<span id="cb10-7"><a href="#cb10-7" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lassign</span> <span class="dt">$t2</span> bx by</span>
+<span id="cb10-8"><a href="#cb10-8" aria-hidden="true" tabindex="-1"></a>    <span class="kw">lassign</span> <span class="dt">$t3</span> cx cy</span>
+<span id="cb10-9"><a href="#cb10-9" aria-hidden="true" tabindex="-1"></a>    : <span class="kw">{</span></span>
+<span id="cb10-10"><a href="#cb10-10" aria-hidden="true" tabindex="-1"></a>        d1 = sgn(px, py, ax, ay, bx, by);</span>
+<span id="cb10-11"><a href="#cb10-11" aria-hidden="true" tabindex="-1"></a>        d2 = sgn(px, py, bx, by, cx, cy);</span>
+<span id="cb10-12"><a href="#cb10-12" aria-hidden="true" tabindex="-1"></a>        d3 = sgn(px, py, cx, cy, ax, ay);</span>
+<span id="cb10-13"><a href="#cb10-13" aria-hidden="true" tabindex="-1"></a>        !(((d1 &lt; <span class="dv">0</span>) || (d2 &lt; <span class="dv">0</span>) || (d3 &lt; <span class="dv">0</span>)) &amp;&amp; ((d1 &gt; <span class="dv">0</span>) || (d2 &gt; <span class="dv">0</span>) || (d3 &gt; <span class="dv">0</span>)))</span>
+<span id="cb10-14"><a href="#cb10-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">}</span></span>
+<span id="cb10-15"><a href="#cb10-15" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
+<p><strong>Plain Tcl</strong></p>
+<div class="sourceCode" id="cb11"><pre
+class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb11-1"><a href="#cb11-1" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span> calculate_edge_distance_Plain <span class="kw">{</span>px py t1 t2 t3<span class="kw">}</span> <span class="kw">{</span></span>
+<span id="cb11-2"><a href="#cb11-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">set</span> edges <span class="kw">[list</span> <span class="kw">[list</span> <span class="dt">$t1</span> <span class="dt">$t2</span><span class="kw">]</span> <span class="kw">[list</span> <span class="dt">$t2</span> <span class="dt">$t3</span><span class="kw">]</span> <span class="kw">[list</span> <span class="dt">$t3</span> <span class="dt">$t1</span><span class="kw">]]</span></span>
+<span id="cb11-3"><a href="#cb11-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">set</span> min_distance <span class="dv">999999999</span></span>
+<span id="cb11-4"><a href="#cb11-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">foreach</span> edge <span class="dt">$edges</span> <span class="kw">{</span></span>
+<span id="cb11-5"><a href="#cb11-5" aria-hidden="true" tabindex="-1"></a>        <span class="kw">lassign</span> <span class="dt">$edge</span> p1 p2</span>
+<span id="cb11-6"><a href="#cb11-6" aria-hidden="true" tabindex="-1"></a>        <span class="kw">lassign</span> <span class="dt">$p1</span> x1 y1</span>
+<span id="cb11-7"><a href="#cb11-7" aria-hidden="true" tabindex="-1"></a>        <span class="kw">lassign</span> <span class="dt">$p2</span> x2 y2</span>
+<span id="cb11-8"><a href="#cb11-8" aria-hidden="true" tabindex="-1"></a>        <span class="kw">set</span> A <span class="kw">[expr</span> <span class="kw">{</span><span class="dt">$y2</span>-<span class="dt">$y1</span><span class="kw">}]</span></span>
+<span id="cb11-9"><a href="#cb11-9" aria-hidden="true" tabindex="-1"></a>        <span class="kw">set</span> B <span class="kw">[expr</span> <span class="kw">{</span><span class="dt">$x1</span>-<span class="dt">$x2</span><span class="kw">}]</span></span>
+<span id="cb11-10"><a href="#cb11-10" aria-hidden="true" tabindex="-1"></a>        <span class="kw">set</span> C <span class="kw">[expr</span> <span class="kw">{</span><span class="dt">$x2</span>*<span class="dt">$y1</span> - <span class="dt">$x1</span>*<span class="dt">$y2</span><span class="kw">}]</span></span>
+<span id="cb11-11"><a href="#cb11-11" aria-hidden="true" tabindex="-1"></a>        <span class="kw">set</span> distance <span class="kw">[expr</span> <span class="kw">{</span>abs(<span class="dt">$A</span>*<span class="dt">$px</span> + <span class="dt">$B</span>*<span class="dt">$py</span> + <span class="dt">$C</span>) / hypot(<span class="dt">$A</span>, <span class="dt">$B</span>)<span class="kw">}]</span></span>
+<span id="cb11-12"><a href="#cb11-12" aria-hidden="true" tabindex="-1"></a>        <span class="kw">if</span> <span class="kw">{</span><span class="dt">$distance</span> &lt; <span class="dt">$min_distance</span><span class="kw">}</span> <span class="kw">{set</span> min_distance <span class="dt">$distance</span><span class="kw">}</span></span>
+<span id="cb11-13"><a href="#cb11-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">}</span></span>
+<span id="cb11-14"><a href="#cb11-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">expr</span> <span class="kw">{[</span>point_in_triangle <span class="dt">$px</span> <span class="dt">$py</span> <span class="dt">$t1</span> <span class="dt">$t2</span> <span class="dt">$t3</span><span class="kw">]</span> ? -<span class="dt">$min_distance</span> : <span class="dt">$min_distance</span><span class="kw">}</span></span>
+<span id="cb11-15"><a href="#cb11-15" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
+<p><strong>TIP 672</strong></p>
+<div class="sourceCode" id="cb12"><pre
+class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb12-1"><a href="#cb12-1" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span> calculate_edge_distance_672 <span class="kw">{</span>px py t1 t2 t3<span class="kw">}</span> <span class="kw">{</span></span>
+<span id="cb12-2"><a href="#cb12-2" aria-hidden="true" tabindex="-1"></a>    <span class="kw">set</span> edges <span class="kw">[list</span> <span class="kw">[list</span> <span class="dt">$t1</span> <span class="dt">$t2</span><span class="kw">]</span> <span class="kw">[list</span> <span class="dt">$t2</span> <span class="dt">$t3</span><span class="kw">]</span> <span class="kw">[list</span> <span class="dt">$t3</span> <span class="dt">$t1</span><span class="kw">]]</span></span>
+<span id="cb12-3"><a href="#cb12-3" aria-hidden="true" tabindex="-1"></a>    <span class="kw">set</span> min_distance <span class="dv">999999999</span></span>
+<span id="cb12-4"><a href="#cb12-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">foreach</span> edge <span class="dt">$edges</span> <span class="kw">{</span></span>
+<span id="cb12-5"><a href="#cb12-5" aria-hidden="true" tabindex="-1"></a>        <span class="kw">lassign</span> <span class="dt">$edge</span> p1 p2</span>
+<span id="cb12-6"><a href="#cb12-6" aria-hidden="true" tabindex="-1"></a>        <span class="kw">lassign</span> <span class="dt">$p1</span> x1 y1</span>
+<span id="cb12-7"><a href="#cb12-7" aria-hidden="true" tabindex="-1"></a>        <span class="kw">lassign</span> <span class="dt">$p2</span> x2 y2</span>
+<span id="cb12-8"><a href="#cb12-8" aria-hidden="true" tabindex="-1"></a>        <span class="kw">set</span> A $((<span class="dt">$y2</span>-<span class="dt">$y1</span>))</span>
+<span id="cb12-9"><a href="#cb12-9" aria-hidden="true" tabindex="-1"></a>        <span class="kw">set</span> B $((<span class="dt">$x1</span>-<span class="dt">$x2</span>))</span>
+<span id="cb12-10"><a href="#cb12-10" aria-hidden="true" tabindex="-1"></a>        <span class="kw">set</span> C $((<span class="dt">$x2</span>*<span class="dt">$y1</span> - <span class="dt">$x1</span>*<span class="dt">$y2</span>))</span>
+<span id="cb12-11"><a href="#cb12-11" aria-hidden="true" tabindex="-1"></a>        <span class="kw">set</span> distance $((abs(<span class="dt">$A</span>*<span class="dt">$px</span> + <span class="dt">$B</span>*<span class="dt">$py</span> + <span class="dt">$C</span>) / hypot(<span class="dt">$A</span>, <span class="dt">$B</span>)))</span>
+<span id="cb12-12"><a href="#cb12-12" aria-hidden="true" tabindex="-1"></a>        <span class="kw">if</span> <span class="kw">{</span><span class="dt">$distance</span> &lt; <span class="dt">$min_distance</span><span class="kw">}</span> <span class="kw">{set</span> min_distance <span class="dt">$distance</span><span class="kw">}</span></span>
+<span id="cb12-13"><a href="#cb12-13" aria-hidden="true" tabindex="-1"></a>    <span class="kw">}</span></span>
+<span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">return</span> $((<span class="kw">[</span>point_in_triangle <span class="dt">$px</span> <span class="dt">$py</span> <span class="dt">$t1</span> <span class="dt">$t2</span> <span class="dt">$t3</span><span class="kw">]</span> ? -<span class="dt">$min_distance</span> : <span class="dt">$min_distance</span>))</span>
+<span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
+<p><strong>TIP 759 (as published in section E,
+<code>calculate_edge_distance_Arith</code>)</strong></p>
+<div class="sourceCode" id="cb13"><pre
+class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span> calculate_edge_distance_Arith <span class="kw">{</span>px py t1 t2 t3<span class="kw">}</span> <span class="kw">{</span>(</span>
+<span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>       <span class="co"># Arithmetic Syntax</span></span>
+<span id="cb13-3"><a href="#cb13-3" aria-hidden="true" tabindex="-1"></a>        edges = ((<span class="dt">$t1</span>,<span class="dt">$t2</span>),(<span class="dt">$t2</span>,<span class="dt">$t3</span>),(<span class="dt">$t3</span>,<span class="dt">$t1</span>));</span>
+<span id="cb13-4"><a href="#cb13-4" aria-hidden="true" tabindex="-1"></a>        min_distance = <span class="dv">999999999</span>;</span>
+<span id="cb13-5"><a href="#cb13-5" aria-hidden="true" tabindex="-1"></a>       <span class="kw">[</span># Command Syntax</span>
+<span id="cb13-6"><a href="#cb13-6" aria-hidden="true" tabindex="-1"></a>           <span class="kw">foreach</span> edge <span class="dt">$edges</span> <span class="kw">{</span>(</span>
+<span id="cb13-7"><a href="#cb13-7" aria-hidden="true" tabindex="-1"></a>              <span class="co"># Arithmetic Syntax</span></span>
+<span id="cb13-8"><a href="#cb13-8" aria-hidden="true" tabindex="-1"></a>              <span class="kw">[</span> # Command Syntax</span>
+<span id="cb13-9"><a href="#cb13-9" aria-hidden="true" tabindex="-1"></a>                 <span class="kw">lassign</span> <span class="dt">$edge</span> p1 p2</span>
+<span id="cb13-10"><a href="#cb13-10" aria-hidden="true" tabindex="-1"></a>                 <span class="kw">lassign</span> <span class="dt">$p1</span> x1 y1</span>
+<span id="cb13-11"><a href="#cb13-11" aria-hidden="true" tabindex="-1"></a>                 <span class="kw">lassign</span> <span class="dt">$p2</span> x2 y2      <span class="kw">]</span> ;</span>
+<span id="cb13-12"><a href="#cb13-12" aria-hidden="true" tabindex="-1"></a>              A = <span class="dt">$y2</span>-<span class="dt">$y1</span>; B = <span class="dt">$x1</span>-<span class="dt">$x2</span>;</span>
+<span id="cb13-13"><a href="#cb13-13" aria-hidden="true" tabindex="-1"></a>              C = <span class="dt">$x2</span>*<span class="dt">$y1</span> - <span class="dt">$x1</span>*<span class="dt">$y2</span>;</span>
+<span id="cb13-14"><a href="#cb13-14" aria-hidden="true" tabindex="-1"></a>              distance = abs(<span class="dt">$A</span> * <span class="dt">$px</span> + <span class="dt">$B</span> * <span class="dt">$py</span> + <span class="dt">$C</span>) / hypot(<span class="dt">$A</span>, <span class="dt">$B</span>);</span>
+<span id="cb13-15"><a href="#cb13-15" aria-hidden="true" tabindex="-1"></a>              <span class="dt">$distance</span> &lt; <span class="dt">$min_distance</span> ? (min_distance = <span class="dt">$distance</span>) :;</span>
+<span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>         )<span class="kw">}]</span>;</span>
+<span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>       <span class="kw">[</span>point_in_triangle <span class="dt">$px</span> <span class="dt">$py</span> <span class="dt">$t1</span> <span class="dt">$t2</span> <span class="dt">$t3</span><span class="kw">]</span> ? -<span class="dt">$min_distance</span> : <span class="dt">$min_distance</span></span>
+<span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>)<span class="kw">}</span></span></code></pre></div>
+<p><strong>Calc module</strong> (<code>proc=</code>; the edge function
+written in the Calc style)</p>
+<div class="sourceCode" id="cb14"><pre
+class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span>= calculate_edge_distance_Calc <span class="kw">{</span>px py t1 t2 t3<span class="kw">}</span> <span class="kw">{</span></span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    : edges = <span class="kw">list</span>(<span class="kw">list</span>(t1,t2), <span class="kw">list</span>(t2,t3), <span class="kw">list</span>(t3,t1))</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    : min_distance = <span class="dv">999999999</span></span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">foreach</span> edge <span class="dt">$edges</span> <span class="kw">{</span></span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>        <span class="kw">lassign</span> <span class="dt">$edge</span> p1 p2</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>        <span class="kw">lassign</span> <span class="dt">$p1</span> x1 y1</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>        <span class="kw">lassign</span> <span class="dt">$p2</span> x2 y2</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>        : <span class="kw">{</span></span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>            A = y2-y1;</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>            B = x1-x2;</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>            C = x2*y1 - x1*y2;</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>            distance = abs(A*px + B*py + C) / hypot(A, B);</span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>            distance &lt; min_distance ? (min_distance = distance) : <span class="dv">0</span></span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>        <span class="kw">}</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">}</span></span>
+<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    : point_in_triangle(px, py, t1, t2, t3) ?<span class="ot"> -min_distance</span> : min_distance</span>
+<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
+<p><em>What Calc is.</em> It is a small module written in plain Tcl by
+Eric T. (on top of Colin Macleod’s prototype expression parser; <a
+href="https://github.com/rocketship88/colin-parser"
+class="uri">https://github.com/rocketship88/colin-parser</a>). It needs
+no change to Tcl. The command <code>:</code> takes an expression in
+which variables are bare names (no <code>$</code>) and which can call
+functions, including Tcl procs with numeric arguments, as in
+<code>sgn(px, py, ...)</code>. <code>proc=</code> rewrites those
+expressions when the proc is defined, so they run as compiled code.
+<code>Calc::transformProcs name ...</code> does the same to procs that
+are already defined. Claude wrote the first Calc version of this
+function; Eric T. then changed it to use <code>list(list(...))</code>
+for the edges and to call the helper as a function. The function and
+variable names match TIP 759’s, and it ends with a <code>? :</code>
+expression, as TIP 759’s does, so there is no <code>if</code> or
+<code>return</code>. The current GitHub version of the module is needed
+for the long <code>||</code>/<code>&amp;&amp;</code> line in the helper
+(a label clash when several <code>&amp;&amp;</code>/<code>||</code>
+occurred in one proc was found while preparing this page and fixed in
+commit <code>e07f433</code>).</p>
+<p><em>Limits.</em> A Calc expression cannot contain
+<code>[command]</code> substitution, so a call to a Tcl command is
+written as a function call, as <code>point_in_triangle(...)</code> is
+here. A <code>? :</code> needs both branches, so TIP 759’s
+<code>cond ? (x = y) :;</code> with nothing after the colon is written
+<code>cond ? (x = y) : 0</code>. Arrays are read-only in Calc, and the
+list unpacking (<code>lassign</code>) is left as plain Tcl here.</p>
+<p>All four edge versions give <code>-0.14142135623730948</code> for
+<code>.5 .3 {0.0 0.0} {1.0 0.0} {0.0 1.0}</code>, the number published
+in TIP 759, and the plain, 672 and Calc versions all give
+<code>2.0</code> for a point outside the triangle (<code>2 2</code>).
+The Calc versions of the two helpers were also run under the plain and
+672 edge functions, in place of the plain helpers, over 42 points with
+identical results, and the Calc helpers agree with the plain helpers on
+a grid of 36 points.</p>
+<p>The edge function only (the helpers are not counted):</p>
+<table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+</colgroup>
+<thead>
+<tr class="header">
+<th></th>
+<th>plain</th>
+<th>672</th>
+<th>759</th>
+<th>Calc</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>non-comment lines</td>
+<td>15</td>
+<td>15</td>
+<td>16</td>
+<td>17</td>
+</tr>
+<tr class="even">
+<td><code>$</code> characters</td>
+<td>35</td>
+<td>40</td>
+<td>35</td>
+<td>4</td>
+</tr>
+<tr class="odd">
+<td>characters, as printed (spaces, indentation and comments
+included)</td>
+<td>591</td>
+<td>578</td>
+<td>724</td>
+<td>557</td>
+</tr>
+<tr class="even">
+<td>characters, comment lines removed</td>
+<td>591</td>
+<td>578</td>
+<td>663</td>
+<td>557</td>
+</tr>
+<tr class="odd">
+<td>characters, each separator counted as one (a run of whitespace, a
+line break, or <code>,</code> between arguments)</td>
+<td>506</td>
+<td>493</td>
+<td>486</td>
+<td>430</td>
+</tr>
+<tr class="even">
+<td>characters, no whitespace at all (a lower bound)</td>
+<td>424</td>
+<td>415</td>
+<td>404</td>
+<td>359</td>
+</tr>
+</tbody>
+</table>
+<p><em>On size:</em> the first character row counts everything printed,
+including the indentation and the two comment lines in the TIP 759 text,
+which is why 759 looks longest there. In Tcl the spaces between words
+are required, so ignoring whitespace entirely is too generous; the row
+that counts each separator as one character keeps them (in Calc the
+argument separator is a comma, <code>f(a, b)</code>, where Tcl uses a
+space, <code>f a b</code>, so <code>,</code> is counted as one
+character) (it also keeps a few spaces around operators that are
+optional). By that measure the plain, 672 and 759 versions are close,
+with 759 slightly the shortest of them, and Calc is the shortest.</p>
+<p><em>Eric T.’s notes on the Calc version.</em> The biggest cost for
+Calc is the word <code>list</code>, written four times in the
+<code>edges</code> line. He finds that line easier to read anyway: it is
+plainly three lists inside one list, because there are no <code>$</code>
+to clutter it and the commas are small and do not hide what is there.
+The line count could also be reduced by putting <code>: {</code> on the
+same line as the first statement and the closing <code>}</code> at the
+end of the last one, but he prefers to keep those lines because the
+space helps to see the block, so they are left in.</p>
+<p><em>On <code>$</code>:</em> Florent is right that
+<code>$((...))</code> adds <code>$</code> characters. In this function
+it goes from 35 to 40, one for each expression turned into a
+substitution. Calc has the fewest <code>$</code> (its variables are
+bare), at the price of a separate module and its own small language.
+Whether any of this looks worse is a matter of taste, as Florent says,
+and this is the real function so that others can judge.</p>
+<p><strong>Rough timing.</strong> Claude timed one call of each edge
+function (inside point <code>.5 .3</code>), 20,000 calls per sample,
+median of 9 samples, and repeated that four times. The figures are
+microseconds per call, as the lowest and highest of the four medians.
+The first three rows ran on the TIP 672 build (Tcl 9.1.1) and the last
+three on the <code>tip-759b_tcl90</code> build (Tcl 9.0.5). The plain,
+672 and 759 rows use the plain helpers; the Calc rows use the Calc
+helpers. Calibration: an empty compiled <code>for</code> loop runs at
+about 20 ns per iteration on both builds (19.6 to 20.5), so the two
+builds are about the same speed, but they are different Tcl versions and
+this is not a controlled benchmark.</p>
+<table>
+<thead>
+<tr class="header">
+<th>build</th>
+<th>version</th>
+<th>µs per call</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>9.1.1</td>
+<td>plain</td>
+<td>3.70 – 3.80</td>
+</tr>
+<tr class="even">
+<td>9.1.1</td>
+<td>672</td>
+<td>3.57 – 3.76</td>
+</tr>
+<tr class="odd">
+<td>9.1.1</td>
+<td>Calc</td>
+<td>3.83 – 4.03</td>
+</tr>
+<tr class="even">
+<td>9.0.5</td>
+<td>plain</td>
+<td>3.35 – 3.58</td>
+</tr>
+<tr class="odd">
+<td>9.0.5</td>
+<td>759</td>
+<td>3.50 – 3.68</td>
+</tr>
+<tr class="even">
+<td>9.0.5</td>
+<td>Calc</td>
+<td>3.49 – 3.65</td>
+</tr>
+<tr class="odd">
+<td>8.6.14</td>
+<td>plain</td>
+<td>about 5.0 (best sample of 25)</td>
+</tr>
+<tr class="even">
+<td>8.6.14</td>
+<td>Calc</td>
+<td>about 5.2 (best sample of 25)</td>
+</tr>
+</tbody>
+</table>
+<p>Calc, being plain Tcl, was also run on Tcl 8.6.14 (64-bit, from the
+Ubuntu package), where TIP 672 and TIP 759 do not exist: the page’s Calc
+code gives the same two results there, and the module’s own test file
+(<code>calc.test</code>, 173 tests) passes with 0 failures. The machine
+was noisier during that run, with medians between 5.2 and 6.0 µs, so the
+two 8.6 rows are the best single sample of 25 and are only a rough
+guide. 8.6 itself is slower than 9.x here, so those rows should not be
+compared with the others.</p>
+<p>On each of the 9.x builds the versions are within about 5% of each
+other, which is about the size of the run-to-run noise, so no version is
+clearly faster. These numbers say nothing about large inputs or other
+functions.</p>
+<hr />
+<h2 id="same-bytecode">10. Same bytecode</h2>
+<p><code>set A [expr {$y2-$y1}]</code> and
+<code>set A $(($y2-$y1))</code> compile to the same instructions:</p>
+<pre><code>loadScalar %v0   # y2
+loadScalar %v1   # y1
+sub
+storeScalar %v2  # A
+done</code></pre>
+<p>(The only difference in the <code>disassemble</code> listing is a
+label line.) This is because <code>$((...))</code> is parsed once as the
+argument of a braced <code>expr</code>, and the existing compiler does
+the rest.</p>
+<p>The Calc versions were disassembled too. A Calc-compiled
+<code>sgn</code> gives the same instruction listing as the plain
+<code>sgn</code>, once addresses and source text are removed. The Calc
+<code>point_in_triangle</code> is the same except in its
+<code>&amp;&amp;</code>/<code>||</code> part: the module writes those
+out as its own jump sequences, so its listing is 139 lines against 129
+for plain Tcl, about 8% longer. The three <code>lassign</code> lines and
+the calls to <code>sgn</code> are the same, apart from the name being
+written <code>::sgn</code> and Calc not emitting the per-command
+bookkeeping instruction.</p>
+<hr />
+<h3 id="bytecode-of-the-whole-edge-function">Bytecode of the whole edge
+function</h3>
+<p>Claude disassembled <code>calculate_edge_distance_Plain</code>,
+<code>_672</code>, <code>_Calc</code> and TIP 759’s <code>_Arith</code>
+(each calling the plain helpers). Counts are only comparable within one
+build, since the 9.1.1 and 9.0.5 builds encode some instructions
+differently, so each version is compared with plain Tcl on its own
+build.</p>
+<table>
+<thead>
+<tr class="header">
+<th>build</th>
+<th>version</th>
+<th>instructions</th>
+<th>commands compiled</th>
+<th>bytes of code</th>
+</tr>
+</thead>
+<tbody>
+<tr class="odd">
+<td>9.1.1</td>
+<td>plain</td>
+<td>133</td>
+<td>22</td>
+<td>569</td>
+</tr>
+<tr class="even">
+<td>9.1.1</td>
+<td>672</td>
+<td>134</td>
+<td>18</td>
+<td>570</td>
+</tr>
+<tr class="odd">
+<td>9.1.1</td>
+<td>Calc</td>
+<td>123</td>
+<td>12</td>
+<td>491</td>
+</tr>
+<tr class="even">
+<td>9.0.5</td>
+<td>plain</td>
+<td>133</td>
+<td>22</td>
+<td>383</td>
+</tr>
+<tr class="odd">
+<td>9.0.5</td>
+<td>759</td>
+<td>138</td>
+<td>5</td>
+<td>318</td>
+</tr>
+</tbody>
+</table>
+<ul>
+<li><strong>672 against plain:</strong> the same instructions, in the
+same order. The one extra instruction is a second <code>done</code> at
+the end, which comes from the <code>return</code> in the 672 version,
+not from <code>$((...))</code>. The <code>startCommand</code>
+bookkeeping instructions say “1 command” instead of “2” because the
+<code>set A [expr ...]</code> pair became the single command
+<code>set A $((...))</code>.</li>
+<li><strong>Calc against plain:</strong> 10 fewer instructions. Most of
+the saving is <code>startCommand</code> (7 against 14), since a
+<code>: { ... }</code> block is one command to Tcl, and the final
+<code>tryCvtToNumeric</code> is gone. Assignments are stored straight
+into the local variable slots (<code>storeScalar</code>), as in plain
+Tcl, except one: the assignment inside
+<code>cond ? (min_distance = distance) : 0</code> is stored by name
+(<code>storeStk</code>), which is a slower path.</li>
+<li><strong>759 against plain:</strong> 5 more instructions. Its whole
+body is 5 commands, so it needs few <code>startCommand</code>
+instructions (4 against 14), but 7 of its assignments are stored by name
+(<code>storeStk</code>) instead of into the local variable slots. The
+loads still use the local slots. It also has 5 more <code>pop</code> and
+8 more <code>push</code>.</li>
+</ul>
+<p>The bytes row says little about speed: it mostly reflects how many
+<code>startCommand</code> instructions (9 bytes each) a version
+needs.</p>
+<h2 id="what-these-examples-do-not-cover">What these examples do not
+cover</h2>
+<p>TIP 759 adds more than a substitution: assignment, <code>;</code>,
+the comma list, arithmetic scripts and commands inside
+<code>expr</code>. 672 adds none of those, so no 672 versions of them
+were written. As far as can be seen the two ideas don’t conflict: the
+body of <code>$((...))</code> is handed to <code>expr</code>, so
+extensions to the <code>expr</code> language should be usable inside it
+too (this was not tried, since <code>expr</code> doesn’t have them).</p>
+</body>
+</html>
