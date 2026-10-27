@@ -239,7 +239,7 @@ instructions executed, running through `eval` is about 3% cheaper and
 compiling in a proc about 4% cheaper.
 
 The change comes with documentation (`Tcl.n`, `subst.n`, `ParseCmd.3`,
-`SubstObj.3`) and 111 new tests in `parse.test`, `subst.test`,
+`SubstObj.3`) and 116 new tests in `parse.test`, `subst.test`,
 `compile.test` and `parseOld.test`. The full test suite passes in both
 spellings on Linux and Windows. The new code was also run under Valgrind,
 AddressSanitizer and the Tcl memory-debug build with no errors, and checked
@@ -250,6 +250,12 @@ Expression substitutions nested inside one another are limited by the same
 nesting check that limits nested commands (`interp recursionlimit`): very deep
 nesting gives the error "too many nested compilations (infinite loop?)" with
 the error code `TCL LIMIT STACK`, instead of overflowing the C stack.
+
+The scan that finds the end of `$((...))` also follows `[` inside the body, and
+that scan is limited to 1000 levels of nested `[` (the constant
+`EXPR_SUBST_MAX_SCAN_DEPTH` in `tclParse.c`, the same number as Tcl's default
+recursion limit). Deeper nesting gives the error "expression substitution nested
+too deeply", again with the error code `TCL LIMIT STACK`.
 
 # Copyright
 

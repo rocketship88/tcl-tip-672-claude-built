@@ -24,7 +24,7 @@ Full suites after this change: 0 failed in both builds (509,461 tests each).
 
 Update (Oct 24, evening): code is unchanged since the message change above (tclParse.c md5 7d9e28c9543e3d739b3ea5a4ed696489).
   * One new test: tests/parse.test parse-22.109 (line numbers after a continuation line). Copy new/tests/parse.test.
-    111 new tests in total (107, plus parse-22.110 to 22.113 for the nesting depth guard) across parse.test, subst.test, compile.test and parseOld.test.
+    116 new tests in total (107, plus parse-22.110 to 22.113 for the compiler nesting guard and parse-22.114 to 22.118 for the scanner depth limit) across parse.test, subst.test, compile.test and parseOld.test.
   * Memory checks on the final code, both builds: Valgrind, AddressSanitizer and the Tcl memory-debug build are clean (the only
     report is a 48-byte leak in core Tcl, TclArgumentBCEnter, which also shows up without this feature). Logs in extras/valgrind/final_*.txt,
     scripts in extras/scripts/valgrind_asan_mem/.
@@ -35,8 +35,7 @@ Update (Oct 24, evening): code is unchanged since the message change above (tclP
 ==================================================================================
 SITUATION AND STRATEGY (from the user, Oct 24 2026; keep this up to date)
 ==================================================================================
-Who/what: user is rocketship98 (Fossil user; GitHub rocketship88; Tcl core fossil user also "core5"
-appears in old timelines). This project is the implementation of TIP 672 ($(expr) / $((expr)) = [expr {expr}])
+Who/what: user is rocketship98 (Fossil user; GitHub rocketship88). This project is the implementation of TIP 672 ($(expr) / $((expr)) = [expr {expr}])
 in the real parser; code frozen (generic/tclParse.c md5 7d9e28c9543e3d739b3ea5a4ed696489).
 
 Why 672: the user's other expression-related efforts are unlikely to be accepted:
@@ -143,4 +142,100 @@ FOSSIL PUSH (Oct 25, 2026): nesting depth guard committed on tip-672-v2 in D:\re
 
 TIP PUSHED AGAIN (Oct 25, 2026): tips-work check-in 3d317d1bc0d1e4730f9ded4982b38ac3ce149b05110f9e930b76cc14a25b0fd7 (TIP 672: 111 tests, nesting-limit paragraph, testing sentence made accurate: the nesting check was run under AddressSanitizer and the memory-debug build only). Pushed to core.tcl-lang.org/tips. No email sent about the nesting fix (user decided it was not needed; the check-in comment says it was found using the review tool).
 
-LESSON (user preference): when giving commands to run in a cmd window, put each command in its own card (a tabbed card via the compose widget, one command per tab, labelled 1, 2, 3...), because the user can copy only one thing at a time. Say which cards to run together and which to hold until a check passes.
+LESSON (user preference, updated Oct 26, 2026): when giving several commands for a cmd window, put them in ONE card, one command per line (the user runs them with a private helper script). Say which to run together and which to hold until a check passes.
+
+FOSSIL CHECKOUTS ON THE USER'S MACHINE (Oct 26, 2026). A checkout folder remembers its repository (hidden file .fslckout); "fossil status" or "fossil info" inside a folder shows "repository:". "fossil all ls" lists the repositories, "fossil all ls -c" lists the checkout folders but NOT which goes with which. Config db: C:/Users/<windows-user>/AppData/Local/_fossil. fossil.exe is d:\fossil.
+  D:\repos\tcl-672     -> D:/repos/tcl.fossil   branch tip-672-v2   checkout 24c265df9a (nesting guard, Oct 26)   <- core work for TIP 672
+  D:\repos\tcl-trunk   -> D:/repos/tcl.fossil   branch lrange-inline checkout 5c9d6b1830 (Oct 7)               <- other work (listRange), do not use for TIP 672
+  D:\repos\tips-work   -> D:/repos/tips.fossil  branch trunk/main    checkout 3d317d1bc0 (TIP 672 text, Oct 26) <- the TIP text
+  D:\repos\tk-561-revised -> D:/repos/tk.fossil branch tip-561-revised checkout a6b7aa5f93 (Aug 23)             <- TIP 561, not ours
+  D:\repos\tk-work     -> D:/repos/tk.fossil    branch tip-561-autoload checkout 692e0f9fbf (2022-10-21)        <- TIP 561, not ours
+Rule: core commands only in D:\repos\tcl-672, tips commands only in D:\repos\tips-work. tcl-672 is based on trunk commit d6dd6d0f71 (dkf, Oct 24, "More marking of default switch branches as unreachable"), so the TCL_UNREACHABLE() lines are core's, not ours. tcl.fossil has 42786 check-ins; "fossil leaves" lists 381 leaves (use "leaves -multiple" for forks).
+
+--- paste 1 (user, Oct 26 21:38): tips-work status, all ls, all ls -c, core info ---
+D:\repos>cd /d D:\repos\tips-work
+
+D:\repos\tips-work>d:\fossil status
+repository:   D:/repos/tips.fossil
+local-root:   D:/repos/tips-work/
+config-db:    C:/Users/<windows-user>/AppData/Local/_fossil
+checkout:     3d317d1bc0d1e4730f9ded4982b38ac3ce149b05 2026-10-26 03:08:35 UTC
+parent:       19f86f153e804425a4707172ad945f409f9809a4 2026-10-25 19:58:40 UTC
+tags:         trunk, main
+comment:      TIP 672: 111 tests; note the nesting limit for nested expression substitutions (user:
+              rocketship98)
+
+D:\repos\tips-work>d:\fossil all ls
+D:/repos/tcl.fossil
+D:/repos/tips.fossil
+D:/repos/tk.fossil
+
+D:\repos\tips-work>d:\fossil all ls -c
+D:/repos/tcl-672/
+D:/repos/tcl-trunk/
+D:/repos/tips-work/
+D:/repos/tk-561-revised/
+D:/repos/tk-work/
+
+D:\repos\tips-work>cd /d D:\repos\tcl-672
+
+D:\repos\tcl-672>d:\fossil info
+project-name: Tcl Source Code
+repository:   D:/repos/tcl.fossil
+local-root:   D:/repos/tcl-672/
+config-db:    C:/Users/<windows-user>/AppData/Local/_fossil
+project-code: 1ec9da4c469c29f4717e2a967fe6b916d9c8c06e
+checkout:     24c265df9af13a72aa9778ef74a7ef8e10f71209 2026-10-26 02:57:40 UTC
+parent:       b6eed8b994e311e8bacd269f58339db83a23bc0f 2026-10-24 23:36:48 UTC
+tags:         tip-672-v2
+comment:      Guard against stack overflow from deeply nested $((expr)): apply the same nesting limit as
+              TclCompileScript (found using the review tool). Adds parse-22.110 to 22.113. (user: <windows-user>)
+check-ins:    42786
+
+D:\repos\tcl-672>
+
+--- paste 2 (user, Oct 26 21:41): status in the other three checkouts ---
+D:\repos\tcl-672>cd /d D:\repos\tcl-trunk
+
+D:\repos\tcl-trunk>d:\fossil status
+repository:   D:/repos/tcl.fossil
+local-root:   D:/repos/tcl-trunk/
+config-db:    C:/Users/<windows-user>/AppData/Local/_fossil
+checkout:     5c9d6b1830081b6e69843bc274b4929ab764e87d 2026-10-07 06:22:28 UTC
+parent:       a675fa551b343746eef1771efadac48e351ede13 2026-10-05 16:39:21 UTC
+tags:         lrange-inline
+comment:      Add listRange instruction so [lrange] with non-literal indices compiles inline. Code and
+              tests written by Claude (Anthropic); reviewed, built and tested by EricT. (user:
+              rocketship98)
+
+D:\repos\tcl-trunk>cd /d D:\repos\tk-561-revised
+
+D:\repos\tk-561-revised>d:\fossil status
+repository:   D:/repos/tk.fossil
+local-root:   D:/repos/tk-561-revised/
+config-db:    C:/Users/<windows-user>/AppData/Local/_fossil
+checkout:     a6b7aa5f930b5ab83515d7dc07fd1c35d1d8eeb2 2026-08-23 19:32:23 UTC
+parent:       b91105a6a0a8eee493ea7776897d6808d86ad788 2026-08-11 19:21:26 UTC
+tags:         tip-561-revised
+comment:      Remove unused global variable _ from initial tk_library check (user: rocketship98)
+
+D:\repos\tk-561-revised>cd /d D:\repos\tk-work
+
+D:\repos\tk-work>d:\fossil status
+repository:   D:/repos/tk.fossil
+local-root:   D:/repos/tk-work/
+config-db:    C:/Users/<windows-user>/AppData/Local/_fossil
+checkout:     692e0f9fbf0579e1b5a71427d1bd07c4c6f0bae0 2022-10-21 13:54:44 UTC
+parent:       49db43fe55deb4700ba17087fcc7231d3a42d01f 2022-10-20 21:51:14 UTC
+tags:         tip-561-autoload
+comment:      The console window should not pop up when the initial command is something other than
+              [console show]. (user: sbron)
+
+D:\repos\tk-work>
+--- end of pastes ---
+
+v2.12 (Oct 27, 2026): SCANNER DEPTH LIMIT ADDED (closes the KNOWN LIMIT of v2.11). SkipExprSubstScan (generic/tclParse.c) now takes a level argument and stops at EXPR_SUBST_MAX_SCAN_DEPTH = 1000 nested [ (a plain #define, #ifndef-guarded, so the core team can change it; 1000 is Tcl's default recursionlimit). Too-deep input returns a sentinel (EXPR_SUBST_TOO_DEEP) instead of NULL, so it is not confused with a missing ")"; the caller (the $( / $(( branch of Tcl_ParseVarName) reports "expression substitution nested too deeply" with error code TCL LIMIT STACK (errorType TCL_PARSE_SYNTAX, not "incomplete"). Both spellings share the code (syntax-checked with -DTCL_EXPR_SUBST_PARENS=1). New tests parse-22.114 (100 nested [expr ...] inside the body still work), 22.115 (exactly 1000 levels: ordinary "missing )"), 22.116 (1001 levels: the new error), 22.117 (2,000,000 levels: the new error, no crash), 22.118 (the same inside a double-quoted string in the body). Before the change the interpreter segfaulted at about 300,000 nested [ (v2.11); 5,000,000 now gives the error. Linux, tcltest build: parse.test 363 total, 354 passed, 9 skipped, 0 failed; parseOld 0 failed; subst 0 failed; parseExpr 0 failed; expr 0 failed; compile 0 failed; basic 0 failed; info 0 failed. Not re-run for this change: the full suite, Windows, both spellings in full, AddressSanitizer, Valgrind, mutation testing. Files changed since v2.11: generic/tclParse.c (md5 e30bfbd51c776f130e07c783902f4bdc), tests/parse.test (md5 1e74286ee0fc6a65d2a75f4ec62a7458); extras/expr-subst.patch regenerated (15 files, +1264 -22). TO DO for the user: copy generic/tclParse.c and tests/parse.test into D:\repos\tcl-672, build and run parse.test, parseOld.test, subst.test and compile.test on Windows, commit on tip-672-v2, push; update the TIP in tips-work (116 tests and the scanner sentence, see TIP-672-updated.md).
+
+STEPPER v2.12 (Oct 27, 2026): rebuilt for the scanner depth limit (extras/parser_stepper.html; sources in extras/scripts/stepper/: template.html, build_page.py, review_notes.py changed; data1.json and data2.json unchanged, regenerated from the new builds and identical apart from memory addresses). (1) Every line number the trace and the code snippets use in tclParse.c was moved to the new file (the file grew by 21 lines near the top and about 11 more inside the scanner and Tcl_ParseVarName). (2) A new step at the start of every SkipExprSubstScan call, "Depth check: level n, limit 1000", highlights the new if (level > EXPR_SUBST_MAX_SCAN_DEPTH) line; the call-stack panel and the variable list now show each call's level. (3) The code view of the build-switch block now includes the new constant and the sentinel. (4) The review notes for tclParse.c hunks 1, 3 and 4 were rewritten (the v2.11 "known limit" text is replaced by a description of the limit); the hunk count is still 19. NOT added: a scenario that actually reaches 1001 levels (too many steps to show), so the new "nested too deeply" branch in Tcl_ParseVarName is visible only in the code view and the review, not in a trace. Checked: the page's own self-check ran all 530 scenario/option traces in both builds, none failed; the only console error in the sandbox is the Google Fonts request. AFTER ANY STEPPER CHANGE: copy extras/parser_stepper.html to the GitHub repo (the Pages copy is not updated by this package).
+
+EXAMPLES PAGE (Oct 27, 2026): TIP672-examples.html is now in the top level of the package (the page that was uploaded to GitHub Pages: https://rocketship88.github.io/tcl-tip-672-claude-built/TIP672-examples.html). It compares plain Tcl, TIP 672, TIP 759 and the Calc module on the same functions, with character counts, rough timing and bytecode. The Markdown source is deliberately not included.

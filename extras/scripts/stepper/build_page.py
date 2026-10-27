@@ -4,28 +4,28 @@ def lines(f,a,b):
     L=open(G+f).read().split('\n')
     return [(n,L[n-1]) for n in range(a,b+1)]
 # (name,title,file,a,b)
-SN=[('pvn','Tcl_ParseVarName: start','tclParse.c',1578,1593),
-    ('hook','Tcl_ParseVarName: the new branch','tclParse.c',1655,1709),
-    ('fin','Tcl_ParseVarName: finish','tclParse.c',1775,1778),
-    ('scan','SkipExprSubstScan','tclParse.c',1345,1429),
-    ('arr','Tcl_ParseVarName: ordinary name path','tclParse.c',1710,1716),
-    ('arr2','Tcl_ParseVarName: array index','tclParse.c',1737,1753),
+SN=[('pvn','Tcl_ParseVarName: start','tclParse.c',1606,1621),
+    ('hook','Tcl_ParseVarName: the new branch','tclParse.c',1683,1748),
+    ('fin','Tcl_ParseVarName: finish','tclParse.c',1814,1817),
+    ('scan','SkipExprSubstScan','tclParse.c',1368,1457),
+    ('arr','Tcl_ParseVarName: ordinary name path','tclParse.c',1749,1755),
+    ('arr2','Tcl_ParseVarName: array index','tclParse.c',1776,1792),
     ('comp','TclCompileTokens','tclCompile.c',2876,2918),
-    ('run','TclSubstTokens','tclParse.c',2523,2588)]
+    ('run','TclSubstTokens','tclParse.c',2562,2627)]
 snips={}
 for n,t,f,a,b in SN:
     snips[n]={'title':t,'file':f,'lines':[[x,y] for x,y in lines(f,a,b)]}
     if n=='pvn': snips[n]['note']='unchanged: the start for every $'
 # sanity checks on the line numbers the JS trace uses
-chk={('scan',1353):'while (src < end)',('scan',1354):'switch',('scan',1355):"case '\\\\'",('scan',1361):"case '{'",
- ('scan',1365):'while (src < end)',('scan',1370):"'{'",('scan',1372):"'}'",('scan',1378):'return NULL',('scan',1382):"case '\"'",
- ('scan',1384):'*src != \'"\'',('scan',1389):"'['",('scan',1390):'SkipExprSubstScan',('scan',1401):"case '['",('scan',1402):'SkipExprSubstScan',
- ('scan',1407):"case '('",('scan',1409):'depth++',('scan',1412):"case ')'",('scan',1414):'depth == 0',('scan',1415):'return src',('scan',1417):'depth--',
- ('scan',1420):"case ']'",('scan',1422):'return src',('scan',1426):'src++',('scan',1428):'return NULL',
- ('hook',1672):'skip',('hook',1673):'FindExprSubstEnd',('hook',1675):'bodyEnd',('hook',1681):'TCL_PARSE_SYNTAX',('hook',1678):'ExprSubstSyntaxError',('hook',1685):'bodyEnd == NULL',('hook',1705):'EXPR_SUBST',('hook',1706):'start',('hook',1707):'size',('hook',1708):'numTokens',('hook',1709):'bodyEnd + skip',('pvn',1581):'TCL_TOKEN_VARIABLE',('pvn',1586):'src++',
+chk={('scan',1381):'while (src < end)',('scan',1382):'switch',('scan',1383):"case '\\\\'",('scan',1389):"case '{'",
+ ('scan',1393):'while (src < end)',('scan',1398):"'{'",('scan',1400):"'}'",('scan',1406):'return NULL',('scan',1410):"case '\"'",
+ ('scan',1412):'*src != \'"\'',('scan',1417):"'['",('scan',1418):'SkipExprSubstScan',('scan',1429):"case '['",('scan',1430):'SkipExprSubstScan',
+ ('scan',1435):"case '('",('scan',1437):'depth++',('scan',1440):"case ')'",('scan',1442):'depth == 0',('scan',1443):'return src',('scan',1445):'depth--',
+ ('scan',1448):"case ']'",('scan',1450):'return src',('scan',1454):'src++',('scan',1456):'return NULL',
+ ('hook',1700):'skip',('hook',1701):'FindExprSubstEnd',('hook',1714):'bodyEnd',('hook',1720):'TCL_PARSE_SYNTAX',('hook',1717):'ExprSubstSyntaxError',('hook',1724):'bodyEnd == NULL',('hook',1744):'EXPR_SUBST',('hook',1745):'start',('hook',1746):'size',('hook',1747):'numTokens',('hook',1748):'bodyEnd + skip',('pvn',1609):'TCL_TOKEN_VARIABLE',('pvn',1614):'src++',
  
- ('fin',1776):'size',('fin',1777):'numComponents',('arr',1711):'TCL_TOKEN_TEXT',('arr2',1737):'array =',('arr2',1750):'ParseTokens',
- ('comp',2876):'EXPR_SUBST',('comp',2889):'envPtr->line',('comp',2900):'numLevels',('comp',2909):'TclCompileExpr',('run',2558):'EXPR_SUBST',('run',2564):'Tcl_NewStringObj',('run',2569):'Tcl_ExprObj'}
+ ('fin',1815):'size',('fin',1816):'numComponents',('arr',1750):'TCL_TOKEN_TEXT',('arr2',1776):'array =',('arr2',1789):'ParseTokens',
+ ('comp',2876):'EXPR_SUBST',('comp',2889):'envPtr->line',('comp',2900):'numLevels',('comp',2909):'TclCompileExpr',('run',2597):'EXPR_SUBST',('run',2603):'Tcl_NewStringObj',('run',2608):'Tcl_ExprObj'}
 for (n,l),sub in chk.items():
     txt=dict((a,b) for a,b in snips[n]['lines']).get(l)
     assert txt is not None and sub in txt,(n,l,txt,sub)
@@ -73,7 +73,8 @@ for n,k in (('cexpr','TclCompileExpr'),('cexcmd','TclCompileExprCmd'),('cexw','T
     snips[n]={'title':k,'file':FUNCS[k]['file'],'lines':[[FUNCS[k]['a']+x,y] for x,y in enumerate(FUNCS[k]['lines'])]}
 print(LN)
 LP=open(G+'tclParse.c').read().split('\n')
-FUNCS['TCL_EXPR_SUBST_PARENS']={'a':118,'file':'tclParse.c','lines':LP[117:149]}
+_end=next(i for i,l in enumerate(LP) if '#define EXPR_SUBST_TOO_DEEP' in l)+1
+FUNCS['TCL_EXPR_SUBST_PARENS']={'a':118,'file':'tclParse.c','lines':LP[117:_end]}
 assert 'TCL_EXPR_SUBST_PARENS selects' in FUNCS['TCL_EXPR_SUBST_PARENS']['lines'][1]
 for n,v in FUNCS.items(): print(n,v['file'],v['a'],len(v['lines']))
 TCLH=open(G+'tcl.h').read()

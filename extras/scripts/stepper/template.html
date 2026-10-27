@@ -240,7 +240,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
 <main>
   <header class="top">
     <div class="topl">
-    <p class="ver mono">Version 2.11 &middot; Oct 25, 2026</p>
+    <p class="ver mono">Version 2.12 &middot; Oct 27, 2026</p>
     <h1>Tcl Expression Substitution <span id="ttlw">Stepper</span></h1>
     <p class="lede"><u class="choose">Choose either the review of the code changes or the step-by-step walkthrough.</u><br><span id="ledeT">Follow the parser through <code>$((expr))</code>, a shortcut for <code>[expr {expr}]</code>. Step through the real C code in <code>Tcl_ParseVarName</code> and the scanner that finds the closing parenthesis, watch the token array grow, then see the bytecode and result. The panes show the actual source lines and real output from a build of the modified trunk.</span></p>
     </div>
@@ -502,18 +502,18 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
       out.push(s); return s;
     }
     var frames = [];
-    function F() { return frames.map(function (f) { return {fn: 'SkipExprSubstScan', closer: f.closer, depth: f.depth, start: f.start}; }); }
+    function F() { return frames.map(function (f) { return {fn: 'SkipExprSubstScan', closer: f.closer, depth: f.depth, level: f.level, start: f.start}; }); }
     var scanFrom = -1;
     function reg(from, to, cls) { return {a: from, b: to, c: cls}; }
     var firstParen = d + 1;
 
     /* 1: token for $ */
     var tokVar = {type: 'variable', text: '$', nc: '?', cls: 'new'};
-    E('pvn', 1581, 'Tcl_ParseVarName: a token for the $',
+    E('pvn', 1609, 'Tcl_ParseVarName: a token for the $',
       'The word parser met a $ and called Tcl_ParseVarName. It starts by filling in a TCL_TOKEN_VARIABLE token whose start points at the $. Its size and numComponents are filled in at the very end.',
       {pos: d, reg: [reg(d, d + 1, 'dollar')], tokens: [tokVar], tokNote: 'being built',
        kv: {'src': 'at the $', numBytes: String(N - d)}});
-    E('pvn', 1586, 'Step past the $',
+    E('pvn', 1614, 'Step past the $',
       'src++ and numBytes-- move past the dollar sign. A second token (TEXT) is started for the variable name, but nothing has decided yet whether this is a name at all.',
       {pos: d + 1, reg: [reg(d, d + 1, 'dollar')], tokens: [tokVar], tokNote: 'being built',
        kv: {src: 'at "' + src[d + 1] + '"', numBytes: String(N - d - 1)}});
@@ -534,7 +534,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     }
     var condRows = cond(c0, cOne, build === 1 && cOne ? null : cTwo, accept);
     if (build === 1) condRows[2][1] = '(not evaluated)';
-    E('hook', 1655, 'Is this an expression substitution?',
+    E('hook', 1683, 'Is this an expression substitution?',
       'The new branch is tried before the ordinary variable-name branch. It needs the next character to be "(". In the default build the character after that must also be "(", which is what makes it $((. In the single-paren build any "(" is enough. The test on the build is a compile-time constant, so one half of the condition is dead code in each build.',
       {pos: d + 1, reg: [reg(d, d + 1, 'dollar')], tokens: [tokVar], tokNote: 'being built', cond: condRows,
        kv: {src: 'at "' + src[d + 1] + '"', numBytes: String(rest)}});
@@ -543,17 +543,17 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
 
     if (!accept) {
       /* the old path: empty array name */
-      E('arr', 1711, 'Not taken: the ordinary name path runs',
+      E('arr', 1750, 'Not taken: the ordinary name path runs',
         'In this build "$(" followed by something that is not "(" is still what it always was: a variable with the empty name and an array index. The name is empty, so the code takes the array branch and parses the text up to the ")" as an index with ParseTokens.',
         {pos: d + 1, reg: [reg(d, d + 1, 'dollar')], tokens: [tokVar], tokNote: 'being built', cond: condRows,
          kv: {name: '"" (empty)', array: '1'}});
       var tk = (realT || []).map(function (t) { return t; });
-      E('arr2', 1750, 'Parse the index as a word',
+      E('arr2', 1789, 'Parse the index as a word',
         'The text between the parentheses is parsed with the usual substitution rules (it is a word, not an expression), giving a TEXT token. The result is a TCL_TOKEN_VARIABLE for an array element, with an empty name token and one index token.',
         {pos: d + 2, reg: [reg(d, d + 1, 'dollar'), reg(d + 2, N, 'scan')], tokens: tk, tokNote: 'real testparser output', cond: condRows,
          kv: {name: '"" (empty)', array: '1', index: '1+2'}});
       var r = D2;
-      E('run', 2558, 'Result: a variable lookup, not an expression',
+      E('run', 2597, 'Result: a variable lookup, not an expression',
         'At run time the variable named "" (empty) is looked up with index 1+2. It does not exist. Use the single-paren build to see $(1+2) evaluate as an expression.',
         {pos: null, reg: [], tokens: tk, tokNote: 'real testparser output', res: {text: r.res, bad: r.rc !== 0, label: 'Result (real, error)'}});
       return finish(out);
@@ -562,15 +562,15 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     /* 4: call the scanner */
     var skip = build === 2 ? 2 : 1;
     var scanStart = firstParen + skip;
-    E('hook', 1672, 'skip = ' + skip + ' \u2192 ' + (skip === 2 ? '$((' : '$(') + ': how many "(" belong to the trigger',
+    E('hook', 1700, 'skip = ' + skip + ' \u2192 ' + (skip === 2 ? '$((' : '$(') + ': how many "(" belong to the trigger',
       'skip is the number of opening parentheses that belong to the trigger. It is a compile-time constant:  skip = 1 \u2192 $(  (single-paren build)   skip = 2 \u2192 $((  (default build).  This build: skip = ' + skip + ' \u2192 ' + (skip === 2 ? '$((' : '$(') + '. The scan starts after the trigger, and the body starts there too.',
       {pos: d + 1, reg: [reg(d, d + 1, 'dollar'), reg(firstParen, scanStart, 'scan')], tokens: [tokVar], tokNote: 'being built', cond: condRows, kv: {skip: skip + ' \u2192 ' + (skip === 2 ? '$((' : '$(')}});
-    var f0 = {closer: ')', depth: 0, start: scanStart};
+    var f0 = {closer: ')', depth: 0, level: 0, start: scanStart};
     frames.push(f0);
-    E('hook', 1673, 'FindExprSubstEnd(src + skip, end)',
+    E('hook', 1701, 'FindExprSubstEnd(src + skip, end)',
       'The code looks for the first ")" that balances the parentheses inside the body, starting just after the trigger. It calls FindExprSubstEnd, which is a one-line wrapper that calls SkipExprSubstScan with closer ")".',
       {pos: scanStart, reg: [reg(d, d + 1, 'dollar'), reg(firstParen, scanStart, 'scan')], tokens: [tokVar], tokNote: 'being built',
-       frames: F(), cond: condRows, kv: {closer: "')'", depth: '0'}});
+       frames: F(), cond: condRows, kv: {closer: "')'", depth: '0', level: '0'}});
 
     var found = -1;
     /* scanning, with grouping of ordinary characters */
@@ -578,14 +578,14 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
       var r = [reg(d, d + 1, 'dollar'), reg(firstParen, scanStart, 'scan'), reg(scanStart, cur, 'scan')];
       return r.concat(extra || []);
     }
-    var scanAll = function (from, closer, topLevel) {
+    var scanAll = function (from, closer, topLevel, level) {
       /* returns index of closer or -1 */
-      var f = {closer: closer, depth: 0, start: from};
+      var f = {closer: closer, depth: 0, level: level, start: from};
       if (!topLevel) frames.push(f); else f = f0;
       var j = from, res = -1;
       function st(ln, h, p, pos, extra, moreReg) {
         E('scan', ln, h, p, {pos: pos, reg: scanRegs(pos, extra).concat(moreReg || []), tokens: [tokVar], tokNote: 'being built',
-          frames: F(), kv: {closer: "'" + closer + "'", depth: String(f.depth), src: pos >= N ? 'at the end of the text' : 'at "' + src[pos] + '"'}});
+          frames: F(), kv: {closer: "'" + closer + "'", depth: String(f.depth), level: String(f.level), src: pos >= N ? 'at the end of the text' : 'at "' + src[pos] + '"'}});
       }
       function special(c) {
         if ('\\{"['.indexOf(c) >= 0) return true;
@@ -593,84 +593,86 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
         if (closer === ']' && c === ']') return true;
         return false;
       }
+      st(1377, 'Depth check: level ' + level + ', limit 1000',
+        'The first thing SkipExprSubstScan does is compare its level with EXPR_SUBST_MAX_SCAN_DEPTH (1000). The level counts how many nested "[" this call is inside: the call from FindExprSubstEnd is level 0 and every recursive call for a "[" adds one. ' + (level === 0 ? 'Level 0 is far below the limit, so the scan goes on. ' : 'This call is at level ' + level + ', still below the limit. ') + 'If the level were 1001 the call would return at once with EXPR_SUBST_TOO_DEEP, a pointer that is not NULL and not a position in the text, so that Tcl_ParseVarName can report "expression substitution nested too deeply" instead of "missing )". No example here gets anywhere near it.', from);
       loop: while (j < N) {
         var c = src[j];
         if (!special(c)) {
           var k = j; while (k < N && !special(src[k])) k++;
-          st(1426, 'Ordinary characters: ' + JSON.stringify(src.slice(j, k)).slice(1, -1),
+          st(1454, 'Ordinary characters: ' + JSON.stringify(src.slice(j, k)).slice(1, -1),
             'None of these characters is special in the switch, so each one just does src++ and the loop goes on. (Grouped into one step.)', j, [], [reg(j, k, 'scan')]);
           j = k; continue;
         }
         if (c === '\\') {
-          st(1355, 'Backslash: skip the next character', 'A backslash escapes whatever follows, so that character is skipped without being looked at.', j);
+          st(1383, 'Backslash: skip the next character', 'A backslash escapes whatever follows, so that character is skipped without being looked at.', j);
           if (j + 1 < N) j++;
         } else if (c === '{') {
           var b = 1, k2 = j + 1;
-          st(1361, 'Open brace: skip the whole braced word', 'A braced word is skipped as a unit, counting nested braces. Whatever is inside, including a ")", is not seen by the outer scan.', j);
+          st(1389, 'Open brace: skip the whole braced word', 'A braced word is skipped as a unit, counting nested braces. Whatever is inside, including a ")", is not seen by the outer scan.', j);
           while (k2 < N) {
             var ch = src[k2];
             if (ch === '\\') { if (k2 + 1 < N) k2++; }
-            else if (ch === '{') { b++; st(1370, 'Brace level ' + b, 'A nested open brace raises the count.', k2, [], [reg(j, k2 + 1, 'skip')]); }
+            else if (ch === '{') { b++; st(1398, 'Brace level ' + b, 'A nested open brace raises the count.', k2, [], [reg(j, k2 + 1, 'skip')]); }
             else if (ch === '}' && --b === 0) break;
-            else if (ch === '}') { st(1372, 'Brace level ' + b, 'A close brace that does not bring the count to zero.', k2, [], [reg(j, k2 + 1, 'skip')]); }
-            else if (ch === ')' || ch === ']') { st(1375, JSON.stringify(ch).slice(1, -1) + ' inside braces is ignored', 'The inner loop only cares about backslash and braces. This ' + ch + ' is part of the braced word, so it neither closes nor counts.', k2, [], [reg(j, k2 + 1, 'skip')]); }
+            else if (ch === '}') { st(1400, 'Brace level ' + b, 'A close brace that does not bring the count to zero.', k2, [], [reg(j, k2 + 1, 'skip')]); }
+            else if (ch === ')' || ch === ']') { st(1403, JSON.stringify(ch).slice(1, -1) + ' inside braces is ignored', 'The inner loop only cares about backslash and braces. This ' + ch + ' is part of the braced word, so it neither closes nor counts.', k2, [], [reg(j, k2 + 1, 'skip')]); }
             k2++;
           }
-          if (k2 >= N) { st(1378, 'No closing brace: give up', 'The end of the text was reached inside the braces. The scan returns NULL.', Math.min(k2, N - 1), [], [reg(j, N, 'skip')]); res = -1; break loop; }
-          st(1372, 'Closing brace: the braced word ends', 'The count is back to zero. Everything from the open brace to here has been skipped as one unit.', k2, [], [reg(j, k2 + 1, 'skip')]);
+          if (k2 >= N) { st(1406, 'No closing brace: give up', 'The end of the text was reached inside the braces. The scan returns NULL.', Math.min(k2, N - 1), [], [reg(j, N, 'skip')]); res = -1; break loop; }
+          st(1400, 'Closing brace: the braced word ends', 'The count is back to zero. Everything from the open brace to here has been skipped as one unit.', k2, [], [reg(j, k2 + 1, 'skip')]);
           j = k2;
         } else if (c === '"') {
-          st(1382, 'Open quote: skip the quoted string', 'A double-quoted string is skipped as a unit. Backslashes are honored and a [command] inside it is skipped with a recursive scan.', j);
+          st(1410, 'Open quote: skip the quoted string', 'A double-quoted string is skipped as a unit. Backslashes are honored and a [command] inside it is skipped with a recursive scan.', j);
           var q = j + 1;
           while (q < N && src[q] !== '"') {
             if (src[q] === '\\') { if (q + 1 < N) q++; }
             else if (src[q] === '[') {
-              st(1390, 'A [ inside the string: scan it recursively', 'SkipExprSubstScan calls itself with closer "]".', q, [], [reg(j, q + 1, 'skip')]);
-              var e = scanAll(q + 1, ']', false);
+              st(1418, 'A [ inside the string: scan it recursively', 'SkipExprSubstScan calls itself with closer "]".', q, [], [reg(j, q + 1, 'skip')]);
+              var e = scanAll(q + 1, ']', false, f.level + 1);
               if (e < 0) { res = -1; break loop; }
               q = e;
             }
             q++;
           }
-          if (q >= N) { st(1397, 'No closing quote: give up', 'The end of the text was reached inside the string.', N - 1, [], [reg(j, N, 'skip')]); res = -1; break loop; }
-          st(1384, 'Closing quote', 'The quoted string is skipped.', q, [], [reg(j, q + 1, 'skip')]);
+          if (q >= N) { st(1425, 'No closing quote: give up', 'The end of the text was reached inside the string.', N - 1, [], [reg(j, N, 'skip')]); res = -1; break loop; }
+          st(1412, 'Closing quote', 'The quoted string is skipped.', q, [], [reg(j, q + 1, 'skip')]);
           j = q;
         } else if (c === '[') {
-          st(1402, 'Open bracket: skip the command', 'A bracketed command is skipped by calling SkipExprSubstScan again, this time looking for the matching "]". Parentheses do not count in there.', j);
-          var e2 = scanAll(j + 1, ']', false);
+          st(1430, 'Open bracket: skip the command', 'A bracketed command is skipped by calling SkipExprSubstScan again, this time looking for the matching "]". Parentheses do not count in there.', j);
+          var e2 = scanAll(j + 1, ']', false, f.level + 1);
           if (e2 < 0) { res = -1; break loop; }
-          E('scan', 1403, 'Back from the recursive scan',
+          E('scan', 1431, 'Back from the recursive scan',
             'The inner scan found the matching "]" at the position shown. The outer scan continues after it.',
-            {pos: e2, reg: scanRegs(e2 + 1, [reg(j, e2 + 1, 'skip')]), tokens: [tokVar], tokNote: 'being built', frames: F(), kv: {closer: "'" + closer + "'", depth: String(f.depth)}});
+            {pos: e2, reg: scanRegs(e2 + 1, [reg(j, e2 + 1, 'skip')]), tokens: [tokVar], tokNote: 'being built', frames: F(), kv: {closer: "'" + closer + "'", depth: String(f.depth), level: String(f.level)}});
           j = e2;
         } else if (c === '(') {
           f.depth++;
-          st(1409, 'Open parenthesis: depth ' + (f.depth - 1) + ' to ' + f.depth, 'Nested parentheses are counted, so the matching close is not mistaken for the end.', j);
+          st(1437, 'Open parenthesis: depth ' + (f.depth - 1) + ' to ' + f.depth, 'Nested parentheses are counted, so the matching close is not mistaken for the end.', j);
         } else if (c === ')') {
           if (f.depth === 0) {
-            st(1415, 'Close parenthesis at depth 0: found it', 'This ")" matches the opening "(" of the substitution. The scan returns a pointer to it.', j);
+            st(1443, 'Close parenthesis at depth 0: found it', 'This ")" matches the opening "(" of the substitution. The scan returns a pointer to it.', j);
             res = j; break loop;
           }
           f.depth--;
-          st(1417, 'Close parenthesis: depth ' + (f.depth + 1) + ' to ' + f.depth, 'This ")" closes a nested "(", not the substitution.', j);
+          st(1445, 'Close parenthesis: depth ' + (f.depth + 1) + ' to ' + f.depth, 'This ")" closes a nested "(", not the substitution.', j);
         } else if (c === ']') {
-          st(1422, 'Close bracket: the command ends', 'The "]" that matches the "[" is found, so this recursive call returns.', j);
+          st(1450, 'Close bracket: the command ends', 'The "]" that matches the "[" is found, so this recursive call returns.', j);
           res = j; break loop;
         }
         j++;
       }
       if (res < 0 && j >= N) {
-        st(1428, 'End of text: return NULL', 'src has reached the end of the text without finding the closer, so the scan returns NULL.', N);
+        st(1456, 'End of text: return NULL', 'src has reached the end of the text without finding the closer, so the scan returns NULL.', N);
       }
       if (!topLevel) frames.pop();
       return res;
     };
-    found = scanAll(scanStart, ')', true);
+    found = scanAll(scanStart, ')', true, 0);
 
     if (found < 0 || (build === 2 && found + 1 >= N)) {
       frames.length = 0;
       var tt = [tokVar];
-      E('hook', found < 0 ? 1685 : 1693, found < 0 ? 'bodyEnd is NULL: missing )' : 'No second ")" before the end: missing second ")"',
+      E('hook', found < 0 ? 1724 : 1732, found < 0 ? 'bodyEnd is NULL: missing )' : 'No second ")" before the end: missing second ")"',
         found < 0
           ? 'FindExprSubstEnd returned NULL, so there is no balancing parenthesis. The parser sets the error message "missing )" and the error type TCL_PARSE_MISSING_PAREN, and marks the parse incomplete. Incomplete matters: an interactive tclsh, or info complete, treats the text as unfinished and waits for more lines.'
           : 'The scan found the first ")" but the text ends right after it, so the second ")" that $(( requires is not there yet. The message is the same one as for a wrong character there (missing second ")" at _@_, with the text around the marker), but the error type is still TCL_PARSE_MISSING_PAREN and the parse is marked incomplete, so an interactive tclsh waits for more input.',
@@ -684,17 +686,17 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
       var la = [reg(d, d + 1, 'dollar'), reg(scanStart, found, 'body'), reg(found, found + 2, 'scan')];
       if (nextc !== ')') {
         frames.length = 0;
-        E('hook', 1675, 'Look ahead: the character after the ")" is ' + JSON.stringify(nextc),
+        E('hook', 1714, 'Look ahead: the character after the ")" is ' + JSON.stringify(nextc),
           'In the default build the ")" that ends the body must be followed by a second ")". Here it is followed by ' + JSON.stringify(nextc) + '. This is the case where an opening parenthesis was left out, for example $((1+2)*3) instead of $(((1+2)*3)): without this check the substitution would silently end at the first ")" and leave a stray one behind.',
           {pos: found + 1, reg: la, tokens: [tokVar], tokNote: 'being built', cond: condRows, kv: {'bodyEnd[1]': JSON.stringify(nextc)}});
-        E('hook', 1678, 'Syntax error: missing second ")"',
+        E('hook', 1717, 'Syntax error: missing second ")"',
           'ExprSubstSyntaxError builds the message in the style of expr: the position is marked with _@_ and the text around it is quoted (long text is shortened with "..."). The error type is TCL_PARSE_SYNTAX and the parse is not marked incomplete, because more input could not fix it.',
           {pos: null, reg: [reg(d, N, 'scan'), reg(found + 1, found + 2, 'err')], tokens: [tokVar], tokNote: 'discarded (parse failed)', cond: condRows,
            res: {text: D.res, bad: true, label: 'Result (real, error)'}});
         return finish(out);
       }
       frames.length = 0;
-      E('hook', 1675, 'Look ahead: the next character is ")"',
+      E('hook', 1714, 'Look ahead: the next character is ")"',
         'The second ")" is there, so the closing "))" is complete and the substitution is well formed.',
         {pos: found + 1, reg: la, tokens: [tokVar], tokNote: 'being built', cond: condRows, kv: {'bodyEnd[1]': '")"'}});
     }
@@ -703,31 +705,31 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     frames.length = 0;
     var bodyText = src.slice(bodyA, bodyB);
     var bodyReg = [reg(d, d + 1, 'dollar'), reg(bodyA, bodyB, 'body')];
-    E('hook', 1705, 'Scanner returned: bodyEnd found',
+    E('hook', 1744, 'Scanner returned: bodyEnd found',
       build === 2
         ? 'bodyEnd points at the first ")" that balances the body. The body is everything between the "$((" and that ")". For $((1+2)) it is 1+2; for $(((1+2)*3)) it is (1+2)*3, because the inner parentheses are counted by the scanner and belong to the body.'
         : 'bodyEnd points at the matching ")". The body is everything between the "(" and that ")". In this build $((1+2)) has the body (1+2): the inner parentheses are just a parenthesized subexpression.',
       {pos: bodyB, reg: bodyReg, tokens: [tokVar], tokNote: 'being built', cond: condRows, kv: {bodyEnd: 'at the ")"', body: JSON.stringify(bodyText)}});
     var t1 = {type: 'exprsubst', text: '$', nc: '?', cls: 'new'};
-    E('hook', 1705, 'Change the first token to EXPR_SUBST',
+    E('hook', 1744, 'Change the first token to EXPR_SUBST',
       'The TCL_TOKEN_VARIABLE token started earlier is relabeled TCL_TOKEN_EXPR_SUBST. This is the new token type (value 512 in tcl.h).',
       {pos: d, reg: bodyReg, tokens: [t1], tokNote: 'being built', kv: {type: 'EXPR_SUBST'}});
     var t2 = {type: 'text', text: bodyText, nc: '0', cls: 'new'};
-    E('hook', 1706, 'A TEXT token holds the raw body',
+    E('hook', 1745, 'A TEXT token holds the raw body',
       'The second token points at src + skip, just after the trigger, and gets size = bodyEnd - (src + skip). Nothing is parsed: the body is just a start pointer and a length. numTokens is incremented to count it.',
       {pos: bodyA, reg: bodyReg, tokens: [t1, t2], tokNote: 'being built', kv: {start: 'src + skip', size: String(bodyB - bodyA)}});
-    E('hook', 1709, (build === 2 ? 'Move past the closing parentheses' : 'Move past the closing parenthesis'),
+    E('hook', 1748, (build === 2 ? 'Move past the closing parentheses' : 'Move past the closing parenthesis'),
       'src = bodyEnd + skip: parsing of the word continues after the ' + (build === 2 ? '"))"' : '")"') + '.',
       {pos: bodyB + skip, reg: bodyReg, tokens: [t1, t2], tokNote: 'being built', kv: {src: 'after the ' + (build === 2 ? '"))"' : '")"')}});
     var t1f = {type: 'exprsubst', text: src.slice(d, bodyB + skip), nc: '1', cls: 'new'};
-    E('fin', 1777, 'Fill in size and numComponents',
+    E('fin', 1816, 'Fill in size and numComponents',
       'Back at the end of Tcl_ParseVarName: the first token\'s size now covers $ through the closing ' + (build === 2 ? '"))"' : '")"') + ', and numComponents is numTokens - (varIndex + 1) = 1, the body token. Word-level code skips over a token and its components using that count.',
       {pos: null, reg: bodyReg, tokens: [t1f, t2], tokNote: 'complete', kv: {size: String(bodyB + skip - d), numComponents: '1'}});
 
     /* the real token list */
     if (realT) {
       var shown = realT.map(function (t) { return {type: t.type, text: t.text, nc: t.nc, cls: (t.type === 'exprsubst' ? 'hl' : '')}; });
-      E('hook', 1709, 'The rest of the word, then the whole command',
+      E('hook', 1748, 'The rest of the word, then the whole command',
         'The word parser carries on with the rest of the word (text after the substitution, if any). This is the complete token list that the real parser produced for the command (output of testparser). Each token is: type, source text, number of components after it.',
         {pos: null, reg: bodyReg, tokens: shown, tokNote: 'real testparser output'});
       var key = realT.filter(function (t) { return t.type === 'exprsubst'; }).length;
@@ -744,13 +746,13 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
         {pos: null, reg: bodyReg, tokens: realT ? realT.map(function (t) { return {type: t.type, text: t.text, nc: t.nc, cls: t.type === 'exprsubst' ? 'hl' : ''}; }) : [t1f, t2], tokNote: 'real testparser output',
          outs: D.dis});
     } else {
-      E('run', 2569, 'Run time: Tcl_ExprObj on a copy of the body',
+      E('run', 2608, 'Run time: Tcl_ExprObj on a copy of the body',
         'This text was handed to subst as a variable value, so it was never compiled: TclSubstTokens meets the token while substituting. It makes a string object from the body and calls Tcl_ExprObj. The body runs the command [return -code error boom], so expr returns TCL_ERROR with the message boom. The result of such an evaluation is the text that gets substituted, exactly as with [command] substitution. Before a bug found by mutation testing, this message was lost and the result was empty.',
         {pos: null, reg: bodyReg, tokens: realT ? realT.map(function (t) { return {type: t.type, text: t.text, nc: t.nc, cls: t.type === 'exprsubst' ? 'hl' : ''}; }) : [t1f, t2], tokNote: 'real testparser output'});
     }
     var lastRes = {text: D.res, bad: D.rc !== 0 && scen !== 'runtime', label: scen === 'runtime' ? 'Result of subst $t (real)' : (D.rc ? 'Result (real, error)' : 'Result of the command (real)')};
     var runNote = ' (The highlighted line is the Tcl_ExprObj call that TclSubstTokens makes when a script is not compiled, as with subst. A compiled script runs the bytecode shown above instead.)';
-    var last = E('run', 2569, scen === 'runtime' ? 'Result' : 'Run: the value is substituted',
+    var last = E('run', 2608, scen === 'runtime' ? 'Result' : 'Run: the value is substituted',
       scen === 'basic' ? 'The substituted value, ' + D.res + ', is stored in v. The expression was constant, so the compiler folded it: the disassembly has no arithmetic left, only a push of the result.' + runNote :
       scen === 'runtime' ? 'The message boom is the substituted text, matching what [expr {...}] would give for the same body.' :
       scen === 'braces' ? 'The braced words compared equal, so the value is ' + D.res + '.' + runNote :
@@ -938,7 +940,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     var on = $('code').querySelector('.on');
     if (on) { var box = $('code'); box.scrollTop = Math.max(0, on.offsetTop - box.offsetTop - 90); }
     $('frames').innerHTML = s.frames.length ? s.frames.map(function (f, n) {
-      return '<div class="frame' + (n === s.frames.length - 1 ? ' top' : '') + '">SkipExprSubstScan<small>closer ' + esc(f.closer) + ' &middot; depth ' + f.depth + '</small></div>';
+      return '<div class="frame' + (n === s.frames.length - 1 ? ' top' : '') + '">SkipExprSubstScan<small>closer ' + esc(f.closer) + ' &middot; depth ' + f.depth + ' &middot; level ' + f.level + '</small></div>';
     }).join('') : '<div class="empty">not running</div>';
     var kv = '';
     Object.keys(s.kv || {}).forEach(function (k) { kv += '<span>' + esc(k) + '</span><span>' + esc(s.kv[k]) + '</span>'; });

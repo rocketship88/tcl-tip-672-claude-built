@@ -1,5 +1,5 @@
 diff --git a/doc/ParseCmd.3 b/doc/ParseCmd.3
-index 68b2b52..f328dc8 100644
+index 68b2b52db..f328dc892 100644
 --- a/doc/ParseCmd.3
 +++ b/doc/ParseCmd.3
 @@ -300,6 +300,18 @@ token giving the array name and the remaining sub-tokens are
@@ -22,7 +22,7 @@ index 68b2b52..f328dc8 100644
  The token describes one subexpression of an expression
  (or an entire expression).
 diff --git a/doc/SubstObj.3 b/doc/SubstObj.3
-index 2867df8..3423274 100644
+index 2867df87e..3423274ef 100644
 --- a/doc/SubstObj.3
 +++ b/doc/SubstObj.3
 @@ -27,9 +27,9 @@ A Tcl value containing the string to perform substitutions on.
@@ -51,7 +51,7 @@ index 2867df8..3423274 100644
  that look like command substitutions for Tcl commands are replaced by
  the result of evaluating that script.  Where an uncaught
 diff --git a/doc/Tcl.n b/doc/Tcl.n
-index df4472a..bff5e63 100644
+index df4472ae4..bff5e63f3 100644
 --- a/doc/Tcl.n
 +++ b/doc/Tcl.n
 @@ -136,6 +136,34 @@ or close brace characters,
@@ -90,7 +90,7 @@ index df4472a..bff5e63 100644
  There may be any number of variable substitutions in a single word.
  Variable substitution is not performed on words enclosed in braces.
 diff --git a/doc/subst.n b/doc/subst.n
-index 50d0b2b..07ea6d3 100644
+index 50d0b2bfd..07ea6d3fd 100644
 --- a/doc/subst.n
 +++ b/doc/subst.n
 @@ -14,8 +14,8 @@
@@ -146,7 +146,7 @@ index 50d0b2b..07ea6d3 100644
  other kinds.  For example, even when the \fB\-novariables\fR option
  is specified, command substitution is performed without restriction.
 diff --git a/generic/tcl.h b/generic/tcl.h
-index 7c16468..eb93e4b 100644
+index 7c16468f1..eb93e4b5a 100644
 --- a/generic/tcl.h
 +++ b/generic/tcl.h
 @@ -513,7 +513,8 @@ typedef struct stat *Tcl_OldStat_;
@@ -188,7 +188,7 @@ index 7c16468..eb93e4b 100644
  /*
   * Parsing error types. On any parsing error, one of these values will be
 diff --git a/generic/tclCmdMZ.c b/generic/tclCmdMZ.c
-index ca8bcea..0de3c82 100644
+index ca8bcea77..0de3c820c 100644
 --- a/generic/tclCmdMZ.c
 +++ b/generic/tclCmdMZ.c
 @@ -3390,7 +3390,8 @@ TclSubstOptions(
@@ -242,7 +242,7 @@ index ca8bcea..0de3c82 100644
      }
  
 diff --git a/generic/tclCompCmdsSZ.c b/generic/tclCompCmdsSZ.c
-index a100354..9274b71 100644
+index a100354f9..9274b7109 100644
 --- a/generic/tclCompCmdsSZ.c
 +++ b/generic/tclCompCmdsSZ.c
 @@ -1612,6 +1612,11 @@ TclSubstCompile(
@@ -258,7 +258,7 @@ index a100354..9274b71 100644
  		Tcl_Panic("unexpected token type in TclCompileSubstCmd: %d",
  			tokenPtr->type);
 diff --git a/generic/tclCompExpr.c b/generic/tclCompExpr.c
-index a5b3940..321d297 100644
+index a5b3940c2..321d29718 100644
 --- a/generic/tclCompExpr.c
 +++ b/generic/tclCompExpr.c
 @@ -935,7 +935,8 @@ ParseExpr(
@@ -272,10 +272,10 @@ index a5b3940..321d297 100644
  		    errCode = "BADCHAR";
  		    goto error;
 diff --git a/generic/tclCompile.c b/generic/tclCompile.c
-index 7e031a2..66b2b81 100644
+index 7e031a2b8..37f74c403 100644
 --- a/generic/tclCompile.c
 +++ b/generic/tclCompile.c
-@@ -2873,6 +2873,28 @@ TclCompileTokens(
+@@ -2873,6 +2873,50 @@ TclCompileTokens(
  	    tokenPtr += tokenPtr->numComponents;
  	    break;
  
@@ -293,8 +293,30 @@ index 7e031a2..66b2b81 100644
 +	    }
 +
 +	    envPtr->line += adjust;
-+	    TclCompileExpr(interp, tokenPtr[1].start, tokenPtr[1].size,
-+		    envPtr, 1);
++	    {
++		Interp *iPtr = (Interp *) interp;
++
++		/*
++		 * Nested $(expr) inside $(expr) recurses through
++		 * TclCompileExpr -> CompileExprTree -> TclCompileTokens
++		 * without passing TclCompileScript, so apply the same depth
++		 * check here to avoid overflowing the C stack.
++		 */
++
++		if (iPtr->numLevels / 5 > iPtr->maxNestingDepth / 4) {
++		    Tcl_SetObjResult(interp, Tcl_NewStringObj(
++			    "too many nested compilations (infinite loop?)",
++			    TCL_AUTO_LENGTH));
++		    Tcl_SetErrorCode(interp, "TCL", "LIMIT", "STACK",
++			    (char *)NULL);
++		    TclCompileSyntaxError(interp, envPtr);
++		} else {
++		    iPtr->numLevels++;
++		    TclCompileExpr(interp, tokenPtr[1].start,
++			    tokenPtr[1].size, envPtr, 1);
++		    iPtr->numLevels--;
++		}
++	    }
 +	    envPtr->line -= adjust;
 +	    numObjsToConcat++;
 +	    count -= tokenPtr->numComponents;
@@ -305,10 +327,10 @@ index 7e031a2..66b2b81 100644
  	    Tcl_Panic("Unexpected token type in TclCompileTokens: %d; %.*s",
  		    tokenPtr->type, (int)tokenPtr->size, tokenPtr->start);
 diff --git a/generic/tclParse.c b/generic/tclParse.c
-index 3a40a40..6412762 100644
+index 3a40a40ed..ebd241a03 100644
 --- a/generic/tclParse.c
 +++ b/generic/tclParse.c
-@@ -115,10 +115,41 @@ const unsigned char tclCharTypeTable[] = {
+@@ -115,10 +115,62 @@ const unsigned char tclCharTypeTable[] = {
      TYPE_NORMAL,      TYPE_NORMAL,      TYPE_NORMAL,      TYPE_NORMAL,
  };
  
@@ -339,6 +361,27 @@ index 3a40a40..6412762 100644
 +#error "TCL_EXPR_SUBST_PARENS must be 1 or 2"
 +#endif
 +
++/*
++ * EXPR_SUBST_MAX_SCAN_DEPTH is the deepest nesting of "[...]" (a script
++ * inside an expression substitution) that SkipExprSubstScan follows. The
++ * scan recurses once per level, so without a limit a long enough run of "["
++ * overflows the C stack. 1000 is the same number as Tcl's default
++ * "interp recursionlimit"; it is a plain constant and can be changed here.
++ */
++
++#ifndef EXPR_SUBST_MAX_SCAN_DEPTH
++#define EXPR_SUBST_MAX_SCAN_DEPTH 1000
++#endif
++
++/*
++ * SkipExprSubstScan returns a pointer to this object (never dereferenced) to
++ * report that EXPR_SUBST_MAX_SCAN_DEPTH was exceeded, as opposed to NULL,
++ * which means the closing delimiter was not found.
++ */
++
++static const char exprSubstTooDeep = 0;
++#define EXPR_SUBST_TOO_DEEP (&exprSubstTooDeep)
++
  /*
   * Prototypes for local functions defined in this file:
   */
@@ -350,7 +393,7 @@ index 3a40a40..6412762 100644
  static bool		CommandComplete(const char *script, Tcl_Size numBytes);
  static Tcl_Size		ParseComment(const char *src, Tcl_Size numBytes,
  			    Tcl_Parse *parsePtr);
-@@ -1085,7 +1116,16 @@ ParseTokens(
+@@ -1085,7 +1137,16 @@ ParseTokens(
  	} else if (*src == '$') {
  	    Tcl_Size varToken;
  
@@ -368,7 +411,7 @@ index 3a40a40..6412762 100644
  		tokenPtr->type = TCL_TOKEN_TEXT;
  		tokenPtr->size = 1;
  		parsePtr->numTokens++;
-@@ -1280,6 +1320,198 @@ Tcl_FreeParse(
+@@ -1280,6 +1341,205 @@ Tcl_FreeParse(
      }
  }
  
@@ -386,7 +429,9 @@ index 3a40a40..6412762 100644
 + *	closer is ')', nested parentheses are counted.
 + *
 + * Results:
-+ *	Pointer to the closing delimiter, or NULL if end was reached first.
++ *	Pointer to the closing delimiter, or NULL if end was reached first,
++ *	or EXPR_SUBST_TOO_DEEP if "[" was nested more than
++ *	EXPR_SUBST_MAX_SCAN_DEPTH levels (level is the current nesting).
 + *
 + * Side effects:
 + *	None.
@@ -398,9 +443,14 @@ index 3a40a40..6412762 100644
 +SkipExprSubstScan(
 +    const char *src,
 +    const char *end,
-+    char closer)
++    char closer,
++    int level)
 +{
 +    int depth = 0;
++
++    if (level > EXPR_SUBST_MAX_SCAN_DEPTH) {
++	return EXPR_SUBST_TOO_DEEP;
++    }
 +
 +    while (src < end) {
 +	switch (*src) {
@@ -439,9 +489,9 @@ index 3a40a40..6412762 100644
 +			src++;
 +		    }
 +		} else if (*src == '[') {
-+		    src = SkipExprSubstScan(src + 1, end, ']');
-+		    if (src == NULL) {
-+			return NULL;
++		    src = SkipExprSubstScan(src + 1, end, ']', level + 1);
++		    if ((src == NULL) || (src == EXPR_SUBST_TOO_DEEP)) {
++			return src;
 +		    }
 +		}
 +		src++;
@@ -451,9 +501,9 @@ index 3a40a40..6412762 100644
 +	    }
 +	    break;
 +	case '[':
-+	    src = SkipExprSubstScan(src + 1, end, ']');
-+	    if (src == NULL) {
-+		return NULL;
++	    src = SkipExprSubstScan(src + 1, end, ']', level + 1);
++	    if ((src == NULL) || (src == EXPR_SUBST_TOO_DEEP)) {
++		return src;
 +	    }
 +	    break;
 +	case '(':
@@ -502,7 +552,7 @@ index 3a40a40..6412762 100644
 +    const char *src,
 +    const char *end)
 +{
-+    return SkipExprSubstScan(src, end, ')');
++    return SkipExprSubstScan(src, end, ')', 0);
 +}
 +
 +/*
@@ -567,7 +617,7 @@ index 3a40a40..6412762 100644
  /*
   *----------------------------------------------------------------------
   *
-@@ -1420,6 +1652,61 @@ Tcl_ParseVarName(
+@@ -1420,6 +1680,72 @@ Tcl_ParseVarName(
  	tokenPtr[-1].size = src - tokenPtr[-1].start;
  	parsePtr->numTokens++;
  	src++;
@@ -591,6 +641,17 @@ index 3a40a40..6412762 100644
 +	const int skip = (TCL_EXPR_SUBST_PARENS == 2) ? 2 : 1;
 +	const char *bodyEnd = FindExprSubstEnd(src + skip, src + numBytes);
 +
++	if (bodyEnd == EXPR_SUBST_TOO_DEEP) {
++	    if (parsePtr->interp != NULL) {
++		Tcl_SetObjResult(parsePtr->interp, Tcl_NewStringObj(
++			"expression substitution nested too deeply", -1));
++		Tcl_SetErrorCode(parsePtr->interp, "TCL", "LIMIT", "STACK",
++			(char *)NULL);
++	    }
++	    parsePtr->errorType = TCL_PARSE_SYNTAX;
++	    parsePtr->term = src;
++	    goto error;
++	}
 +	if ((bodyEnd != NULL) && (skip == 2) && (bodyEnd + 1 < src + numBytes)
 +		&& (bodyEnd[1] != ')')) {
 +	    if (parsePtr->interp != NULL) {
@@ -629,7 +690,7 @@ index 3a40a40..6412762 100644
      } else {
  	tokenPtr->type = TCL_TOKEN_TEXT;
  	tokenPtr->start = src;
-@@ -1540,6 +1827,7 @@ Tcl_ParseVar(
+@@ -1540,6 +1866,7 @@ Tcl_ParseVar(
  {
      Tcl_Obj *objPtr;
      int code;
@@ -637,7 +698,7 @@ index 3a40a40..6412762 100644
      Tcl_Parse *parsePtr = (Tcl_Parse *)TclStackAlloc(interp, sizeof(Tcl_Parse));
  
      if (Tcl_ParseVarName(interp, start, TCL_INDEX_NONE, parsePtr, 0) != TCL_OK) {
-@@ -1559,6 +1847,7 @@ Tcl_ParseVar(
+@@ -1559,6 +1886,7 @@ Tcl_ParseVar(
  	return "$";
      }
  
@@ -645,7 +706,7 @@ index 3a40a40..6412762 100644
      code = TclSubstTokens(interp, parsePtr->tokenPtr, parsePtr->numTokens,
  	    NULL, 1, NULL, NULL);
      Tcl_FreeParse(parsePtr);
-@@ -1568,6 +1857,17 @@ Tcl_ParseVar(
+@@ -1568,6 +1896,17 @@ Tcl_ParseVar(
      }
      objPtr = Tcl_GetObjResult(interp);
  
@@ -663,7 +724,7 @@ index 3a40a40..6412762 100644
      /*
       * At this point we should have an object containing the value of a
       * variable. Just return the string from that object.
-@@ -2255,6 +2555,38 @@ TclSubstTokens(
+@@ -2255,6 +2594,38 @@ TclSubstTokens(
  	    break;
  	}
  
@@ -703,7 +764,7 @@ index 3a40a40..6412762 100644
  	    Tcl_Obj *arrayIndex = NULL;
  	    Tcl_Obj *varName = NULL;
 diff --git a/generic/tclTest.c b/generic/tclTest.c
-index ef13c6d..25eb503 100644
+index ef13c6d60..25eb503d2 100644
 --- a/generic/tclTest.c
 +++ b/generic/tclTest.c
 @@ -4611,6 +4611,9 @@ PrintParse(
@@ -717,7 +778,7 @@ index ef13c6d..25eb503 100644
  	    typeString = "subexpr";
  	    break;
 diff --git a/tests/compile.test b/tests/compile.test
-index 8e6df7f..8fe413f 100644
+index 8e6df7f5b..8fe413f71 100644
 --- a/tests/compile.test
 +++ b/tests/compile.test
 @@ -1114,6 +1114,136 @@ test compile-21.4 {stack balance management} {
@@ -858,7 +919,7 @@ index 8e6df7f..8fe413f 100644
  # cleanup
  catch {rename p ""}
 diff --git a/tests/parse.test b/tests/parse.test
-index 6ce7588..2648a90 100644
+index 6ce758832..b75383110 100644
 --- a/tests/parse.test
 +++ b/tests/parse.test
 @@ -30,6 +30,20 @@ testConstraint testcmdtrace [llength [info commands testcmdtrace]]
@@ -896,7 +957,7 @@ index 6ce7588..2648a90 100644
  test parse-18.13 {Tcl_SubstObj, parse errors} {
      list [catch "subst \[" msg] $msg
  } [list 1 "missing close-bracket"]
-@@ -1131,6 +1148,469 @@ test parse-21.1 {TCL_EVAL_DIRECT coverage} testevent {
+@@ -1131,6 +1148,531 @@ test parse-21.1 {TCL_EVAL_DIRECT coverage} testevent {
      set ::done
  } 2
  
@@ -1363,11 +1424,73 @@ index 6ce7588..2648a90 100644
 +    list [expr {$n1 == $n2}] [expr {$n3 == $n4}] [expr {$n4 == $n5}] [expr {$n3 - $n1}]
 +} -result {1 1 1 0}
 +
++# Expression substitutions nested inside one another are compiled by
++# recursion that does not pass through TclCompileScript, so they need their
++# own check against the nesting limit (interp recursionlimit); without it the
++# C stack overflows.
++test parse-22.110 {expression substitution: moderate nesting works} -body {
++    subst [string repeat {$((1+} 100]1[string repeat )) 100]
++} -result 101
++test parse-22.111 {expression substitution: nesting too deep is an error, not a crash} -body {
++    set parse22s [string repeat {$((1+} 20000]1[string repeat )) 20000]
++    list [catch {subst $parse22s} msg opts] $msg [dict get $opts -errorcode]
++} -cleanup {
++    unset -nocomplain parse22s msg opts
++} -result {1 {too many nested compilations (infinite loop?)} {TCL LIMIT STACK}}
++test parse-22.112 {expression substitution: nesting depth follows interp recursionlimit} -body {
++    set parse22old [interp recursionlimit {}]
++    interp recursionlimit {} 50
++    set parse22s [string repeat {$((1+} 100]1[string repeat )) 100]
++    list [catch {subst $parse22s} msg opts] $msg [dict get $opts -errorcode]
++} -cleanup {
++    interp recursionlimit {} $parse22old
++    unset -nocomplain parse22old parse22s msg opts
++} -result {1 {too many nested compilations (infinite loop?)} {TCL LIMIT STACK}}
++test parse-22.113 {expression substitution: nesting inside an expression too deep is an error} -body {
++    set parse22s [string repeat {$((1+} 20000]1[string repeat )) 20000]
++    list [catch {expr "$parse22s"} msg opts] $msg [dict get $opts -errorcode]
++} -cleanup {
++    unset -nocomplain parse22s msg opts
++} -result {1 {too many nested compilations (infinite loop?)} {TCL LIMIT STACK}}
++
++test parse-22.114 {expression substitution: nested brackets inside the body work} -body {
++    set parse22s "\$(([string repeat {[expr } 100]1[string repeat {]} 100]+1))"
++    subst $parse22s
++} -cleanup {
++    unset -nocomplain parse22s
++} -result 2
++test parse-22.115 {expression substitution: bracket nesting exactly at the scan limit} -body {
++    # 1000 nested "[" in an unfinished body: the scan reaches the end of the
++    # input without exceeding the limit, so it is an ordinary missing ")".
++    set parse22s "\$(([string repeat \[ 1000]"
++    list [catch {subst $parse22s} msg opts] $msg
++} -cleanup {
++    unset -nocomplain parse22s msg opts
++} -result {1 {missing )}}
++test parse-22.116 {expression substitution: bracket nesting one past the scan limit} -body {
++    set parse22s "\$(([string repeat \[ 1001]"
++    list [catch {subst $parse22s} msg opts] $msg [dict get $opts -errorcode]
++} -cleanup {
++    unset -nocomplain parse22s msg opts
++} -result {1 {expression substitution nested too deeply} {TCL LIMIT STACK}}
++test parse-22.117 {expression substitution: very deep bracket nesting is an error, not a crash} -body {
++    set parse22s "\$(([string repeat \[ 2000000]"
++    list [catch {subst $parse22s} msg opts] $msg [dict get $opts -errorcode]
++} -cleanup {
++    unset -nocomplain parse22s msg opts
++} -result {1 {expression substitution nested too deeply} {TCL LIMIT STACK}}
++test parse-22.118 {expression substitution: deep nesting inside double quotes in the body} -body {
++    set parse22s "\$((\"[string repeat \[ 1001]"
++    list [catch {subst $parse22s} msg opts] $msg [dict get $opts -errorcode]
++} -cleanup {
++    unset -nocomplain parse22s msg opts
++} -result {1 {expression substitution nested too deeply} {TCL LIMIT STACK}}
++
  cleanupTests
  }
  
 diff --git a/tests/parseOld.test b/tests/parseOld.test
-index f0f88e9..0524d5e 100644
+index f0f88e914..0524d5e4a 100644
 --- a/tests/parseOld.test
 +++ b/tests/parseOld.test
 @@ -21,6 +21,9 @@ if {"::tcltest" ni [namespace children]} {
@@ -1396,7 +1519,7 @@ index f0f88e9..0524d5e 100644
  test parseOld-5.13 {array variable substitution} {
      unset -nocomplain a
 diff --git a/tests/subst.test b/tests/subst.test
-index 30dba7d..117c352 100644
+index 30dba7de4..117c35287 100644
 --- a/tests/subst.test
 +++ b/tests/subst.test
 @@ -22,10 +22,10 @@ testConstraint testbytestring [llength [info commands testbytestring]]
