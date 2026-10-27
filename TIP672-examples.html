@@ -263,6 +263,16 @@ on a build of the <code>tip-759b_tcl90</code> branch (check-in
 <code>6e5df9de10</code>, Oct 13) and got the same number. The
 Calc-module version in section 9 was run with the module’s current
 GitHub version on the same 672 build and gives the same number.</p>
+<p><strong>Update, Oct 27.</strong> Florent published an updated
+comparison page (<code>672-759.md</code>, check-in
+<code>9c3a827c80</code>) in which TIP 759 can call commands inside the
+arithmetic, so the TIP 759 edge function in section 9 is now his updated
+one and the character counts are redone. As he wrote it, that function
+did not run on Claude’s copy of the branch; with one change, parentheses
+around the <code>if</code> body, it did (see section 9). The Calc entry
+now uses the new list and tuple forms of the module, and the tables
+(characters, timing, bytecode) were measured again in one session, so
+the old and new rows can be compared.</p>
 <hr />
 <h2 id="cross-product">1. Cross product</h2>
 <div class="sourceCode" id="cb1"><pre
@@ -466,7 +476,8 @@ class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb12-1"><a href="#
 <span id="cb12-14"><a href="#cb12-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">return</span> $((<span class="kw">[</span>point_in_triangle <span class="dt">$px</span> <span class="dt">$py</span> <span class="dt">$t1</span> <span class="dt">$t2</span> <span class="dt">$t3</span><span class="kw">]</span> ? -<span class="dt">$min_distance</span> : <span class="dt">$min_distance</span>))</span>
 <span id="cb12-15"><a href="#cb12-15" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
 <p><strong>TIP 759 (as published in section E,
-<code>calculate_edge_distance_Arith</code>)</strong></p>
+<code>calculate_edge_distance_Arith</code>; this is the version Claude
+ran)</strong></p>
 <div class="sourceCode" id="cb13"><pre
 class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb13-1"><a href="#cb13-1" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span> calculate_edge_distance_Arith <span class="kw">{</span>px py t1 t2 t3<span class="kw">}</span> <span class="kw">{</span>(</span>
 <span id="cb13-2"><a href="#cb13-2" aria-hidden="true" tabindex="-1"></a>       <span class="co"># Arithmetic Syntax</span></span>
@@ -486,26 +497,57 @@ class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb13-1"><a href="#
 <span id="cb13-16"><a href="#cb13-16" aria-hidden="true" tabindex="-1"></a>         )<span class="kw">}]</span>;</span>
 <span id="cb13-17"><a href="#cb13-17" aria-hidden="true" tabindex="-1"></a>       <span class="kw">[</span>point_in_triangle <span class="dt">$px</span> <span class="dt">$py</span> <span class="dt">$t1</span> <span class="dt">$t2</span> <span class="dt">$t3</span><span class="kw">]</span> ? -<span class="dt">$min_distance</span> : <span class="dt">$min_distance</span></span>
 <span id="cb13-18"><a href="#cb13-18" aria-hidden="true" tabindex="-1"></a>)<span class="kw">}</span></span></code></pre></div>
-<p><strong>Calc module</strong> (<code>proc=</code>; the edge function
-written in the Calc style)</p>
+<p><strong>TIP 759, updated version (with commands in
+<code>expr</code>)</strong>, as given in Florent’s updated comparison
+page. As written it does not run on Claude’s copy of the
+<code>tip-759b_tcl90</code> branch (check-in <code>6e5df9de10</code>,
+Oct 13): the line
+<code>if {$distance &lt; $min_distance} {min_distance = $distance}</code>
+fails with <code>invalid command name "min_distance"</code>, because on
+that branch a braced body is arithmetic only if it begins with
+<code>(</code>, as the <code>foreach</code> body does. With one change,
+parentheses around the <code>if</code> body,
+<code>{(min_distance = $distance)}</code>, it runs: it gives the TIP’s
+number and is exactly equal to the plain version on 297 points (three
+triangles, 11 by 9 positions each). His newer branch may accept the line
+as written. The code below is as he wrote it, and the character counts
+are counted from this text (the parentheses add 2 characters).</p>
 <div class="sourceCode" id="cb14"><pre
-class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span>= calculate_edge_distance_Calc <span class="kw">{</span>px py t1 t2 t3<span class="kw">}</span> <span class="kw">{</span></span>
-<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>    : edges = <span class="kw">list</span>(<span class="kw">list</span>(t1,t2), <span class="kw">list</span>(t2,t3), <span class="kw">list</span>(t3,t1))</span>
-<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>    : min_distance = <span class="dv">999999999</span></span>
-<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>    <span class="kw">foreach</span> edge <span class="dt">$edges</span> <span class="kw">{</span></span>
-<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>        <span class="kw">lassign</span> <span class="dt">$edge</span> p1 p2</span>
-<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>        <span class="kw">lassign</span> <span class="dt">$p1</span> x1 y1</span>
-<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>        <span class="kw">lassign</span> <span class="dt">$p2</span> x2 y2</span>
-<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>        : <span class="kw">{</span></span>
-<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>            A = y2-y1;</span>
-<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>            B = x1-x2;</span>
-<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>            C = x2*y1 - x1*y2;</span>
-<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>            distance = abs(A*px + B*py + C) / hypot(A, B);</span>
-<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>            distance &lt; min_distance ? (min_distance = distance) : <span class="dv">0</span></span>
-<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>        <span class="kw">}</span></span>
-<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>    <span class="kw">}</span></span>
-<span id="cb14-16"><a href="#cb14-16" aria-hidden="true" tabindex="-1"></a>    : point_in_triangle(px, py, t1, t2, t3) ?<span class="ot"> -min_distance</span> : min_distance</span>
-<span id="cb14-17"><a href="#cb14-17" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
+class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb14-1"><a href="#cb14-1" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span> calculate_edge_distance_Arith <span class="kw">{</span>px py t1 t2 t3<span class="kw">}</span> <span class="kw">{</span>(</span>
+<span id="cb14-2"><a href="#cb14-2" aria-hidden="true" tabindex="-1"></a>        edges = ((<span class="dt">$t1</span>,<span class="dt">$t2</span>),(<span class="dt">$t2</span>,<span class="dt">$t3</span>),(<span class="dt">$t3</span>,<span class="dt">$t1</span>));</span>
+<span id="cb14-3"><a href="#cb14-3" aria-hidden="true" tabindex="-1"></a>        min_distance = <span class="dv">999999999</span>;</span>
+<span id="cb14-4"><a href="#cb14-4" aria-hidden="true" tabindex="-1"></a>        <span class="kw">foreach</span> edge <span class="dt">$edges</span> <span class="kw">{</span>(</span>
+<span id="cb14-5"><a href="#cb14-5" aria-hidden="true" tabindex="-1"></a>            <span class="kw">lassign</span> <span class="dt">$edge</span> p1 p2</span>
+<span id="cb14-6"><a href="#cb14-6" aria-hidden="true" tabindex="-1"></a>            <span class="kw">lassign</span> <span class="dt">$p1</span> x1 y1</span>
+<span id="cb14-7"><a href="#cb14-7" aria-hidden="true" tabindex="-1"></a>            <span class="kw">lassign</span> <span class="dt">$p2</span> x2 y2;</span>
+<span id="cb14-8"><a href="#cb14-8" aria-hidden="true" tabindex="-1"></a>            A = <span class="dt">$y2</span>-<span class="dt">$y1</span>;</span>
+<span id="cb14-9"><a href="#cb14-9" aria-hidden="true" tabindex="-1"></a>            B = <span class="dt">$x1</span>-<span class="dt">$x2</span>;</span>
+<span id="cb14-10"><a href="#cb14-10" aria-hidden="true" tabindex="-1"></a>            C = <span class="dt">$x2</span>*<span class="dt">$y1</span> - <span class="dt">$x1</span>*<span class="dt">$y2</span>;</span>
+<span id="cb14-11"><a href="#cb14-11" aria-hidden="true" tabindex="-1"></a>            distance = abs(<span class="dt">$A</span> * <span class="dt">$px</span> + <span class="dt">$B</span> * <span class="dt">$py</span> + <span class="dt">$C</span>) / hypot(<span class="dt">$A</span>, <span class="dt">$B</span>);</span>
+<span id="cb14-12"><a href="#cb14-12" aria-hidden="true" tabindex="-1"></a>            <span class="kw">if</span> <span class="kw">{</span><span class="dt">$distance</span> &lt; <span class="dt">$min_distance</span><span class="kw">}</span> <span class="kw">{</span>min_distance = <span class="dt">$distance</span><span class="kw">}</span></span>
+<span id="cb14-13"><a href="#cb14-13" aria-hidden="true" tabindex="-1"></a>         )<span class="kw">}</span>;</span>
+<span id="cb14-14"><a href="#cb14-14" aria-hidden="true" tabindex="-1"></a>       <span class="kw">[</span>point_in_triangle <span class="dt">$px</span> <span class="dt">$py</span> <span class="dt">$t1</span> <span class="dt">$t2</span> <span class="dt">$t3</span><span class="kw">]</span> ? -<span class="dt">$min_distance</span> : <span class="dt">$min_distance</span></span>
+<span id="cb14-15"><a href="#cb14-15" aria-hidden="true" tabindex="-1"></a>)<span class="kw">}</span></span></code></pre></div>
+<p><strong>Calc module</strong> (<code>proc=</code>; the edge function
+written in the Calc style, with the new list and tuple forms; the
+comment line shows the same line written with <code>list</code>)</p>
+<div class="sourceCode" id="cb15"><pre
+class="sourceCode tcl"><code class="sourceCode tcl"><span id="cb15-1"><a href="#cb15-1" aria-hidden="true" tabindex="-1"></a><span class="kw">proc</span>= calculate_edge_distance_Calc <span class="kw">{</span>px py t1 t2 t3<span class="kw">}</span> <span class="kw">{</span></span>
+<span id="cb15-2"><a href="#cb15-2" aria-hidden="true" tabindex="-1"></a>    <span class="co"># the same line with list():  : edges = list(list(t1,t2), list(t2,t3), list(t3,t1))</span></span>
+<span id="cb15-3"><a href="#cb15-3" aria-hidden="true" tabindex="-1"></a>    : edges = ((t1,t2),(t2,t3),(t3,t1))</span>
+<span id="cb15-4"><a href="#cb15-4" aria-hidden="true" tabindex="-1"></a>    : min_distance = <span class="dv">999999999</span></span>
+<span id="cb15-5"><a href="#cb15-5" aria-hidden="true" tabindex="-1"></a>    <span class="kw">foreach</span> edge <span class="dt">$edges</span> <span class="kw">{</span></span>
+<span id="cb15-6"><a href="#cb15-6" aria-hidden="true" tabindex="-1"></a>        : <span class="kw">{</span></span>
+<span id="cb15-7"><a href="#cb15-7" aria-hidden="true" tabindex="-1"></a>            ((x1,y1),(x2,y2)) = edge;</span>
+<span id="cb15-8"><a href="#cb15-8" aria-hidden="true" tabindex="-1"></a>            A = y2-y1;</span>
+<span id="cb15-9"><a href="#cb15-9" aria-hidden="true" tabindex="-1"></a>            B = x1-x2;</span>
+<span id="cb15-10"><a href="#cb15-10" aria-hidden="true" tabindex="-1"></a>            C = x2*y1 - x1*y2;</span>
+<span id="cb15-11"><a href="#cb15-11" aria-hidden="true" tabindex="-1"></a>            distance = abs(A*px + B*py + C) / hypot(A, B);</span>
+<span id="cb15-12"><a href="#cb15-12" aria-hidden="true" tabindex="-1"></a>            distance &lt; min_distance ? (min_distance = distance) : <span class="dv">0</span></span>
+<span id="cb15-13"><a href="#cb15-13" aria-hidden="true" tabindex="-1"></a>        <span class="kw">}</span></span>
+<span id="cb15-14"><a href="#cb15-14" aria-hidden="true" tabindex="-1"></a>    <span class="kw">}</span></span>
+<span id="cb15-15"><a href="#cb15-15" aria-hidden="true" tabindex="-1"></a>    : point_in_triangle(px, py, t1, t2, t3) ?<span class="ot"> -min_distance</span> : min_distance</span>
+<span id="cb15-16"><a href="#cb15-16" aria-hidden="true" tabindex="-1"></a><span class="kw">}</span></span></code></pre></div>
 <p><em>What Calc is.</em> It is a small module written in plain Tcl by
 Eric T. (on top of Colin Macleod’s prototype expression parser; <a
 href="https://github.com/rocketship88/colin-parser"
@@ -518,7 +560,19 @@ expressions when the proc is defined, so they run as compiled code.
 <code>Calc::transformProcs name ...</code> does the same to procs that
 are already defined. Claude wrote the first Calc version of this
 function; Eric T. then changed it to use <code>list(list(...))</code>
-for the edges and to call the helper as a function. The function and
+for the edges and to call the helper as a function. On Oct 27 Claude
+added two forms to the module, after reading how TIP 759 writes lists
+and multiple assignment: a bare parenthesised comma list,
+<code>(a, b, c)</code>, which builds a list (so
+<code>((t1,t2),(t2,t3),(t3,t1))</code> replaces
+<code>list(list(t1,t2), ...)</code>), and a tuple pattern on the left of
+<code>=</code>, <code>((x1,y1),(x2,y2)) = edge</code>, which replaces
+the three <code>lassign</code> lines
+(<code>edge -&gt; ((x1,y1),(x2,y2))</code> is the same thing written
+left to right). They compile to the same instructions
+<code>lassign</code> uses. Both forms are in the current GitHub version
+of the module (the one the tuple version below needs); the helpers still
+use <code>lassign</code> and run with any version. The function and
 variable names match TIP 759’s, and it ends with a <code>? :</code>
 expression, as TIP 759’s does, so there is no <code>if</code> or
 <code>return</code>. The current GitHub version of the module is needed
@@ -531,32 +585,43 @@ commit <code>e07f433</code>).</p>
 written as a function call, as <code>point_in_triangle(...)</code> is
 here. A <code>? :</code> needs both branches, so TIP 759’s
 <code>cond ? (x = y) :;</code> with nothing after the colon is written
-<code>cond ? (x = y) : 0</code>. Arrays are read-only in Calc, and the
-list unpacking (<code>lassign</code>) is left as plain Tcl here.</p>
-<p>All four edge versions give <code>-0.14142135623730948</code> for
+<code>cond ? (x = y) : 0</code>. Arrays are read-only in Calc, and Calc
+has no loop of its own, so the <code>foreach</code> is plain Tcl with a
+Calc block inside it.</p>
+<p>The plain, 672, published-759 and Calc (<code>list</code>) versions
+give <code>-0.14142135623730948</code> for
 <code>.5 .3 {0.0 0.0} {1.0 0.0} {0.0 1.0}</code>, the number published
 in TIP 759, and the plain, 672 and Calc versions all give
 <code>2.0</code> for a point outside the triangle (<code>2 2</code>).
-The Calc versions of the two helpers were also run under the plain and
-672 edge functions, in place of the plain helpers, over 42 points with
-identical results, and the Calc helpers agree with the plain helpers on
-a grid of 36 points.</p>
+The updated 759 function, with the <code>if</code> body in parentheses,
+gives the same number and equals the plain version on all 297 points.
+The Calc (tuples) version was compared with the plain version on 297
+points (three triangles, 11 by 9 positions each): all 297 results are
+exactly equal, on Tcl 9.1.1 (both spellings), 9.0.5 and 8.6.14. The Calc
+versions of the two helpers were also run under the plain and 672 edge
+functions, in place of the plain helpers, over 42 points with identical
+results, and the Calc helpers agree with the plain helpers on a grid of
+36 points.</p>
 <p>The edge function only (the helpers are not counted):</p>
-<table>
+<table style="width:100%;">
 <colgroup>
-<col style="width: 20%" />
-<col style="width: 20%" />
-<col style="width: 20%" />
-<col style="width: 20%" />
-<col style="width: 20%" />
+<col style="width: 14%" />
+<col style="width: 14%" />
+<col style="width: 14%" />
+<col style="width: 14%" />
+<col style="width: 14%" />
+<col style="width: 14%" />
+<col style="width: 14%" />
 </colgroup>
 <thead>
 <tr class="header">
 <th></th>
 <th>plain</th>
 <th>672</th>
-<th>759</th>
-<th>Calc</th>
+<th>759 (as published)</th>
+<th>759 (updated)</th>
+<th>Calc (<code>list</code>)</th>
+<th>Calc (tuples)</th>
 </tr>
 </thead>
 <tbody>
@@ -565,14 +630,18 @@ a grid of 36 points.</p>
 <td>15</td>
 <td>15</td>
 <td>16</td>
+<td>15</td>
 <td>17</td>
+<td>15</td>
 </tr>
 <tr class="even">
 <td><code>$</code> characters</td>
 <td>35</td>
 <td>40</td>
 <td>35</td>
+<td>35</td>
 <td>4</td>
+<td>1</td>
 </tr>
 <tr class="odd">
 <td>characters, as printed (spaces, indentation and comments
@@ -580,14 +649,18 @@ included)</td>
 <td>591</td>
 <td>578</td>
 <td>724</td>
+<td>582</td>
 <td>557</td>
+<td>585</td>
 </tr>
 <tr class="even">
 <td>characters, comment lines removed</td>
 <td>591</td>
 <td>578</td>
 <td>663</td>
+<td>582</td>
 <td>557</td>
+<td>497</td>
 </tr>
 <tr class="odd">
 <td>characters, each separator counted as one (a run of whitespace, a
@@ -595,36 +668,69 @@ line break, or <code>,</code> between arguments)</td>
 <td>506</td>
 <td>493</td>
 <td>486</td>
+<td>445</td>
 <td>430</td>
+<td>384</td>
 </tr>
 <tr class="even">
 <td>characters, no whitespace at all (a lower bound)</td>
 <td>424</td>
 <td>415</td>
 <td>404</td>
+<td>373</td>
 <td>359</td>
+<td>322</td>
 </tr>
 </tbody>
 </table>
 <p><em>On size:</em> the first character row counts everything printed,
-including the indentation and the two comment lines in the TIP 759 text,
-which is why 759 looks longest there. In Tcl the spaces between words
-are required, so ignoring whitespace entirely is too generous; the row
-that counts each separator as one character keeps them (in Calc the
-argument separator is a comma, <code>f(a, b)</code>, where Tcl uses a
-space, <code>f a b</code>, so <code>,</code> is counted as one
-character) (it also keeps a few spaces around operators that are
-optional). By that measure the plain, 672 and 759 versions are close,
-with 759 slightly the shortest of them, and Calc is the shortest.</p>
-<p><em>Eric T.’s notes on the Calc version.</em> The biggest cost for
-Calc is the word <code>list</code>, written four times in the
-<code>edges</code> line. He finds that line easier to read anyway: it is
-plainly three lists inside one list, because there are no <code>$</code>
-to clutter it and the commas are small and do not hide what is there.
+including the indentation and the comment lines (two in the published
+TIP 759 text, one in the Calc (tuples) code), which is why the published
+759 looks longest there. In Tcl the spaces between words are required,
+so ignoring whitespace entirely is too generous; the row that counts
+each separator as one character keeps them (in Calc the argument
+separator is a comma, <code>f(a, b)</code>, where Tcl uses a space,
+<code>f a b</code>, so <code>,</code> is counted as one character) (it
+also keeps a few spaces around operators that are optional). By that
+measure the updated TIP 759 is now clearly shorter than plain Tcl and
+672 (445 against 506 and 493; the published version was 486), and Calc
+with tuples is the shortest (384). Florent’s page gives 340 for the
+updated function. That figure comes from
+<code>string length [string map {{ } {}} [info body ...]]</code>: it
+counts only the body, removes spaces but keeps the line breaks. With
+that method the updated function is 340 (the published one 408); with
+the no-whitespace row above, which counts the whole proc and removes all
+whitespace, it is 373 (the published one 404). The two numbers are not
+comparable with each other. With the two parentheses that make it run on
+Claude’s copy of the branch, the counts become 342 by his method and 375
+by the no-whitespace row.</p>
+<p><em>Eric T.’s notes on the Calc version.</em> Before the tuple forms
+existed, the biggest cost for Calc was the word <code>list</code>,
+written four times in the <code>edges</code> line. He finds the
+<code>list(list(...))</code> form easier to read anyway: among all the
+parentheses the word <code>list</code> shows where each list starts, and
+with no <code>$</code> and small commas it is plainly three lists inside
+one list. The bare form, <code>((t1,t2),(t2,t3),(t3,t1))</code>, is
+shorter (Calc (tuples) is now the shortest in every row except “as
+printed”, where its comment line is counted), but he does not think it
+is easier to read, so the code above keeps the <code>list</code> form in
+a comment line for comparison. Size is not the only thing that matters.
 The line count could also be reduced by putting <code>: {</code> on the
 same line as the first statement and the closing <code>}</code> at the
 end of the last one, but he prefers to keep those lines because the
 space helps to see the block, so they are left in.</p>
+<p><em>Why Calc is in the tables.</em> TIP 759 asks for new syntax for
+lists, multiple assignment and arithmetic scripts. The Calc rows are
+there to show that the list and tuple forms do not need a TIP: a module
+written in Tcl can provide them today, through
+<code>tcl::unsupported::assemble</code>, on Tcl 8.6 as well, and the
+code it generates is the same instruction sequence that
+<code>lassign</code> compiles to. That is also a reason to make
+<code>assemble</code> a supported command (Eric T.’s TIP 760). It does
+not replace the parts of 759 that need the core: the <code>[( )]</code>,
+<code>{( )}</code> and <code>"( )"</code> forms and proc bodies that
+begin with <code>(</code> change how Tcl parses a script, which a module
+cannot do.</p>
 <p><em>On <code>$</code>:</em> Florent is right that
 <code>$((...))</code> adds <code>$</code> characters. In this function
 it goes from 35 to 40, one for each expression turned into a
@@ -636,13 +742,17 @@ and this is the real function so that others can judge.</p>
 function (inside point <code>.5 .3</code>), 20,000 calls per sample,
 median of 9 samples, and repeated that four times. The figures are
 microseconds per call, as the lowest and highest of the four medians.
-The first three rows ran on the TIP 672 build (Tcl 9.1.1) and the last
-three on the <code>tip-759b_tcl90</code> build (Tcl 9.0.5). The plain,
-672 and 759 rows use the plain helpers; the Calc rows use the Calc
-helpers. Calibration: an empty compiled <code>for</code> loop runs at
-about 20 ns per iteration on both builds (19.6 to 20.5), so the two
-builds are about the same speed, but they are different Tcl versions and
-this is not a controlled benchmark.</p>
+This table was measured again on Oct 27, in one session on a slower
+machine than the first time, so it replaces the earlier figures and
+cannot be compared with them. The first four rows ran on the TIP 672
+build (Tcl 9.1.1) and the next four on the <code>tip-759b_tcl90</code>
+build (Tcl 9.0.5; the 759 row is the published version, since the
+updated one could not be run). The plain, 672 and 759 rows use the plain
+helpers; the Calc rows use the Calc helpers. Calibration: an empty
+compiled <code>for</code> loop runs at about 29 to 45 ns per iteration
+on 9.1.1, 28 to 41 ns on 9.0.5 and 24 ns on 8.6.14, so the machine was
+noisy and the builds are only roughly comparable; they are different Tcl
+versions and this is not a controlled benchmark.</p>
 <table>
 <thead>
 <tr class="header">
@@ -655,32 +765,42 @@ this is not a controlled benchmark.</p>
 <tr class="odd">
 <td>9.1.1</td>
 <td>plain</td>
-<td>3.70 – 3.80</td>
+<td>5.22 – 5.38</td>
 </tr>
 <tr class="even">
 <td>9.1.1</td>
 <td>672</td>
-<td>3.57 – 3.76</td>
+<td>5.07 – 5.66</td>
 </tr>
 <tr class="odd">
 <td>9.1.1</td>
-<td>Calc</td>
-<td>3.83 – 4.03</td>
+<td>Calc (<code>list</code>)</td>
+<td>5.36 – 6.52</td>
 </tr>
 <tr class="even">
-<td>9.0.5</td>
-<td>plain</td>
-<td>3.35 – 3.58</td>
+<td>9.1.1</td>
+<td>Calc (tuples)</td>
+<td>5.10 – 6.49</td>
 </tr>
 <tr class="odd">
 <td>9.0.5</td>
-<td>759</td>
-<td>3.50 – 3.68</td>
+<td>plain</td>
+<td>6.05 – 6.53</td>
 </tr>
 <tr class="even">
 <td>9.0.5</td>
-<td>Calc</td>
-<td>3.49 – 3.65</td>
+<td>759 (published)</td>
+<td>5.54 – 7.21</td>
+</tr>
+<tr class="odd">
+<td>9.0.5</td>
+<td>Calc (<code>list</code>)</td>
+<td>5.11 – 5.62</td>
+</tr>
+<tr class="even">
+<td>9.0.5</td>
+<td>Calc (tuples)</td>
+<td>5.07 – 5.55</td>
 </tr>
 <tr class="odd">
 <td>8.6.14</td>
@@ -689,22 +809,32 @@ this is not a controlled benchmark.</p>
 </tr>
 <tr class="even">
 <td>8.6.14</td>
-<td>Calc</td>
+<td>Calc (<code>list</code>)</td>
 <td>about 5.2 (best sample of 25)</td>
+</tr>
+<tr class="odd">
+<td>8.6.14</td>
+<td>Calc (tuples)</td>
+<td>about 5.1 (best sample of 25)</td>
 </tr>
 </tbody>
 </table>
 <p>Calc, being plain Tcl, was also run on Tcl 8.6.14 (64-bit, from the
 Ubuntu package), where TIP 672 and TIP 759 do not exist: the page’s Calc
-code gives the same two results there, and the module’s own test file
-(<code>calc.test</code>, 173 tests) passes with 0 failures. The machine
-was noisier during that run, with medians between 5.2 and 6.0 µs, so the
-two 8.6 rows are the best single sample of 25 and are only a rough
-guide. 8.6 itself is slower than 9.x here, so those rows should not be
-compared with the others.</p>
-<p>On each of the 9.x builds the versions are within about 5% of each
-other, which is about the size of the run-to-run noise, so no version is
-clearly faster. These numbers say nothing about large inputs or other
+code gives the same results there, and the module’s own test file
+(<code>calc.test</code>, 173 tests) passes with 0 failures, with the
+tuple forms added. The two 8.6 rows are the best single sample of 25 and
+are only a rough guide. 8.6 itself is slower than 9.x in the earlier
+session, so those rows should not be compared with the others.</p>
+<p>The updated 759 function (with the <code>if</code> body in
+parentheses) was timed on the 9.0.5 build too, in two separate runs:
+5.26 – 7.21 and 5.87 – 6.68 µs. The machine was too noisy in the last
+run to make a reliable table row of it (the same Calc function ranged
+from 5.1 to 8.9 µs between runs), so it is not in the table; it was no
+different from the published version.</p>
+<p>On each of the 9.x builds the ranges of the versions overlap, which
+is about the size of the run-to-run noise on this machine, so no version
+is clearly faster. These numbers say nothing about large inputs or other
 functions.</p>
 <hr />
 <h2 id="same-bytecode">10. Same bytecode</h2>
@@ -733,12 +863,21 @@ bookkeeping instruction.</p>
 <h3 id="bytecode-of-the-whole-edge-function">Bytecode of the whole edge
 function</h3>
 <p>Claude disassembled <code>calculate_edge_distance_Plain</code>,
-<code>_672</code>, <code>_Calc</code> and TIP 759’s <code>_Arith</code>
-(each calling the plain helpers). Counts are only comparable within one
-build, since the 9.1.1 and 9.0.5 builds encode some instructions
-differently, so each version is compared with plain Tcl on its own
-build.</p>
+<code>_672</code>, both <code>_Calc</code> versions and TIP 759’s
+published <code>_Arith</code> (each calling the plain helpers, except
+the Calc ones, which call the Calc helpers). The first rows were
+measured again on Oct 27 with the same method and give the same numbers
+as before. Counts are only comparable within one build, since the 9.1.1
+and 9.0.5 builds encode some instructions differently, so each version
+is compared with plain Tcl on its own build.</p>
 <table>
+<colgroup>
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+<col style="width: 20%" />
+</colgroup>
 <thead>
 <tr class="header">
 <th>build</th>
@@ -765,24 +904,45 @@ build.</p>
 </tr>
 <tr class="odd">
 <td>9.1.1</td>
-<td>Calc</td>
+<td>Calc (<code>list</code>)</td>
 <td>123</td>
 <td>12</td>
 <td>491</td>
 </tr>
 <tr class="even">
+<td>9.1.1</td>
+<td>Calc (tuples)</td>
+<td>111</td>
+<td>9</td>
+<td>415</td>
+</tr>
+<tr class="odd">
 <td>9.0.5</td>
 <td>plain</td>
 <td>133</td>
 <td>22</td>
 <td>383</td>
 </tr>
-<tr class="odd">
+<tr class="even">
 <td>9.0.5</td>
-<td>759</td>
+<td>759 (published)</td>
 <td>138</td>
 <td>5</td>
 <td>318</td>
+</tr>
+<tr class="odd">
+<td>9.0.5</td>
+<td>759 (updated, with the <code>if</code> body in parentheses)</td>
+<td>138</td>
+<td>6</td>
+<td>325</td>
+</tr>
+<tr class="even">
+<td>9.0.5</td>
+<td>Calc (tuples)</td>
+<td>111</td>
+<td>9</td>
+<td>244</td>
 </tr>
 </tbody>
 </table>
@@ -794,14 +954,30 @@ not from <code>$((...))</code>. The <code>startCommand</code>
 bookkeeping instructions say “1 command” instead of “2” because the
 <code>set A [expr ...]</code> pair became the single command
 <code>set A $((...))</code>.</li>
-<li><strong>Calc against plain:</strong> 10 fewer instructions. Most of
-the saving is <code>startCommand</code> (7 against 14), since a
-<code>: { ... }</code> block is one command to Tcl, and the final
-<code>tryCvtToNumeric</code> is gone. Assignments are stored straight
-into the local variable slots (<code>storeScalar</code>), as in plain
-Tcl, except one: the assignment inside
+<li><strong>Calc (<code>list</code>) against plain:</strong> 10 fewer
+instructions. Most of the saving is <code>startCommand</code> (7 against
+14), since a <code>: { ... }</code> block is one command to Tcl, and the
+final <code>tryCvtToNumeric</code> is gone. Assignments are stored
+straight into the local variable slots (<code>storeScalar</code>), as in
+plain Tcl, except one: the assignment inside
 <code>cond ? (min_distance = distance) : 0</code> is stored by name
 (<code>storeStk</code>), which is a slower path.</li>
+<li><strong>Calc (tuples) against plain:</strong> 22 fewer instructions
+(111 against 133). <code>startCommand</code> is 4 against 14, since the
+whole loop body is one Calc block. The plain version’s three
+<code>lassign</code> commands each end with a <code>listRangeImm</code>
+and a <code>pop</code> for the leftover list nobody uses (3
+<code>listRangeImm</code> in all); the tuple pattern needs none (0).
+Both versions have the same 6 <code>listIndexImm</code> and the same 4
+<code>list</code> instructions, so the unpacking and the list building
+are the same work. As with the other Calc version, one assignment
+(<code>min_distance</code> inside the <code>? :</code>) is stored by
+name (<code>storeStk</code>).</li>
+<li><strong>759 updated against the published 759:</strong> the same 138
+instructions and the same 7 stores by name (<code>storeStk</code>), with
+one more command (6 against 5) and 7 more bytes. Using commands inside
+the arithmetic did not change the amount of work the compiled code does;
+it only removed the bracket syntax from the source.</li>
 <li><strong>759 against plain:</strong> 5 more instructions. Its whole
 body is 5 commands, so it needs few <code>startCommand</code>
 instructions (4 against 14), but 7 of its assignments are stored by name
@@ -812,6 +988,28 @@ loads still use the local slots. It also has 5 more <code>pop</code> and
 <p>The bytes row says little about speed: it mostly reflects how many
 <code>startCommand</code> instructions (9 bytes each) a version
 needs.</p>
+<h2 id="spelling-and-compatibility-notes">11. Spelling and compatibility
+notes</h2>
+<p><em>The shorter spelling.</em> The TIP’s default spelling is
+<code>$((expression))</code>; a build switch selects
+<code>$(expression)</code>. The TIP’s Migration section says that a
+script written with <code>$((expression))</code> keeps working with the
+same value if Tcl later changes to <code>$(expression)</code>, because
+that spelling reads <code>$((expression))</code> as <code>$(</code>
+followed by a parenthesised expression. So every <code>$((...))</code>
+above can later become the shorter <code>$(...)</code>, for example
+<code>$(($y2-$y1))</code> becomes <code>$($y2-$y1)</code>, once the one
+incompatibility the TIP names has been dealt with: code that uses
+<code>$(index)</code>, the array with the empty name, would have to
+change to the <code>set</code> command. Nothing else in these examples
+would change.</p>
+<p><em>Compatibility in general.</em> Any new syntax costs something.
+TIP 759’s own Incompatibilities section says that a proc named
+<code>(</code> would be shadowed by its shorthand, and gives a backslash
+as the workaround. That is a small cost, and it is listed here only to
+show that both proposals have one (the TIP 672 one is described above);
+the page does not weigh them against each other. TIP 759 draft 2.2, as
+read on Oct 27; it may have changed since.</p>
 <h2 id="what-these-examples-do-not-cover">What these examples do not
 cover</h2>
 <p>TIP 759 adds more than a substitution: assignment, <code>;</code>,
@@ -820,6 +1018,10 @@ the comma list, arithmetic scripts and commands inside
 were written. As far as can be seen the two ideas don’t conflict: the
 body of <code>$((...))</code> is handed to <code>expr</code>, so
 extensions to the <code>expr</code> language should be usable inside it
-too (this was not tried, since <code>expr</code> doesn’t have them).</p>
+too (this was not tried, since <code>expr</code> doesn’t have them). The
+same goes for the commands-in-<code>expr</code> feature of the updated
+759: a raw <code>lassign</code> or <code>lindex</code> inside the
+arithmetic has no 672 counterpart, because <code>$((...))</code> hands
+its body to <code>expr</code>, which does not have it.</p>
 </body>
 </html>
