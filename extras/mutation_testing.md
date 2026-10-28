@@ -67,3 +67,33 @@ Survivors on the final code:
 * AddressSanitizer with `-DPURIFY=1 -fsanitize=address`, Valgrind (full leak check, `-DPURIFY`) and the Tcl memory-debug build (`--enable-symbols=mem`), both builds, on parse, parseOld, parseExpr, subst and compile (1,064 tests): no errors. The only report is one 48-byte leak in core Tcl (`TclArgumentBCEnter`), which also appears when running `info.test`. ASan needs `ASAN_OPTIONS=detect_stack_use_after_return=0` for Tcl's regexp engine (its stack-depth check breaks under ASan's fake stacks).
 * Leak-growth test with the memory-debug build: see `scripts/valgrind_asan_mem/leak*.tcl`.
 * Windows (static, MSVC, Windows 10 1903): see `NOTES.txt`.
+
+## Third pass: the scanner depth limit (Oct 27, 2026)
+
+The first two passes were run before `EXPR_SUBST_MAX_SCAN_DEPTH` (1000) was added to `SkipExprSubstScan`, so none of those mutants touch it. This pass covers only the new code: 26 hand-picked mutants (`extras2/depth_limit_mutation/mutants_depth.json`), each run in both builds against `parse.test parseOld.test parseExpr.test compile.test subst.test` (1,073 tests, 0 failed unmutated). Tests `parse-22.114` to `22.118` are the new tests under check.
+
+| What was changed | Mutants | Result |
+|---|---:|---|
+| The limit (999, 1001, 1, 100000) | 4 | all killed (`22.115`, `22.116`, `22.118`, others) |
+| `level > MAX` to `>=` or `<` | 2 | killed |
+| Start level 1 or -1 | 2 | killed |
+| Level increment in the `[` path (none, +2, -1) | 3 | killed (some as crashes or aborts) |
+| Level increment in the double-quote path (none, -1) | 2 | killed (`22.118`) |
+| Level increment in the double-quote path (+2) | 1 | **survived** |
+| Marker check dropped or `\|\|` to `&&`, both paths | 4 | killed (aborts) |
+| Return `NULL` instead of the marker | 1 | killed |
+| Caller: `==` to `!=`, or marker check removed | 2 | killed |
+| Caller: message text, error code `TCL LIMIT STACK` | 2 | killed |
+| Caller: `parsePtr->term = src` deleted | 1 | killed (timeout) |
+| Caller: `interp != NULL` test removed | 1 | **survived** |
+| Caller: `errorType` TCL_PARSE_SYNTAX to MISSING_PAREN | 1 | **survived** |
+
+23 killed, 3 survived, identical in the `$(` and `$((` builds. The two boundary tests `22.115` (exactly 1000 nested `[` is still an ordinary "missing )") and `22.116` (1001 is "nested too deeply") do most of the work.
+
+The 3 survivors, not yet covered by a test:
+
+* **Quote-path increment `+2`.** `22.118` only tests 1001 levels inside double quotes, which gives the same error either way. A test with exactly 1000 inside quotes (`subst "\$((\"[string repeat \[ 1000]"` should give "missing )"; 1001 gives "nested too deeply", checked by hand) would kill it.
+* **`interp != NULL` removed.** No test reaches the branch with no interpreter. `info complete` of deeply nested text takes that path (checked by hand: 1000 levels gives 0, 1001 gives 1), so a test there should kill it.
+* **`errorType` to MISSING_PAREN.** Not visible from any test so far; only the C API sees it. Not known whether the `info complete` test would catch it.
+
+No tests were added after this pass (decision: avoid another Fossil update for now; see `NEXT_STEPS.md`). The mutation trees were restored to the unmutated code afterwards.

@@ -32,6 +32,8 @@ Base: Tcl trunk 77ac0bb (9.1). Everything below was measured on Linux (gcc, x86-
 
 See `mutation_testing.md`. Second pass, on the final code: 235 mutants compile per build. Kill rate 69.4% (`$(`) and 88.1% (`$((`, the default). The `$(` build is lower because the look-ahead and the message builder are not compiled into it, so mutants there are dead code. Every survivor is classified in `mutation_testing.md`; none points to a missing behaviour test. The earlier first pass (186 mutants) found one real bug (non-OK return codes lost on the uncompiled path), fixed. The second pass added tests `parse-22.100` to `22.109`.
 
+Third pass (Oct 27, depth limit only): 26 mutants of the new scanner depth-limit code, 23 killed and 3 survived in both builds; the survivors (quote-path increment `+2`, the no-interpreter branch, `errorType`) and the tests that would kill them are in `mutation_testing.md`; no tests were added after it.
+
 ## 4. Performance
 
 Wall-clock timing was too noisy (about +/-5% run to run), so everything below is instruction counts (callgrind, `Ir`), which are deterministic. Optimized builds (`-O2`, no symbols), original trunk vs modified, both spellings. Scripts are in `performance/`.

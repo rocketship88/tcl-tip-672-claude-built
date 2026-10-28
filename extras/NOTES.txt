@@ -89,7 +89,7 @@ so extras/ stays exactly as uploaded and each folder can be re-uploaded whole. M
 when extras2/ is first created. Compare repo vs package by downloading the repo zip and diffing in Beyond
 Compare (quick size/time compare flags the .bat line-ending difference; ignore it).
 
-ZIP NAME: always send the package as expr_dollar_sub.zip (files at the top level, no wrapper folder). Never
+ZIP NAME: always send the package as expr_dollar_sub.zip, with everything inside ONE top-level folder named expr_dollar_sub/ (as all the earlier zips; the user's compare workflow depends on it). Never
 rename it or add suffixes (_stepper_only, _part1 ...): the user's workflow depends on the exact name. If a
 zip must contain only some changes, still call it expr_dollar_sub.zip.
 
@@ -246,3 +246,18 @@ function, macro or type highlights every whole-word occurrence of it in its func
 string contents excluded), and steps through them with next/prev buttons or n / N.
 Matches inside folded blocks open only the folds around the current match. Esc clears
 the highlight first (a second Esc closes the code view).
+
+Examples page, Oct 27 update: the TIP 759 edge function is now Florent's updated version (commands in expr);
+Claude could not run it on the Oct 13 branch snapshot (the `if {...} {min_distance = ...}` body is not read as
+arithmetic there). Calc entry rewritten with the new list/tuple forms (the `list(...)` line kept as a comment);
+character, timing and bytecode tables measured again in one session; added section 11 (spelling and compatibility).
+(The tuple/list forms are already in the GitHub version of the module, so the page says so.)
+Oct 27 later: Florent's updated 759 function runs on the Oct 13 snapshot once the if body is written {(min_distance = $distance)}; 297 points equal to plain; bytecode row added (138 instr, 325 bytes on 9.0.5).
+
+Mutation testing of the depth limit (Oct 27, 2026): 26 mutants of the new scanner depth-limit code in
+both builds, 23 killed, 3 survived (identical in both). Harness and raw results are in
+extras2/depth_limit_mutation/; the table and the survivors are in extras/mutation_testing.md ("Third pass")
+and the two tests that would kill the survivors are in extras/NEXT_STEPS.md. No tests were added
+and nothing was changed on the Fossil branch.
+(The depth-limit mutation files are in extras2/ because extras/ is at the 100-file limit; only the existing
+docs in extras/ got text added.)

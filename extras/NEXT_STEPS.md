@@ -59,3 +59,11 @@ whether -nocommands should keep disabling the arithmetic). I will draft it when 
 - Optional, same condition: prototype replacing the `{`, `"` and `[` cases of SkipExprSubstScan with
   Tcl_ParseBraces / Tcl_ParseQuotedString / Tcl_ParseCommand (see design_and_results.md section 10),
   checking it with extras/scripts/fuzz and measuring the cost.
+
+## Depth-limit mutation survivors (Oct 27, 2026; same condition as above, only if there is real interest)
+
+Three mutants of the depth-limit code survive (see mutation_testing.md, "Third pass"). Two tests would
+kill the first two: (1) exactly 1000 nested `[` inside double quotes in the body gives "missing )" (the
+existing 22.118 only tests 1001); (2) `info complete` of `puts $((` followed by 1000 and by 1001 `[`
+gives 0 and 1 (this also reaches the no-interpreter branch listed above). The third, `errorType` set to
+MISSING_PAREN, is only visible through the C API. Not added, to avoid another Fossil update for now.
