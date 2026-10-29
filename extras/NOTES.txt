@@ -261,3 +261,11 @@ and the two tests that would kill the survivors are in extras/NEXT_STEPS.md. No 
 and nothing was changed on the Fossil branch.
 (The depth-limit mutation files are in extras2/ because extras/ is at the 100-file limit; only the existing
 docs in extras/ got text added.)
+
+Oct 29, 2026: the proposed change to the Tcl(n) manual page is in extras2/tcl_n_manual_page/
+(rendered page with the additions in red, the diff, and the old and new doc/Tcl.n). It is the
+revised wording: rule [8] renamed "Variable and expression substitution", the intro says three
+variable forms plus expression substitution as the fourth, and the $((expression)) entry split into
+four short paragraphs. extras/expr-subst.patch and new/doc/Tcl.n were regenerated with it (the patch
+still applies cleanly to trunk 77ac0bb); the Fossil branch still has the earlier one-paragraph
+version of that entry and was not changed.
