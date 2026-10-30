@@ -51,7 +51,7 @@ index 2867df87e..3423274ef 100644
  that look like command substitutions for Tcl commands are replaced by
  the result of evaluating that script.  Where an uncaught
 diff --git a/doc/Tcl.n b/doc/Tcl.n
-index df4472ae4..1e3b18ae8 100644
+index df4472ae4..bc1ea958c 100644
 --- a/doc/Tcl.n
 +++ b/doc/Tcl.n
 @@ -94,14 +94,15 @@ substituted into the word in place of the brackets and all of the
@@ -74,7 +74,7 @@ index df4472ae4..1e3b18ae8 100644
  .RS
  .TP 15
  \fB$\fIname\fR
-@@ -136,6 +137,35 @@ or close brace characters,
+@@ -136,6 +137,36 @@ or close brace characters,
  and \fIindex\fR can be any sequence of characters except for close brace
  characters.  No further
  substitutions are performed during the parsing of \fIname\fR.
@@ -90,7 +90,8 @@ index df4472ae4..1e3b18ae8 100644
 +Parentheses inside braces, double quotes or bracketed commands are not counted.
 +.sp
 +A \fB$((\fR that is not closed by a matching \fB))\fR is an error:
-+\fB$((1+2)*3)\fR is rejected, and should be written \fB$(((1+2)*3))\fR.
++\fB$((1+2)*3)\fR is rejected, and should be written \fB$(((1+2)*3))\fR
++or, with spaces, \fB$(( (1+2)*3 ))\fR.
 +Any other form that begins with \fB$(\fR, such as \fB$( (1+2))\fR, is not an
 +expression substitution; as before it is an array reference with an empty name.
 +.sp
@@ -100,13 +101,13 @@ index df4472ae4..1e3b18ae8 100644
 +result of the expression is never substituted a second time.
 +.sp
 +For example,
-+.QW "\fBset area $(($width * $height))\fR"
++.QW "\fBset area $(( $width * $height ))\fR"
 +sets \fBarea\fR to the product of the two variables, and
-+.QW "\fBputs \N'34'n=$((2**10))!\N'34'\fR"
++.QW "\fBputs \N'34'n=$(( 2**10 ))!\N'34'\fR"
 +prints
 +.QW "\fBn=1024!\fR" .
 +Extra parentheses around the expression make no difference:
-+\fB$(($a+$b))\fR and \fB$((($a+$b)))\fR have the same value.
++\fB$(( $a+$b ))\fR and \fB$(( ($a+$b) ))\fR have the same value.
  .PP
  There may be any number of variable substitutions in a single word.
  Variable substitution is not performed on words enclosed in braces.

@@ -278,3 +278,10 @@ arrow key) no longer pauses Auto-play: the voice carries on from the step chosen
 holds when another script, build or subst option is chosen (2.16). How symbols and names are said ($(( as "dollar double paren",
 Tcl_ParseVarName as "tickle Parse variable Name", and so on) is in the SYMBOLS and PRONOUNCE tables
 in scripts/stepper/template.html, so a word that sounds wrong is one line to change.
+
+Oct 30, 2026: Tcl.n entry: the corrected form in the error paragraph is now also shown with spaces,
+$(( (1+2)*3 )), and the examples in the entry are written with spaces inside the delimiters
+($(( $width * $height )), $(( 2**10 )), $(( $a+$b )) and $(( ($a+$b) ))), which is easier to read.
+extras/expr-subst.patch, new/doc/Tcl.n and extras2/tcl_n_manual_page/ were regenerated (35 insertions,
+4 deletions in doc/Tcl.n; the patch still applies cleanly to trunk 77ac0bb). The Fossil branch
+tip-672-v2 still has the earlier wording.
