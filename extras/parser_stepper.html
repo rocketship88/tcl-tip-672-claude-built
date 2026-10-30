@@ -249,7 +249,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
 <main>
   <header class="top">
     <div class="topl">
-    <p class="ver mono">Version 2.13 &middot; Oct 27, 2026</p>
+    <p class="ver mono">Version 2.16 &middot; Oct 30, 2026</p>
     <h1>Tcl Expression Substitution <span id="ttlw">Stepper</span></h1>
     <p class="lede"><u class="choose">Choose either the review of the code changes or the step-by-step walkthrough.</u><br><span id="ledeT">Follow the parser through <code>$((expr))</code>, a shortcut for <code>[expr {expr}]</code>. Step through the real C code in <code>Tcl_ParseVarName</code> and the scanner that finds the closing parenthesis, watch the token array grow, then see the bytecode and result. The panes show the actual source lines and real output from a build of the modified trunk.</span></p>
     </div>
@@ -296,6 +296,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
       <select id="speed" title="Seconds per step during Auto-play" aria-label="Seconds per step"><option>0.5</option><option>1</option><option selected>1.5</option><option>2</option><option>3</option><option>5</option></select><span class="spd">s/step</span>
       <button id="b-play">Auto-play</button>
       <label class="allbox" title="Auto-play carries on from one script to the next: basic, missing paren, ... subst options"><input type="checkbox" id="playall"> all</label>
+      <label class="allbox" id="readBox" title="Speak each step&rsquo;s title and explanation aloud. During Auto-play the next step starts when the voice has finished."><input type="checkbox" id="readOn"> Read aloud</label><select id="voiceSel" hidden aria-label="Voice" title="Voice (the ones your browser and system provide)"></select><select id="rateSel" hidden aria-label="Speaking speed" title="Speaking speed"><option value="0.8">slow</option><option value="1" selected>normal</option><option value="1.2">fast</option><option value="1.5">faster</option></select>
       <button id="b-code">Show code</button>
     </div>
   </div>
@@ -993,6 +994,7 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     Array.prototype.forEach.call($('optbar').querySelectorAll('button'), function (b) { b.setAttribute('aria-pressed', b.dataset.k === 'none' ? sset === 0 : !!(sset & (1 << +b.dataset.k))); });
     if (i === steps.length - 1 && !$('playall').checked) stop();   /* with "all" the timer runs one more pause, then tick() moves on or stops */
     if (window.__codeOpen) renderCode();
+    if (speechOn() && !$('walk').hidden) speakStep();   /* the step that is now showing */
   }
   var speed = 1.5;   /* seconds per step during Auto-play */
   /* "all": the next script in the list. Returns false after the last one. */
@@ -1008,8 +1010,8 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     else stop();
   }
   function startTimer() { timer = setInterval(tick, speed * 1000); }
-  function stop() { if (timer) { clearInterval(timer); timer = null; $('b-play').textContent = 'Auto-play'; } }
-  function reload(keep) { stop(); steps = build_trace(); if (!keep) i = 0; if (i >= steps.length) i = steps.length - 1; render(); }
+  function stop() { if (timer) { if (timer !== 'speech') clearInterval(timer); timer = null; $('b-play').textContent = 'Auto-play'; } stopSpeech(); }   /* timer: null = not playing, an interval id = playing on the timer, 'speech' = playing, each step waits for the voice to finish */
+  function reload(keep) { skipStop(); steps = build_trace();   /* a new script, build or option set pauses Auto-play, except with Read aloud (see skipStop) */ if (!keep) i = 0; if (i >= steps.length) i = steps.length - 1; render(); }
   $('scenSeg').innerHTML = SCEN.map(function (s) { return '<button data-k="' + s[0] + '" data-tip="' + esc(NOTES[s[0]]).replace(/"/g, '&quot;') + '" aria-pressed="false">' + esc(s[1]) + '</button>'; }).join('');
   $('scenSeg').onclick = function (e) { var k = e.target.dataset && e.target.dataset.k; if (k) { scen = k; reload(); } };
   $('optSeg').innerHTML = '<button data-k="none" aria-pressed="false">(none)</button>';
@@ -1026,14 +1028,16 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
     reload(atEnd); };   /* each option toggles; any number of the same kind can be on */
   $('bld1').onclick = function () { build = 1; reload(); };
   $('bld2').onclick = function () { build = 2; reload(); };
-  $('b-next').onclick = function () { stop(); if (i < steps.length - 1) { i++; render(); } };
-  $('b-prev').onclick = function () { stop(); if (i > 0) { i--; render(); } };
+  /* Skipping steps pauses Auto-play, except with Read aloud: then the voice carries on from the step chosen (timer === 'speech'). */
+  function skipStop() { if (timer !== 'speech') stop(); }
+  $('b-next').onclick = function () { skipStop(); if (i < steps.length - 1) { i++; render(); } };
+  $('b-prev').onclick = function () { skipStop(); if (i > 0) { i--; render(); } };
   $('b-reset').onclick = function () { stop(); i = 0; render(); };
   try { var sv = localStorage.getItem('stepperSpeed'); if (sv && /^(0\.5|1|1\.5|2|3|5)$/.test(sv)) { $('speed').value = sv; speed = +sv; } } catch (e) { }
   $('speed').onchange = function () {
     speed = +this.value;
     try { localStorage.setItem('stepperSpeed', this.value); } catch (e) { }
-    if (timer) { clearInterval(timer); startTimer(); }   /* new pace takes effect at once */
+    if (timer && timer !== 'speech') { clearInterval(timer); startTimer(); }   /* new pace takes effect at once; with Read aloud the voice sets the pace */
     this.blur();
   };
   $('b-play').onclick = function () {
@@ -1042,18 +1046,148 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
       if ($('playall').checked) { nextScript(); steps = build_trace(); }   /* carry on to the next script; after the last one, replay it rather than wrapping round */
       i = 0;
     }
-    $('b-play').textContent = 'Pause'; render();
-    startTimer();
+    $('b-play').textContent = 'Pause';
+    if (speechOn()) { timer = 'speech'; render(); }   /* render speaks the step; when the voice is done the next one follows */
+    else { render(); startTimer(); }
   };
+  /* ---------- read aloud: the speech synthesis of the browser, one step at a time ----------
+     Spoken text = the step's title (s.h) and caption (s.p), the same strings that fill the caption box.
+     The captions are plain text, so code-like words are found by their look (isCode) and rewritten by spokenCode. */
+  var speakTok = 0, voices = [];
+  /* How the voice should say symbol phrases. Applied first, to the raw caption: [pattern, spoken form or function]. Specific before general. */
+  var SYMBOLS = [
+    [/\$\(\(\.\.\.\)\)/g, ' dollar double paren '],
+    [/"\(\("/g, ' double open paren '],
+    [/"\)\)"/g, ' double close paren '],
+    [/numTokens - \(varIndex \+ 1\)/g, 'num tokens minus the variable index plus 1'],
+    [/"([()\[\]{}$])"/g, function (m, c) { return ' ' + ({'(': 'open paren', ')': 'close paren', '[': 'open bracket', ']': 'close bracket', '{': 'open brace', '}': 'close brace', '$': 'dollar'})[c] + ' '; }],
+    [/\[expr \{(\.\.\.|body)\}\]/g, ' bracket expr braces '],
+    [/\$\(\(/g, ' dollar double paren '],
+    [/\$\(/g, ' dollar paren '],
+    [/\bmissing \)/g, 'missing close paren'],
+    [/\(([A-Za-z_][\w:]*)\)/g, ', $1,'],   /* a plain name in parentheses is a side remark, not code */
+    [/FindExprSubstEnd\(src \+ skip, end\)/g, 'FindExprSubstEnd called with src plus skip, and end'],
+    [/ - /g, ' minus '],   /* the only " - " in the captions is a subtraction */
+    [/(^|\s)\)(?=\s|$)/g, '$1close paren'],
+    [/(^|\s)\((?=\s|$)/g, '$1open paren'],
+    [/→/g, ', so']
+  ];
+  /* How the voice should say names it gets wrong. Add a line here: [pattern, spoken form]. Applied after the code-like words have been split
+     into plain words, so a camelCase name such as FindExprSubstEnd is already "Find Expr Subst End". Case-insensitive rules are fine. */
+  var PRONOUNCE = [
+    [/\btcl\.h\b/gi, 'tickle dot H'],
+    [/\b([Aa]) open\b/g, '$1n open'],
+    [/\btcl\b/gi, 'tickle'],
+    [/\bexpr\b/gi, 'ex per'],
+    [/\bsrc\b/gi, 'source'],
+    [/\bobj\b/gi, 'object'],
+    [/\bobjc\b/gi, 'object count'],
+    [/\bvar\b/gi, 'variable'],
+    [/\bcmd\b/gi, 'command'],
+    [/\bstk\b/gi, 'stack'],
+    [/\bNR\b/g, 'N R'],
+    [/testparser/gi, 'test parser'],
+    [/\bOR-ed\b/gi, 'ored'],
+    [/\bparens?\b/gi, 'paren']
+  ];
+  function speechOn() { return !!(window.speechSynthesis && $('readOn') && $('readOn').checked); }
+  function stopSpeech() { speakTok++; try { if (window.speechSynthesis) speechSynthesis.cancel(); } catch (e) { } }
+  function spell(h) { return h.toUpperCase().split('').join(' '); }
+  function isCode(w) {
+    return /[$_*+=<>~&\\]|::|\.\.\./.test(w) || /[a-z][A-Z]/.test(w) || /^-[a-z]/.test(w) || /^0x[0-9a-f]+/i.test(w) || /[\[\]{}]/.test(w);
+  }
+  function spokenCode(s) {
+    var m = /^0x([0-9A-Fa-f]+)$/.exec(s); if (m) return 'hex ' + spell(m[1]);
+    return s.replace(/_@_/g, ' marker ')
+      .replace(/::/g, ' double colon ').replace(/\$/g, ' dollar ')
+      .replace(/>>/g, ' shifted right by ').replace(/&=/g, ' and equals ').replace(/~/g, ' not ').replace(/&/g, ' and ')
+      .replace(/\+\+/g, ' plus plus ').replace(/--/g, ' minus minus ').replace(/\.\.\./g, ' ')
+      .replace(/\*/g, ' times ').replace(/\+/g, ' plus ').replace(/=/g, ' equals ').replace(/\\/g, ' backslash ')
+      .replace(/\(\(/g, ' double open paren ').replace(/\)\)/g, ' double close paren ')
+      .replace(/\(/g, ' open paren ').replace(/\)/g, ' close paren ')
+      .replace(/\[/g, ' open bracket ').replace(/\]/g, ' close bracket ')
+      .replace(/\{/g, ' open brace ').replace(/\}/g, ' close brace ')
+      .replace(/(^|\s)-(\w)/g, '$1dash $2')
+      .replace(/([a-z])([A-Z])/g, '$1 $2').replace(/([A-Z])([A-Z][a-z])/g, '$1 $2').replace(/_/g, ' ')
+      .replace(/\b[A-Z]{3,}\b/g, function (x) { return x.toLowerCase(); });
+  }
+  function spokenClean(s) {
+    SYMBOLS.forEach(function (r) { s = s.replace(r[0], r[1]); });
+    s = s.replace(/\S+/g, function (w) {
+      var m = /^(.*?)([.,;:!?]*)$/.exec(w.replace(/^"+/, '').replace(/"+([.,;:!?]*)$/, '$1')), core = m[1];
+      if (!isCode(core)) return w;
+      return ' ' + spokenCode(core) + ' ' + m[2];
+    });
+    s = s.replace(/\b[A-Z]{3,}\b/g, function (x) { return x.toLowerCase(); });   /* ALL-CAPS words in the prose (TEXT, COMMANDS) are said as words */
+    s = s.replace(/\s+/g, ' ');
+    PRONOUNCE.forEach(function (r) { s = s.replace(r[0], r[1]); });
+    return s.replace(/"/g, '').replace(/\s+/g, ' ').replace(/\s+([.,;:!?])/g, '$1').replace(/,\s*,/g, ',').trim();
+  }
+  function spokenParts(s) { return [spokenClean(s.h || ''), spokenClean(s.p || '')].filter(Boolean); }
+  function spokenChunks(s) {
+    var chunks = [];
+    spokenParts(s).forEach(function (p) {
+      var c2 = '';
+      p.split(/(?<=[.!?:;])\s+/).forEach(function (sn) { if (c2 && (c2 + ' ' + sn).length > 180) { chunks.push(c2); c2 = sn; } else c2 = c2 ? c2 + ' ' + sn : sn; });
+      if (c2) chunks.push(c2);
+    });
+    return chunks;
+  }
+  function speakStep() {
+    stopSpeech();
+    var tok = speakTok, chunks = spokenChunks(steps[i]), rate = parseFloat($('rateSel').value) || 1, vname = $('voiceSel').value;
+    var voice = voices.filter(function (v) { return v.name === vname; })[0];
+    (function nxt(k) {
+      if (tok !== speakTok) return;
+      if (k >= chunks.length) { speechDone(tok); return; }
+      var u = new SpeechSynthesisUtterance(chunks[k]); u.rate = rate; if (voice) { u.voice = voice; u.lang = voice.lang; }
+      u.onend = function () { nxt(k + 1); }; u.onerror = function () { nxt(k + 1); };
+      try { speechSynthesis.speak(u); } catch (e) { speechFailed(); }
+    })(0);
+  }
+  function speechFailed() {   /* the browser refused to speak: switch Read aloud off and carry on with the timer */
+    speakTok++; $('readOn').checked = false; $('voiceSel').hidden = $('rateSel').hidden = true;
+    $('readBox').title = 'The browser would not start speech here (some embedded viewers block it). Try the page in a normal browser tab.';
+    if (timer === 'speech') startTimer();
+  }
+  function speechDone(tok) {   /* during Auto-play the next step follows a short pause after the voice has finished */
+    if (timer !== 'speech') return;
+    setTimeout(function () { if (timer === 'speech' && tok === speakTok) tick(); }, 600);
+  }
+  function fillVoices() {
+    if (!window.speechSynthesis) return;
+    voices = speechSynthesis.getVoices() || [];
+    var sel = $('voiceSel'), keep = sel.value, saved = ''; try { saved = localStorage.getItem('stepperVoice') || ''; } catch (e) { }
+    var lang = (navigator.language || 'en').slice(0, 2);
+    var list = voices.filter(function (v) { return v.lang && v.lang.slice(0, 2) === lang; }); if (!list.length) list = voices;
+    sel.innerHTML = list.map(function (v) { return '<option value="' + esc(v.name).replace(/"/g, '&quot;') + '">' + esc(v.name) + '</option>'; }).join('');
+    var want = keep || saved; if (want && list.some(function (v) { return v.name === want; })) sel.value = want;
+    else { var d = list.filter(function (v) { return v.default; })[0]; if (d) sel.value = d.name; }
+  }
+  if (!window.speechSynthesis) { $('readOn').disabled = true; $('readBox').title = 'This browser has no speech output, so Read aloud is not available here.'; }
+  else {
+    fillVoices(); if (speechSynthesis.addEventListener) speechSynthesis.addEventListener('voiceschanged', fillVoices); else speechSynthesis.onvoiceschanged = fillVoices;
+    try { $('readOn').checked = false; var rt = localStorage.getItem('stepperRate'); if (rt) $('rateSel').value = rt; } catch (e) { }
+    $('readOn').addEventListener('change', function () {
+      $('voiceSel').hidden = $('rateSel').hidden = !this.checked;
+      if (this.checked) {
+        fillVoices();
+        if (timer && timer !== 'speech') { clearInterval(timer); timer = 'speech'; }   /* already playing on the timer: let the voice set the pace from now on */
+        speakStep();
+      } else { stop(); }
+    });
+    $('voiceSel').addEventListener('change', function () { try { localStorage.setItem('stepperVoice', this.value); } catch (e) { } if (speechOn()) speakStep(); });
+    $('rateSel').addEventListener('change', function () { try { localStorage.setItem('stepperRate', this.value); } catch (e) { } if (speechOn()) speakStep(); });
+  }
   $('dots').addEventListener('click', function (e) {
     var d = e.target.closest('i[data-n]'); if (!d) return;
-    stop(); i = +d.dataset.n; render();
+    skipStop(); i = +d.dataset.n; render();
   });
   document.addEventListener('keydown', function (e) {
     if (e.target.tagName === 'INPUT' || e.target.tagName === 'SELECT' || e.ctrlKey || e.metaKey || e.altKey) return;
     if ($('walk').hidden) return;   /* the review view has no steps */
     if (e.key === ' ' || e.code === 'Space') { e.preventDefault(); if (!e.repeat) $('b-play').click(); return; }
-    if ((e.key === 'ArrowRight' || e.key === 'ArrowLeft') && timer) { stop(); e.preventDefault(); return; }   /* during auto-play an arrow only pauses */
+    if ((e.key === 'ArrowRight' || e.key === 'ArrowLeft') && timer && timer !== 'speech') { stop(); e.preventDefault(); return; }   /* during auto-play on the timer an arrow only pauses; with Read aloud it skips and the voice carries on */
     if (e.key === 'ArrowRight') { e.preventDefault(); $('b-next').click(); }
     else if (e.key === 'ArrowLeft') { e.preventDefault(); $('b-prev').click(); }
   });
@@ -1070,6 +1204,14 @@ pre.diff .add { background:var(--d-add); } pre.diff .del { background:var(--d-de
   }, all: function () {
     var r = {};
     [1, 2].forEach(function (b) { SCEN.forEach(function (s) { build = b; scen = s[0]; if (scen === 'subst') { for (var m = 0; m < 256; m++) { sset = m; var t2 = build_trace(); r[b + ':subst:' + m] = {n: t2.length, checks: t2.filter(function (x) { return x.check; }).map(function (x) { return x.check; })}; } sset = 0; return; } var t = build_trace(); r[b + ':' + s[0]] = {n: t.length, checks: t.filter(function (x) { return x.check; }).map(function (x) { return x.check; })}; }); });
+    return r;
+  }, spoken: function () {   /* test hook: the spoken chunks of every step of every script and option set, keyed by the caption */
+    var r = {}, sb = build, ss = scen, sx = sset;
+    [1, 2].forEach(function (b) { SCEN.forEach(function (s) {
+      build = b; scen = s[0];
+      for (var m = 0; m < (scen === 'subst' ? 256 : 1); m++) { sset = scen === 'subst' ? m : sx; build_trace().forEach(function (x) { r[x.h + '\n' + x.p] = spokenChunks(x); }); }
+    }); });
+    build = sb; scen = ss; sset = sx;
     return r;
   }};
   /* ================= full code view: coloured, foldable, double-click to follow a name ================= */

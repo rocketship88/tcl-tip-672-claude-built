@@ -269,3 +269,12 @@ variable forms plus expression substitution as the fourth, and the $((expression
 four short paragraphs. extras/expr-subst.patch and new/doc/Tcl.n were regenerated with it (the patch
 still applies cleanly to trunk 77ac0bb); the Fossil branch still has the earlier one-paragraph
 version of that entry and was not changed.
+
+Oct 30, 2026: the stepper (extras/parser_stepper.html, version 2.14) has a "Read aloud" checkbox in the
+controls bar, designed after the console stepper in the tcl-console-unix repository. It speaks each
+step's title and caption with the browser's speech synthesis; during Auto-play the next step starts
+0.6 s after the voice has finished. With Read aloud on, skipping a step (Next, Back, a step dash or an
+arrow key) no longer pauses Auto-play: the voice carries on from the step chosen (version 2.15); the same
+holds when another script, build or subst option is chosen (2.16). How symbols and names are said ($(( as "dollar double paren",
+Tcl_ParseVarName as "tickle Parse variable Name", and so on) is in the SYMBOLS and PRONOUNCE tables
+in scripts/stepper/template.html, so a word that sounds wrong is one line to change.
