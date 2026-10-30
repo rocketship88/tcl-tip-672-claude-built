@@ -20,9 +20,8 @@ Against the current page: 31 added source lines and 4 changed lines (35 insertio
 The examples are written with spaces inside the delimiters, $(( $width * $height )), and the error paragraph
 shows $(((1+2)*3)) and, with spaces, $(( (1+2)*3 )) as the two ways to write the corrected form.
 
-extras/expr-subst.patch and new/doc/Tcl.n were regenerated (Oct 29) with this wording, so
-the package agrees with itself. The Fossil branch (tip-672-v2) still carries the EARLIER
-one-paragraph wording of this entry and the old rule [8] heading; it was not changed.
+extras/expr-subst.patch and new/doc/Tcl.n were regenerated with this wording, so the package agrees with itself.
+The Fossil branch tip-672-v2 carries the same wording since the Oct 30 check-in b5136123e7.
 The other manual pages the patch touches (subst.n, ParseCmd.3, SubstObj.3) are unchanged.
 
 The HTML was rendered with groff from the nroff source, left-aligned, so line breaks can
