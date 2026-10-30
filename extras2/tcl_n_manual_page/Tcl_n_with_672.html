@@ -33,7 +33,7 @@ pre{background:var(--card);border:1px solid var(--line);border-radius:8px;paddin
 <div class="note"><h1>Tcl(n): the 12 rules, with TIP 672</h1>
 <p><span class="key"><span class="add">Red</span> = text added by TIP 672</span><span class="key"><span class="chg">Red and underlined</span> = existing text that changes</span>
 <span class="key">black = unchanged</span></p>
-<p>Rule [8] is renamed <b>Variable and expression substitution</b>, one phrase in its first sentence changes, and it gets one more entry, <b>$((expression))</b>, after <b>$name</b>, <b>$name(index)</b> and <b>${name}</b>. There is no new rule. Against the current page that is 30 added source lines (a single insertion, 26 lines as rendered here, in four short paragraphs) and 4 changed lines. <a href="#new">Jump to the addition</a></p>
+<p>Rule [8] is renamed <b>Variable and expression substitution</b>, one phrase in its first sentence changes, and it gets one more entry, <b>$((expression))</b>, after <b>$name</b>, <b>$name(index)</b> and <b>${name}</b>. There is no new rule. Against the current page that is 31 added source lines (a single insertion, 27 lines as rendered here, in four short paragraphs) and 4 changed lines. <a href="#new">Jump to the addition</a></p>
 <p>Rendered here with groff, left-aligned, so line breaks may differ a little from the installed man page.</p></div>
 <nav aria-label="Contents"><ul><li class="lv0"><a href="#s0">NAME</a></li><li class="lv0"><a href="#s1">SYNOPSIS</a></li><li class="lv0"><a href="#s2">DESCRIPTION</a></li><li class="lv1"><a href="#s3">[1] Commands.</a></li><li class="lv1"><a href="#s4">[2] Evaluation.</a></li><li class="lv1"><a href="#s5">[3] Words.</a></li><li class="lv1"><a href="#s6">[4] Double quotes.</a></li><li class="lv1"><a href="#s7">[5] Argument expansion.</a></li><li class="lv1"><a href="#s8">[6] Braces.</a></li><li class="lv1"><a href="#s9">[7] Command substitution.</a></li><li class="lv1 chgd"><a href="#s10">[8] Variable and expression substitution.</a></li><li class="lv2"><a href="#s11">$name</a></li><li class="lv2"><a href="#s12">$name(index)</a></li><li class="lv2"><a href="#s13">${name}</a></li><li class="lv2 new"><a href="#s14">$((expression))</a></li><li class="lv1"><a href="#s15">[9] Backslash substitution.</a></li><li class="lv2"><a href="#s16">\a</a></li><li class="lv2"><a href="#s17">\b</a></li><li class="lv2"><a href="#s18">\f</a></li><li class="lv2"><a href="#s19">\n</a></li><li class="lv2"><a href="#s20">\r</a></li><li class="lv2"><a href="#s21">\t</a></li><li class="lv2"><a href="#s22">\v</a></li><li class="lv2"><a href="#s23">\&lt;newline&gt;whiteSpace</a></li><li class="lv2"><a href="#s24">\\</a></li><li class="lv2"><a href="#s25">\ooo</a></li><li class="lv2"><a href="#s26">\xhh</a></li><li class="lv2"><a href="#s27">\uhhhh</a></li><li class="lv2"><a href="#s28">\Uhhhhhhhh</a></li><li class="lv1"><a href="#s29">[10] Comments.</a></li><li class="lv1"><a href="#s30">[11] Order of substitution.</a></li><li class="lv1"><a href="#s31">[12] Substitution and word boundaries.</a></li><li class="lv0"><a href="#s32">KEYWORDS</a></li></ul></nav>
 <pre><span class="i">Tcl</span>(n)                              Tcl Built-In Commands                             <span class="i">Tcl</span>(n)
@@ -151,10 +151,10 @@ ________________________________________________________________________________
                              <span class="add">quotes or bracketed commands are not counted.</span>
 
                              <span class="add">A  <span class="b">$((  </span>that  is  not  closed  by  a  matching  <span class="b">)) </span>is an error:</span>
-                             <span class="add"><span class="b">$((1+2)*3) </span>is rejected, and  should  be  written  <span class="b">$(((1+2)*3))</span>.</span>
-                             <span class="add">Any  other  form that begins with <span class="b">$(</span>, such as <span class="b">$( (1+2))</span>, is not</span>
-                             <span class="add">an expression substitution; as before it is an array  reference</span>
-                             <span class="add">with an empty name.</span>
+                             <span class="add"><span class="b">$((1+2)*3) </span>is rejected, and should be written <span class="b">$(((1+2)*3))  </span>or,</span>
+                             <span class="add">with  spaces,  <span class="b">$(( (1+2)*3 ))</span>.  Any other form that begins with</span>
+                             <span class="add"><span class="b">$(</span>, such as <span class="b">$( (1+2))</span>, is not an  expression  substitution;  as</span>
+                             <span class="add">before it is an array reference with an empty name.</span>
 
                              <span class="add">The  text  is  passed to <span class="b">expr </span>as if it were enclosed in braces:</span>
                              <span class="add">the  Tcl  parser  performs  no  substitution  on  it,  so  that</span>
@@ -162,25 +162,26 @@ ________________________________________________________________________________
                              <span class="add">performed once, by <span class="b">expr</span>, and the result of  the  expression  is</span>
                              <span class="add">never substituted a second time.</span>
 
-                             <span class="add">For  example, “<span class="b">set area $(($width * $height))</span>” sets <span class="b">area </span>to the</span>
-                             <span class="add">product of the two variables, and “<span class="b">puts &quot;n=$((2**10))!&quot;</span>” prints</span>
-                             <span class="add">“<span class="b">n=1024!</span>”.  Extra parentheses around  the  expression  make  no</span>
-                             <span class="add">difference: <span class="b">$(($a+$b)) </span>and <span class="b">$((($a+$b))) </span>have the same value.</span>
+                             <span class="add">For  example,  “<span class="b">set  area $(( $width * $height ))</span>” sets <span class="b">area </span>to</span>
+                             <span class="add">the product of the two variables, and “<span class="b">puts &quot;n=$(( 2**10  ))!&quot;</span>”</span>
+                             <span class="add">prints “<span class="b">n=1024!</span>”.  Extra parentheses around the expression make</span>
+                             <span class="add">no  difference:  <span class="b">$((  $a+$b )) </span>and <span class="b">$(( ($a+$b) )) </span>have the same</span>
+                             <span class="add">value.</span>
 
-              There  may be any number of variable substitutions in a single word.  Variable
+              There may be any number of variable substitutions in a single word.   Variable
               substitution is not performed on words enclosed in braces.
 
-              Note that variables may contain character sequences other  than  those  listed
-              above,  but  in  that case other mechanisms must be used to access them (e.g.,
+              Note  that  variables  may contain character sequences other than those listed
+              above, but in that case other mechanisms must be used to  access  them  (e.g.,
               via the <span class="b">set </span>command&#x27;s single-argument form).
 
 <a id="s15"></a>       [9] <span class="b">Backslash substitution.</span>
               If a backslash (“\”) appears within a word then <span class="i">backslash</span> <span class="i">substitution</span> occurs.
-              In all cases but those described  below  the  backslash  is  dropped  and  the
-              following  character  is  treated as an ordinary character and included in the
-              word.  This allows characters such  as  double  quotes,  close  brackets,  and
-              dollar  signs  to  be included in words without triggering special processing.
-              The following table lists the backslash sequences that are handled  specially,
+              In  all  cases  but  those  described  below  the backslash is dropped and the
+              following character is treated as an ordinary character and  included  in  the
+              word.   This  allows  characters  such  as  double quotes, close brackets, and
+              dollar signs to be included in words without  triggering  special  processing.
+              The  following table lists the backslash sequences that are handled specially,
               along with the value that replaces each sequence.
 
 <a id="s16"></a>                            \<span class="b">a     </span>Audible alert (bell) (Unicode U+000007).
@@ -199,65 +200,65 @@ ________________________________________________________________________________
 
 <a id="s23"></a>                            \<span class="b">&lt;newline&gt;</span><span class="i">whiteSpace</span>
                                    A single space character replaces the backslash, newline,
-                                   and   all  spaces  and  tabs  after  the  newline.   This
-                                   backslash sequence is unique in that it is replaced in  a
-                                   separate  pre-pass before the command is actually parsed.
-                                   This means that it will be replaced even when  it  occurs
-                                   between  braces,  and the resulting space will be treated
+                                   and  all  spaces  and  tabs  after  the  newline.    This
+                                   backslash  sequence is unique in that it is replaced in a
+                                   separate pre-pass before the command is actually  parsed.
+                                   This  means  that it will be replaced even when it occurs
+                                   between braces, and the resulting space will  be  treated
                                    as a word separator if it is not in braces or quotes.
 
 <a id="s24"></a>                            \\     Backslash (“\”).
 
 <a id="s25"></a>                            \<span class="i">ooo</span>   The digits <span class="i">ooo</span> (one, two, or three of them) give a eight-
-                                   bit octal value for the Unicode character  that  will  be
-                                   inserted,   in   the   range  <span class="i">000</span>–<span class="i">377</span>  (i.e.,  the  range
-                                   U+000000–U+0000FF).  The parser  will  stop  just  before
+                                   bit  octal  value  for the Unicode character that will be
+                                   inserted,  in  the  range  <span class="i">000</span>–<span class="i">377</span>   (i.e.,   the   range
+                                   U+000000–U+0000FF).   The  parser  will  stop just before
                                    this range overflows, or when the maximum of three digits
                                    is reached.  The upper bits of the Unicode character will
                                    be 0.
 
-<a id="s26"></a>                            \<span class="b">x</span><span class="i">hh</span>   The  hexadecimal  digits  <span class="i">hh</span> (one or two of them) give an
-                                   eight-bit hexadecimal value  for  the  Unicode  character
-                                   that  will  be  inserted.   The upper bits of the Unicode
-                                   character will be 0 (i.e., the character will be  in  the
+<a id="s26"></a>                            \<span class="b">x</span><span class="i">hh</span>   The hexadecimal digits <span class="i">hh</span> (one or two of  them)  give  an
+                                   eight-bit  hexadecimal  value  for  the Unicode character
+                                   that will be inserted.  The upper  bits  of  the  Unicode
+                                   character  will  be 0 (i.e., the character will be in the
                                    range U+000000–U+0000FF).
 
-<a id="s27"></a>                            \<span class="b">u</span><span class="i">hhhh</span> The  hexadecimal digits <span class="i">hhhh</span> (one, two, three, or four of
+<a id="s27"></a>                            \<span class="b">u</span><span class="i">hhhh</span> The hexadecimal digits <span class="i">hhhh</span> (one, two, three, or four  of
                                    them)  give  a  sixteen-bit  hexadecimal  value  for  the
-                                   Unicode  character that will be inserted.  The upper bits
-                                   of the Unicode character will be 0 (i.e.,  the  character
+                                   Unicode character that will be inserted.  The upper  bits
+                                   of  the  Unicode character will be 0 (i.e., the character
                                    will be in the range U+000000–U+00FFFF).
 
 <a id="s28"></a>                            \<span class="b">U</span><span class="i">hhhhhhhh</span>
                                    The hexadecimal digits <span class="i">hhhhhhhh</span> (one up to eight of them)
-                                   give  a  twenty-one-bit hexadecimal value for the Unicode
-                                   character  that  will   be   inserted,   in   the   range
+                                   give a twenty-one-bit hexadecimal value for  the  Unicode
+                                   character   that   will   be   inserted,   in  the  range
                                    U+000000–U+10FFFF.  The parser will stop just before this
-                                   range  overflows,  or when the maximum of eight digits is
+                                   range overflows, or when the maximum of eight  digits  is
                                    reached.  The upper bits of the Unicode character will be
                                    0.
 
-              Backslash substitution is not performed on words enclosed  in  braces,  except
+              Backslash  substitution  is  not performed on words enclosed in braces, except
               for backslash-newline as described above.
 
 <a id="s29"></a>       [10] <span class="b">Comments.</span>
-              If  a hash character (“#”) appears at a point where Tcl is expecting the first
-              character of the first word of a command, then  the  hash  character  and  the
-              characters  that  follow  it,  up  through  the next newline, are treated as a
-              comment and ignored.  The comment character  only  has  significance  when  it
+              If a hash character (“#”) appears at a point where Tcl is expecting the  first
+              character  of  the  first  word  of a command, then the hash character and the
+              characters that follow it, up through the  next  newline,  are  treated  as  a
+              comment  and  ignored.   The  comment  character only has significance when it
               appears at the beginning of a command.
 
 <a id="s30"></a>       [11] <span class="b">Order of substitution.</span>
-              Each  character  is  processed  exactly once by the Tcl interpreter as part of
+              Each character is processed exactly once by the Tcl  interpreter  as  part  of
               creating the words of a command.  For example, if variable substitution occurs
               then no further substitutions are performed on the value of the variable;  the
               value is inserted into the word verbatim.  If command substitution occurs then
-              the nested command is processed entirely by the  recursive  call  to  the  Tcl
-              interpreter;  no  substitutions are performed before making the recursive call
-              and no additional substitutions are performed on  the  result  of  the  nested
+              the  nested  command  is  processed  entirely by the recursive call to the Tcl
+              interpreter; no substitutions are performed before making the  recursive  call
+              and  no  additional  substitutions  are  performed on the result of the nested
               script.
 
-              Substitutions  take  place  from  left  to  right,  and  each  substitution is
+              Substitutions take  place  from  left  to  right,  and  each  substitution  is
               evaluated completely before attempting to evaluate the next.  Thus, a sequence
               like
 
@@ -266,38 +267,38 @@ ________________________________________________________________________________
               will always set the variable <span class="i">y</span> to the value, <span class="i">012</span>.
 
 <a id="s31"></a>       [12] <span class="b">Substitution and word boundaries.</span>
-              Substitutions do not affect the word  boundaries  of  a  command,  except  for
-              argument  expansion  as  specified  in rule [5].  For example, during variable
-              substitution the entire value of the variable becomes part of a  single  word,
+              Substitutions  do  not  affect  the  word  boundaries of a command, except for
+              argument expansion as specified in rule [5].   For  example,  during  variable
+              substitution  the  entire value of the variable becomes part of a single word,
               even if the variable&#x27;s value contains spaces.
 
    <span class="b">TCL VALUES</span>
-       Conceptually,  all  values in Tcl are strings, or to be precise, sequences of Unicode
-       code points. This characteristic of all values being strings is commonly referred  to
+       Conceptually, all values in Tcl are strings, or to be precise, sequences  of  Unicode
+       code  points. This characteristic of all values being strings is commonly referred to
        as the <span class="i">Everything</span> <span class="i">Is</span> <span class="i">A</span> <span class="i">String</span> <span class="i">(EIAS)</span> principle.
 
-       For  the most part, Tcl strings can be thought of as strings of characters instead of
-       sequences of code points and following common usage, command  descriptions  refer  to
-       them  as  such.  However,  the distinction is to be noted as some characters may have
-       multiple representations as Unicode code  point  sequences  and  in  operations  like
+       For the most part, Tcl strings can be thought of as strings of characters instead  of
+       sequences  of  code  points and following common usage, command descriptions refer to
+       them as such. However, the distinction is to be noted as  some  characters  may  have
+       multiple  representations  as  Unicode  code  point  sequences and in operations like
        comparisons,  Tcl  compares  individual  code  points  and  not  individual  abstract
        characters.
 
        While all values are strings, individual commands may treat or expect their arguments
-       to be representations of data of a particular type.  For example,  the  <span class="b">incr  </span>command
+       to  be  representations  of data of a particular type.  For example, the <span class="b">incr </span>command
        expects its operands to be integers.
 
-       The  most important consequence of the EIAS principle is that all commands must treat
-       arguments that have a particular string representation exactly the same  irrespective
-       of  how  that  value  was  produced. Thus the <span class="b">incr </span>command must treat <span class="b">100 </span>produced by
+       The most important consequence of the EIAS principle is that all commands must  treat
+       arguments  that have a particular string representation exactly the same irrespective
+       of how that value was produced. Thus the <span class="b">incr </span>command  must  treat  <span class="b">100  </span>produced  by
        appending <span class="b">0 </span>to <span class="b">10 </span>exactly the same as <span class="b">100 </span>produced by multiplying 10 by itself.
 
-       Note this EIAS principle is only true at  a  conceptual  level  and  for  reasons  of
-       efficiency  the  implementation  may  choose different internal representations for a
-       value depending on its usage. For example,  arithmetic  operations  on  integers  may
-       internally  store the value as a native machine word. Similarly, a <span class="i">binary</span> <span class="i">string</span> is a
+       Note  this  EIAS  principle  is  only  true  at a conceptual level and for reasons of
+       efficiency the implementation may choose different  internal  representations  for  a
+       value  depending  on  its  usage.  For example, arithmetic operations on integers may
+       internally store the value as a native machine word. Similarly, a <span class="i">binary</span> <span class="i">string</span> is  a
        sequence of Unicode code points in the range U+0000 to U+00FF and may be stored as an
-       array of bytes. In all cases this internal representation is irrelevant  at  the  Tcl
+       array  of  bytes.  In all cases this internal representation is irrelevant at the Tcl
        language level but exposed in the Tcl C API.
 
 <a id="s32"></a><span class="b">KEYWORDS</span>
