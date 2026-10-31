@@ -16,12 +16,12 @@ What changes in rule [8] (there is no new rule):
     form is expression substitution
   - a fourth entry, $((expression)), after $name, $name(index) and ${name}, in four short
     paragraphs
-Against the current page: 31 added source lines and 4 changed lines (35 insertions, 4 deletions in the diff).
+Against the current page: 37 added source lines and 4 changed lines (41 insertions, 4 deletions in the diff).
 The examples are written with spaces inside the delimiters, $(( $width * $height )), and the error paragraph
 shows $(((1+2)*3)) and, with spaces, $(( (1+2)*3 )) as the two ways to write the corrected form.
 
 extras/expr-subst.patch and new/doc/Tcl.n were regenerated with this wording, so the package agrees with itself.
-The Fossil branch tip-672-v2 carries the same wording since the Oct 30 check-in b5136123e7.
+The Fossil branch tip-672-v2 carries the Oct 30 wording (check-in b5136123e7); the Oct 31 opening paragraph is a later commit.
 The other manual pages the patch touches (subst.n, ParseCmd.3, SubstObj.3) are unchanged.
 
 The HTML was rendered with groff from the nroff source, left-aligned, so line breaks can

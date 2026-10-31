@@ -33,7 +33,7 @@ pre{background:var(--card);border:1px solid var(--line);border-radius:8px;paddin
 <div class="note"><h1>Tcl(n): the 12 rules, with TIP 672</h1>
 <p><span class="key"><span class="add">Red</span> = text added by TIP 672</span><span class="key"><span class="chg">Red and underlined</span> = existing text that changes</span>
 <span class="key">black = unchanged</span></p>
-<p>Rule [8] is renamed <b>Variable and expression substitution</b>, one phrase in its first sentence changes, and it gets one more entry, <b>$((expression))</b>, after <b>$name</b>, <b>$name(index)</b> and <b>${name}</b>. There is no new rule. Against the current page that is 31 added source lines (a single insertion, 27 lines as rendered here, in four short paragraphs) and 4 changed lines. <a href="#new">Jump to the addition</a></p>
+<p>Rule [8] is renamed <b>Variable and expression substitution</b>, one phrase in its first sentence changes, and it gets one more entry, <b>$((expression))</b>, after <b>$name</b>, <b>$name(index)</b> and <b>${name}</b>. There is no new rule. Against the current page that is 37 added source lines (a single insertion, 28 lines as rendered here, in four short paragraphs) and 4 changed lines. <a href="#new">Jump to the addition</a></p>
 <p>Rendered here with groff, left-aligned, so line breaks may differ a little from the installed man page.</p></div>
 <nav aria-label="Contents"><ul><li class="lv0"><a href="#s0">NAME</a></li><li class="lv0"><a href="#s1">SYNOPSIS</a></li><li class="lv0"><a href="#s2">DESCRIPTION</a></li><li class="lv1"><a href="#s3">[1] Commands.</a></li><li class="lv1"><a href="#s4">[2] Evaluation.</a></li><li class="lv1"><a href="#s5">[3] Words.</a></li><li class="lv1"><a href="#s6">[4] Double quotes.</a></li><li class="lv1"><a href="#s7">[5] Argument expansion.</a></li><li class="lv1"><a href="#s8">[6] Braces.</a></li><li class="lv1"><a href="#s9">[7] Command substitution.</a></li><li class="lv1 chgd"><a href="#s10">[8] Variable and expression substitution.</a></li><li class="lv2"><a href="#s11">$name</a></li><li class="lv2"><a href="#s12">$name(index)</a></li><li class="lv2"><a href="#s13">${name}</a></li><li class="lv2 new"><a href="#s14">$((expression))</a></li><li class="lv1"><a href="#s15">[9] Backslash substitution.</a></li><li class="lv2"><a href="#s16">\a</a></li><li class="lv2"><a href="#s17">\b</a></li><li class="lv2"><a href="#s18">\f</a></li><li class="lv2"><a href="#s19">\n</a></li><li class="lv2"><a href="#s20">\r</a></li><li class="lv2"><a href="#s21">\t</a></li><li class="lv2"><a href="#s22">\v</a></li><li class="lv2"><a href="#s23">\&lt;newline&gt;whiteSpace</a></li><li class="lv2"><a href="#s24">\\</a></li><li class="lv2"><a href="#s25">\ooo</a></li><li class="lv2"><a href="#s26">\xhh</a></li><li class="lv2"><a href="#s27">\uhhhh</a></li><li class="lv2"><a href="#s28">\Uhhhhhhhh</a></li><li class="lv1"><a href="#s29">[10] Comments.</a></li><li class="lv1"><a href="#s30">[11] Order of substitution.</a></li><li class="lv1"><a href="#s31">[12] Substitution and word boundaries.</a></li><li class="lv0"><a href="#s32">KEYWORDS</a></li></ul></nav>
 <pre><span class="i">Tcl</span>(n)                              Tcl Built-In Commands                             <span class="i">Tcl</span>(n)
@@ -142,13 +142,14 @@ ________________________________________________________________________________
                              during the parsing of <span class="i">name</span>.
 <a id="new"></a>
 <a id="s14"></a>              <span class="add"><span class="b">$((</span><span class="i">expression</span><span class="b">))</span></span>
-                             <span class="add">A  dollar-sign  followed  by  two  open  parentheses  begins an</span>
-                             <span class="add"><span class="i">expression</span> <span class="i">substitution</span>, a shortcut for “<span class="b">[expr  {</span><span class="i">expression</span><span class="b">}]</span>”.</span>
-                             <span class="add">The expression is the text between the two open parentheses and</span>
-                             <span class="add">the  first  close  parenthesis  that  balances  the parentheses</span>
-                             <span class="add">inside the text, and that close parenthesis  must  be  followed</span>
-                             <span class="add">immediately by a second one.  Parentheses inside braces, double</span>
-                             <span class="add">quotes or bracketed commands are not counted.</span>
+                             <span class="add">A  dollar-sign  followed by two open parentheses, “<span class="b">$((</span>”, begins</span>
+                             <span class="add">an <span class="i">expression</span> <span class="i">substitution</span>, and two close  parentheses  written</span>
+                             <span class="add">together  with  no  space  between them, “<span class="b">))</span>”, end it.  It is a</span>
+                             <span class="add">shortcut for “<span class="b">[expr {</span><span class="i">expression</span><span class="b">}]</span>”.  The  expression  does  not</span>
+                             <span class="add">include the opening <span class="b">(( </span>or the closing <span class="b">))</span>, which delimit it.  If</span>
+                             <span class="add">the   expression  itself  contains  parentheses  they  must  be</span>
+                             <span class="add">balanced.   Parentheses  inside  braces,   double   quotes   or</span>
+                             <span class="add">bracketed commands are not counted.</span>
 
                              <span class="add">A  <span class="b">$((  </span>that  is  not  closed  by  a  matching  <span class="b">)) </span>is an error:</span>
                              <span class="add"><span class="b">$((1+2)*3) </span>is rejected, and should be written <span class="b">$(((1+2)*3))  </span>or,</span>
