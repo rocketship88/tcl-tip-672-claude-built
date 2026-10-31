@@ -1,309 +1,1176 @@
-<!doctype html>
-<html lang="en"><head><meta charset="utf-8">
-<meta name="viewport" content="width=device-width, initial-scale=1">
-<title>Tcl(n) with TIP 672 additions</title>
+<!DOCTYPE html>
+<html lang="en">
+<head><meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+<title>TIP 672: changes to Tcl(n), subst(n), Tcl_ParseCmd(3), Tcl_SubstObj(3)</title>
 <style>
-:root{--bg:#fbfbf9;--fg:#1d1d1b;--mut:#666;--red:#c4161c;--card:#fff;--line:#d9d9d2;--link:#1a5fb4;}
-@media (prefers-color-scheme:dark){:root:not([data-theme="light"]){--bg:#17171a;--fg:#e6e6e1;--mut:#9a9a94;--red:#ff6b6b;--card:#1f1f23;--line:#34343a;--link:#8ab4f8;}}
-:root[data-theme="dark"]{--bg:#17171a;--fg:#e6e6e1;--mut:#9a9a94;--red:#ff6b6b;--card:#1f1f23;--line:#34343a;--link:#8ab4f8;}
-body{margin:0;background:var(--bg);color:var(--fg);font:15px/1.5 system-ui,sans-serif}
-.wrap{max-width:900px;margin:0 auto;padding:16px}
-.note{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:12px 16px;margin-bottom:14px}
-.note h1{font-size:18px;margin:0 0 6px}
-.note p{margin:6px 0;color:var(--mut)}
-.note a{color:var(--red)}
-.key{display:inline-block;margin-right:12px}
-nav{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:10px 16px;margin-bottom:14px}
-nav ul{list-style:none;margin:0;padding:0}
-nav li{margin:1px 0}
-nav li.lv0{font-weight:600;margin-top:6px}
-nav li.lv1{padding-left:16px}
-nav li.lv2{padding-left:40px;font:13px/1.45 ui-monospace,Menlo,Consolas,monospace}
-nav a{color:var(--link);text-decoration:none}
-nav a:hover{text-decoration:underline}
-nav li.new a{color:var(--red);font-weight:700}
-nav li.chgd a{color:var(--red);text-decoration:underline}
-pre{background:var(--card);border:1px solid var(--line);border-radius:8px;padding:14px 16px;overflow-x:auto;
- font:13px/1.45 ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;margin:0;tab-size:8}
-.b{font-weight:700}.i{font-style:italic}
-.add{color:var(--red)}
-.chg{color:var(--red);text-decoration:underline;text-decoration-thickness:1px;text-underline-offset:2px}
-.add .b,.add .i,.chg .b,.chg .i{color:var(--red)}
-</style></head><body><div class="wrap">
-<div class="note"><h1>Tcl(n): the 12 rules, with TIP 672</h1>
-<p><span class="key"><span class="add">Red</span> = text added by TIP 672</span><span class="key"><span class="chg">Red and underlined</span> = existing text that changes</span>
-<span class="key">black = unchanged</span></p>
-<p>Rule [8] is renamed <b>Variable and expression substitution</b>, one phrase in its first sentence changes, and it gets one more entry, <b>$((expression))</b>, after <b>$name</b>, <b>$name(index)</b> and <b>${name}</b>. There is no new rule. Against the current page that is 37 added source lines (a single insertion, 28 lines as rendered here, in four short paragraphs) and 4 changed lines. <a href="#new">Jump to the addition</a></p>
-<p>Rendered here with groff, left-aligned, so line breaks may differ a little from the installed man page.</p></div>
-<nav aria-label="Contents"><ul><li class="lv0"><a href="#s0">NAME</a></li><li class="lv0"><a href="#s1">SYNOPSIS</a></li><li class="lv0"><a href="#s2">DESCRIPTION</a></li><li class="lv1"><a href="#s3">[1] Commands.</a></li><li class="lv1"><a href="#s4">[2] Evaluation.</a></li><li class="lv1"><a href="#s5">[3] Words.</a></li><li class="lv1"><a href="#s6">[4] Double quotes.</a></li><li class="lv1"><a href="#s7">[5] Argument expansion.</a></li><li class="lv1"><a href="#s8">[6] Braces.</a></li><li class="lv1"><a href="#s9">[7] Command substitution.</a></li><li class="lv1 chgd"><a href="#s10">[8] Variable and expression substitution.</a></li><li class="lv2"><a href="#s11">$name</a></li><li class="lv2"><a href="#s12">$name(index)</a></li><li class="lv2"><a href="#s13">${name}</a></li><li class="lv2 new"><a href="#s14">$((expression))</a></li><li class="lv1"><a href="#s15">[9] Backslash substitution.</a></li><li class="lv2"><a href="#s16">\a</a></li><li class="lv2"><a href="#s17">\b</a></li><li class="lv2"><a href="#s18">\f</a></li><li class="lv2"><a href="#s19">\n</a></li><li class="lv2"><a href="#s20">\r</a></li><li class="lv2"><a href="#s21">\t</a></li><li class="lv2"><a href="#s22">\v</a></li><li class="lv2"><a href="#s23">\&lt;newline&gt;whiteSpace</a></li><li class="lv2"><a href="#s24">\\</a></li><li class="lv2"><a href="#s25">\ooo</a></li><li class="lv2"><a href="#s26">\xhh</a></li><li class="lv2"><a href="#s27">\uhhhh</a></li><li class="lv2"><a href="#s28">\Uhhhhhhhh</a></li><li class="lv1"><a href="#s29">[10] Comments.</a></li><li class="lv1"><a href="#s30">[11] Order of substitution.</a></li><li class="lv1"><a href="#s31">[12] Substitution and word boundaries.</a></li><li class="lv0"><a href="#s32">KEYWORDS</a></li></ul></nav>
-<pre><span class="i">Tcl</span>(n)                              Tcl Built-In Commands                             <span class="i">Tcl</span>(n)
+body, div, p, th, td, li, dd, ul, ol, dl, dt, blockquote {
+	font-family: Verdana, sans-serif;
+    }
+pre, code {
+	font-family: 'Courier New', Courier, monospace;
+    }
+pre {
+	background-color:  #F6FCEC;
+	border-top:        1px solid #6A6A6A;
+	border-bottom:     1px solid #6A6A6A;
+	padding:           1em;
+	overflow:          auto;
+    }
+body {
+	background-color:  #FFFFFF;
+	font-size:         12px;
+	line-height:       1.25;
+	letter-spacing:    .2px;
+	padding-left:      .5em;
+    }
+h1, h2, h3, h4 {
+	font-family:       Georgia, serif;
+	padding-left:      1em;
+	margin-top:        1em;
+    }
+h1 {
+	font-size:         18px;
+	color:             #11577B;
+	border-bottom:     1px dotted #11577B;
+	margin-top:        0px;
+    }
+h2 {
+	font-size:         14px;
+	color:             #11577B;
+	background-color:  #C5DCE8;
+	padding-left:      1em;
+	border:            1px solid #6A6A6A;
+    }
+h3, h4 {
+	color:             #1674A4;
+	background-color:  #E8F2F6;
+	border-bottom:     1px dotted #11577B;
+	border-top:        1px dotted #11577B;
+    }
+h3 {
+	font-size: 12px;
+    }
+h4 {
+	font-size: 11px;
+    }
+.keylist dt, .arguments dt {
+	width: 25em;
+	float: left;
+	padding: 2px;
+	border-top: 1px solid #999999;
+    }
+.keylist dt { font-weight: bold; }
+.keylist dd, .arguments dd {
+	margin-left: 25em;
+	padding: 2px;
+	border-top: 1px solid #999999;
+    }
+.copy {
+	background-color:  #F6FCFC;
+	white-space:       pre;
+	font-size:         80%;
+	border-top:        1px solid #6A6A6A;
+	margin-top:        2em;
+    }
+.tablecell {
+	font-size:	   12px;
+	padding-left:	   .5em;
+	padding-right:	   .5em;
+    }
 
-____________________________________________________________________________________________
 
-<a id="s0"></a><span class="b">NAME</span>
-       Tcl - Tool Command Language
+a{text-decoration:none}a:hover{text-decoration:underline}
+body{max-width:60em;margin:0 auto;padding:0 16px}
+.mnew{color:#d00000}
+.mchg{color:#d00000;text-decoration:underline}
+.legend{border:1px solid #888;padding:.5em 1em;margin:1em 0;background:#fffbe6}
+.manpage{border-top:3px double #888;margin-top:2em}
+.sum{margin:.3em 1em;color:#555}
+nav{margin:1em 0}
+</style></head>
+<body>
+<h1>TIP 672: changes to Tcl(n), subst(n), Tcl_ParseCmd(3), Tcl_SubstObj(3)</h1>
+<div class="legend"><span class="mnew">Red text</span>: added. <span class="mchg">Underlined in red</span>: changed text. Removed text is not shown. Compared with the unmodified 9.1 trunk (77ac0bb), branch tip-672-v2. The pages describe the default build, <b>$((</b>.</div>
+<nav><a href="#Tcl-M0">Tcl(n)</a> &middot; <a href="#subst-M0">subst(n)</a> &middot; <a href="#ParseCmd-M0">Tcl_ParseCmd(3)</a> &middot; <a href="#SubstObj-M0">Tcl_SubstObj(3)</a></nav>
+<section class="manpage" id="Tcl-M0"><h2>Tcl(n) &mdash; The Tcl language: the 12 rules</h2><p class="sum">247 new words, 13 changed words.</p>
 
-<a id="s1"></a><span class="b">SYNOPSIS</span>
-       Summary of Tcl language syntax.
-____________________________________________________________________________________________
+<dl>
+<dd><a href="#Tcl-M2" name="Tcl-L2310" id="Tcl-L2310">NAME</a>
+<dl><dd>Tcl &mdash; Tool Command Language</dd></dl>
+<dd><a href="#Tcl-M3" name="Tcl-L2311" id="Tcl-L2311">SYNOPSIS</a>
+<dl>
+</dl>
+<dd><a href="#Tcl-M4" name="Tcl-L2312" id="Tcl-L2312">DESCRIPTION</a>
+<dd><a href="#Tcl-M5" name="Tcl-L2313" id="Tcl-L2313">SYNTAX</a>
+<ol class="syntax">
+<dd><a href="#Tcl-M6" name="Tcl-L2314" id="Tcl-L2314">[1] <b>Commands.</b></a>
+<dd><a href="#Tcl-M7" name="Tcl-L2315" id="Tcl-L2315">[2] <b>Evaluation.</b></a>
+<dd><a href="#Tcl-M8" name="Tcl-L2316" id="Tcl-L2316">[3] <b>Words.</b></a>
+<dd><a href="#Tcl-M9" name="Tcl-L2317" id="Tcl-L2317">[4] <b>Double quotes.</b></a>
+<dd><a href="#Tcl-M10" name="Tcl-L2318" id="Tcl-L2318">[5] <b>Argument expansion.</b></a>
+<dd><a href="#Tcl-M11" name="Tcl-L2319" id="Tcl-L2319">[6] <b>Braces.</b></a>
+<dd><a href="#Tcl-M12" name="Tcl-L2320" id="Tcl-L2320">[7] <b>Command substitution.</b></a>
+<dd><a href="#Tcl-M13" name="Tcl-L2321" id="Tcl-L2321">[8] <b>Variable <span class="mnew">and expression</span> substitution.</b></a>
+<dl class="syntax">
+<dd><a href="#Tcl-M14" name="Tcl-L2322" id="Tcl-L2322"><b>$</b><i>name</i></a>
+<dd><a href="#Tcl-M15" name="Tcl-L2323" id="Tcl-L2323"><b>$</b><i>name</i><b>(</b><i>index</i><b>)</b></a>
+<dd><a href="#Tcl-M16" name="Tcl-L2324" id="Tcl-L2324"><b>${</b><i>name</i><b>}</b></a>
+<dd><a href="#Tcl-M17" name="Tcl-L2325" id="Tcl-L2325"><b><span class="mnew">$((</span></b><i><span class="mnew">expression</span></i><b><span class="mnew">))</span></b></a>
+</dl>
+<dd><a href="#Tcl-M18" name="Tcl-L2326" id="Tcl-L2326">[9] <b>Backslash substitution.</b></a>
+<dl class="syntax">
+<dd><a href="#Tcl-M19" name="Tcl-L2327" id="Tcl-L2327">&#92;<b>a</b></a>
+<dd><a href="#Tcl-M20" name="Tcl-L2328" id="Tcl-L2328">&#92;<b>b</b></a>
+<dd><a href="#Tcl-M21" name="Tcl-L2329" id="Tcl-L2329">&#92;<b>f</b></a>
+<dd><a href="#Tcl-M22" name="Tcl-L2330" id="Tcl-L2330">&#92;<b>n</b></a>
+<dd><a href="#Tcl-M23" name="Tcl-L2331" id="Tcl-L2331">&#92;<b>r</b></a>
+<dd><a href="#Tcl-M24" name="Tcl-L2332" id="Tcl-L2332">&#92;<b>t</b></a>
+<dd><a href="#Tcl-M25" name="Tcl-L2333" id="Tcl-L2333">&#92;<b>v</b></a>
+<dd><a href="#Tcl-M26" name="Tcl-L2334" id="Tcl-L2334">&#92;<b>&lt;newline&gt;</b><i>whiteSpace</i></a>
+<dd><a href="#Tcl-M27" name="Tcl-L2335" id="Tcl-L2335">&#92;&#92;</a>
+<dd><a href="#Tcl-M28" name="Tcl-L2336" id="Tcl-L2336">&#92;<i>ooo</i></a>
+<dd><a href="#Tcl-M29" name="Tcl-L2337" id="Tcl-L2337">&#92;<b>x</b><i>hh</i></a>
+<dd><a href="#Tcl-M30" name="Tcl-L2338" id="Tcl-L2338">&#92;<b>u</b><i>hhhh</i></a>
+<dd><a href="#Tcl-M31" name="Tcl-L2339" id="Tcl-L2339">&#92;<b>U</b><i>hhhhhhhh</i></a>
+</dl>
+<dd><a href="#Tcl-M32" name="Tcl-L2340" id="Tcl-L2340">[10] <b>Comments.</b></a>
+<dd><a href="#Tcl-M33" name="Tcl-L2341" id="Tcl-L2341">[11] <b>Order of substitution.</b></a>
+<dd><a href="#Tcl-M34" name="Tcl-L2342" id="Tcl-L2342">[12] <b>Substitution and word boundaries.</b></a>
+</ol>
+<dd><a href="#Tcl-M35" name="Tcl-L2343" id="Tcl-L2343">TCL VALUES</a>
+<dd><a href="#Tcl-M36" name="Tcl-L2344" id="Tcl-L2344">KEYWORDS</a>
+</dl>
+<h3><a name="Tcl-M2" id="Tcl-M2">NAME</a></h3>
+Tcl &mdash; Tool Command Language
+<h3><a name="Tcl-M3" id="Tcl-M3">SYNOPSIS</a></h3>
+Summary of Tcl language syntax.<br>
+<h3><a name="Tcl-M4" id="Tcl-M4">DESCRIPTION</a></h3>
+<h4><a name="Tcl-M5" id="Tcl-M5">SYNTAX</a></h4>
+The following rules define the syntax and semantics of the Tcl language:
+<p>
+<ol class="syntax">
+<dt><a name="Tcl-M6" id="Tcl-M6">[1] <b>Commands.</b></a><dd>
+A Tcl script is a string containing one or more commands.
+Semi-colons and newlines are command separators unless quoted as
+described below.
+Close brackets are command terminators during command substitution
+(see below) unless quoted.
+<p><dt><a name="Tcl-M7" id="Tcl-M7">[2] <b>Evaluation.</b></a><dd>
+A command is evaluated in two steps.
+First, the Tcl interpreter breaks the command into <i>words</i>
+and performs substitutions as described below.
+These substitutions are performed in the same way for all
+commands.
+Secondly, the first word is used to locate a routine to
+carry out the command, and the remaining words of the command are
+passed to that routine.
+The routine is free to interpret each of its words
+in any way it likes, such as an integer, variable name, list,
+or Tcl script.
+Different commands interpret their words differently.
+<p><dt><a name="Tcl-M8" id="Tcl-M8">[3] <b>Words.</b></a><dd>
+Words of a command are separated by white space (except for
+newlines, which are command separators).
+<p><dt><a name="Tcl-M9" id="Tcl-M9">[4] <b>Double quotes.</b></a><dd>
+If the first character of a word is double-quote
+(&ldquo;&#34;&rdquo;)
+then the word is terminated by the next double-quote character.
+If semi-colons, close brackets, or white space characters
+(including newlines) appear between the quotes then they are treated
+as ordinary characters and included in the word.
+Command substitution, variable substitution, and backslash substitution
+are performed on the characters between the quotes as described below.
+The double-quotes are not retained as part of the word.
+<p><dt><a name="Tcl-M10" id="Tcl-M10">[5] <b>Argument expansion.</b></a><dd>
+If a word starts with the string
+&ldquo;{*}&rdquo;
+followed by a non-whitespace character, then the leading
+&ldquo;{*}&rdquo;
+is removed and the rest of the word is parsed and substituted as any other
+word. After substitution, the word is parsed as a list (without command or
+variable substitutions; backslash substitutions are performed as is normal for
+a list and individual internal words may be surrounded by either braces or
+double-quote characters), and its words are added to the command being
+substituted. For instance,
+&ldquo;cmd a {*}{b [c]} d {*}{$e f {g h}}&rdquo;
+is equivalent to
+&ldquo;cmd a b {[c]} d {$e} f {g h}&rdquo;.
+<p><dt><a name="Tcl-M11" id="Tcl-M11">[6] <b>Braces.</b></a><dd>
+If the first character of a word is an open brace
+(&ldquo;{&rdquo;)
+and rule [5] does not apply, then
+the word is terminated by the matching close brace
+(&ldquo;}&rdquo;).
+Braces nest within the word: for each additional open
+brace there must be an additional close brace (however,
+if an open brace or close brace within the word is
+quoted with a backslash then it is not counted in locating the
+matching close brace).
+No substitutions are performed on the characters between the
+braces except for backslash-newline substitutions described
+below, nor do semi-colons, newlines, close brackets,
+or white space receive any special interpretation.
+The word will consist of exactly the characters between the
+outer braces, not including the braces themselves.
+<p><dt><a name="Tcl-M12" id="Tcl-M12">[7] <b>Command substitution.</b></a><dd>
+If a word contains an open bracket
+(&ldquo;[&rdquo;)
+then Tcl performs <i>command substitution</i>.
+To do this it invokes the Tcl interpreter recursively to process
+the characters following the open bracket as a Tcl script.
+The script may contain any number of commands and must be terminated
+by a close bracket
+(&ldquo;]&rdquo;).
+The result of the script (i.e. the result of its last command) is
+substituted into the word in place of the brackets and all of the
+characters between them.
+There may be any number of command substitutions in a single word.
+Command substitution is not performed on words enclosed in braces.
+<p><dt><a name="Tcl-M13" id="Tcl-M13">[8] <b>Variable <span class="mnew">and expression</span> substitution.</b></a><dd>
+If a word contains a dollar-sign
+(&ldquo;$&rdquo;)
+followed by one of the forms
+described below, then Tcl performs <i>variable
+substitution</i> <span class="mnew">or</span> <i><span class="mnew">expression substitution</span></i>:  the dollar-sign and the
+following characters are
+replaced in the word by the value of a <span class="mchg">variable or of an expression.</span>
+Variable substitution may take any of the following <span class="mchg">three forms;
+the fourth form is expression substitution:</span>
+<p>
+<dl class="syntax">
+<dt><a name="Tcl-M14" id="Tcl-M14"><b>$</b><i>name</i></a><dd>
+<i>Name</i> is the name of a scalar variable;  the name is a sequence
+of one or more characters that are a letter, digit, underscore,
+or namespace separators (two or more colons).
+Letters and digits are <i>only</i> the standard ASCII ones (<b>0</b>&ndash;<b>9</b>,
+<b>A</b>&ndash;<b>Z</b> and <b>a</b>&ndash;<b>z</b>).
+<p><dt><a name="Tcl-M15" id="Tcl-M15"><b>$</b><i>name</i><b>(</b><i>index</i><b>)</b></a><dd>
+<i>Name</i> gives the name of an array variable and <i>index</i> gives
+the name of an element within that array.
+<i>Name</i> must contain only letters, digits, underscores, and
+namespace separators, and may be an empty string.
+Letters and digits are <i>only</i> the standard ASCII ones (<b>0</b>&ndash;<b>9</b>,
+<b>A</b>&ndash;<b>Z</b> and <b>a</b>&ndash;<b>z</b>).
+Command substitutions, variable substitutions, and backslash
+substitutions are performed on the characters of <i>index</i>.
+<p><dt><a name="Tcl-M16" id="Tcl-M16"><b>${</b><i>name</i><b>}</b></a><dd>
+<i>Name</i> is the name of a scalar variable or array element.  It may contain
+any characters whatsoever except for close braces.  It indicates an array
+element if <i>name</i> is in the form
+&ldquo;<i>arrayName</i><b>(</b><i>index</i><b>)</b>&rdquo;
+where <i>arrayName</i> does not contain any open parenthesis characters,
+&ldquo;<b>(</b>&rdquo;,
+or close brace characters,
+&ldquo;<b>}</b>&rdquo;,
+and <i>index</i> can be any sequence of characters except for close brace
+characters.  No further
+substitutions are performed during the parsing of <i>name</i>.
+<p><dt><a name="Tcl-M17" id="Tcl-M17"><b><span class="mnew">$((</span></b><i><span class="mnew">expression</span></i><b><span class="mnew">))</span></b></a><dd>
+<span class="mnew">A dollar-sign followed by two open parentheses,
+&ldquo;</span><b><span class="mnew">$((</span></b><span class="mnew">&rdquo;,
+begins an</span> <i><span class="mnew">expression substitution</span></i><span class="mnew">, and two close parentheses written
+together with no space between them,
+&ldquo;</span><b><span class="mnew">))</span></b><span class="mnew">&rdquo;,
+end it.
+It is a shortcut for
+&ldquo;</span><b><span class="mnew">[expr {</span></b><i><span class="mnew">expression</span></i><b><span class="mnew">}]</span></b><span class="mnew">&rdquo;.
+The expression does not include the opening</span> <b><span class="mnew">((</span></b> <span class="mnew">or the closing</span>
+<b><span class="mnew">))</span></b><span class="mnew">, which delimit it.
+If the expression itself contains parentheses they must be balanced.
+Parentheses inside braces, double quotes or bracketed commands are not counted.</span>
+<p>
+<span class="mnew">A</span> <b><span class="mnew">$((</span></b> <span class="mnew">that is not closed by a matching</span> <b><span class="mnew">))</span></b> <span class="mnew">is an error:</span>
+<b><span class="mnew">$((1+2)*3)</span></b> <span class="mnew">is rejected, and should be written</span> <b><span class="mnew">$(((1+2)*3))</span></b>
+<span class="mnew">or, with spaces,</span> <b><span class="mnew">$(( (1+2)*3 ))</span></b><span class="mnew">.
+Any other form that begins with</span> <b><span class="mnew">$(</span></b><span class="mnew">, such as</span> <b><span class="mnew">$( (1+2))</span></b><span class="mnew">, is not an
+expression substitution; as before it is an array reference with an empty name.</span>
+<p>
+<span class="mnew">The text is passed to</span> <b><a href="../TclCmd/expr.html"><span class="mnew">expr</span></a></b> <span class="mnew">as if it were enclosed in braces:
+the Tcl parser performs no substitution on it, so that variable, command and
+backslash substitutions in it are performed once, by</span> <b><a href="../TclCmd/expr.html"><span class="mnew">expr</span></a></b><span class="mnew">, and the
+result of the expression is never substituted a second time.</span>
+<p>
+<span class="mnew">For example,
+&ldquo;</span><b><span class="mnew">set area $(( $width * $height ))</span></b><span class="mnew">&rdquo;
+sets</span> <b><span class="mnew">area</span></b> <span class="mnew">to the product of the two variables, and
+&ldquo;</span><b><span class="mnew">puts &#34;n=$(( 2**10 ))!&#34;</span></b><span class="mnew">&rdquo;
+prints
+&ldquo;</span><b><span class="mnew">n=1024!</span></b><span class="mnew">&rdquo;.
+Extra parentheses around the expression make no difference:</span>
+<b><span class="mnew">$(( $a+$b ))</span></b> <span class="mnew">and</span> <b><span class="mnew">$(( ($a+$b) ))</span></b> <span class="mnew">have the same value.</span>
+<p></dl>
+<dl><dd>
+<p>
+There may be any number of variable substitutions in a single word.
+Variable substitution is not performed on words enclosed in braces.
+<p>
+Note that variables may contain character sequences other than those listed
+above, but in that case other mechanisms must be used to access them (e.g.,
+via the <b><a href="../TclCmd/set.html">set</a></b> command's single-argument form).
+</dl>
+<p><dt><a name="Tcl-M18" id="Tcl-M18">[9] <b>Backslash substitution.</b></a><dd>
+If a backslash
+(&ldquo;&#92;&rdquo;)
+appears within a word then <i>backslash substitution</i> occurs.
+In all cases but those described below the backslash is dropped and
+the following character is treated as an ordinary
+character and included in the word.
+This allows characters such as double quotes, close brackets,
+and dollar signs to be included in words without triggering
+special processing.
+The following table lists the backslash sequences that are
+handled specially, along with the value that replaces each sequence.
+<dl><dd>
+<p>
+<dl class="syntax">
+<dt><a name="Tcl-M19" id="Tcl-M19">&#92;<b>a</b></a><dd>
+Audible alert (bell) (Unicode U+000007).
+<p><dt><a name="Tcl-M20" id="Tcl-M20">&#92;<b>b</b></a><dd>
+Backspace (Unicode U+000008).
+<p><dt><a name="Tcl-M21" id="Tcl-M21">&#92;<b>f</b></a><dd>
+Form feed (Unicode U+00000C).
+<p><dt><a name="Tcl-M22" id="Tcl-M22">&#92;<b>n</b></a><dd>
+Newline (Unicode U+00000A).
+<p><dt><a name="Tcl-M23" id="Tcl-M23">&#92;<b>r</b></a><dd>
+Carriage-return (Unicode U+00000D).
+<p><dt><a name="Tcl-M24" id="Tcl-M24">&#92;<b>t</b></a><dd>
+Tab (Unicode U+000009).
+<p><dt><a name="Tcl-M25" id="Tcl-M25">&#92;<b>v</b></a><dd>
+Vertical tab (Unicode U+00000B).
+<p><dt><a name="Tcl-M26" id="Tcl-M26">&#92;<b>&lt;newline&gt;</b><i>whiteSpace</i></a><dd>
+A single space character replaces the backslash, newline, and all spaces
+and tabs after the newline.  This backslash sequence is unique in that it
+is replaced in a separate pre-pass before the command is actually parsed.
+This means that it will be replaced even when it occurs between braces,
+and the resulting space will be treated as a word separator if it is not
+in braces or quotes.
+<p><dt><a name="Tcl-M27" id="Tcl-M27">&#92;&#92;</a><dd>
+Backslash
+(&ldquo;&#92;&rdquo;).
+<p><dt><a name="Tcl-M28" id="Tcl-M28">&#92;<i>ooo</i></a><dd>
+The digits <i>ooo</i> (one, two, or three of them) give a eight-bit octal
+value for the Unicode character that will be inserted, in the range
+<i>000</i>&ndash;<i>377</i> (i.e., the range U+000000&ndash;U+0000FF).
+The parser will stop just before this range overflows, or when
+the maximum of three digits is reached.  The upper bits of the Unicode
+character will be 0.
+<p><dt><a name="Tcl-M29" id="Tcl-M29">&#92;<b>x</b><i>hh</i></a><dd>
+The hexadecimal digits <i>hh</i> (one or two of them) give an eight-bit
+hexadecimal value for the Unicode character that will be inserted.  The upper
+bits of the Unicode character will be 0 (i.e., the character will be in the
+range U+000000&ndash;U+0000FF).
+<p><dt><a name="Tcl-M30" id="Tcl-M30">&#92;<b>u</b><i>hhhh</i></a><dd>
+The hexadecimal digits <i>hhhh</i> (one, two, three, or four of them) give a
+sixteen-bit hexadecimal value for the Unicode character that will be
+inserted.  The upper bits of the Unicode character will be 0 (i.e., the
+character will be in the range U+000000&ndash;U+00FFFF).
+<p><dt><a name="Tcl-M31" id="Tcl-M31">&#92;<b>U</b><i>hhhhhhhh</i></a><dd>
+The hexadecimal digits <i>hhhhhhhh</i> (one up to eight of them) give a
+twenty-one-bit hexadecimal value for the Unicode character that will be
+inserted, in the range U+000000&ndash;U+10FFFF.  The parser will stop just
+before this range overflows, or when the maximum of eight digits
+is reached.  The upper bits of the Unicode character will be 0.
+<p></dl>
+</dl>
+<p>Backslash substitution is not performed on words enclosed in braces,
+except for backslash-newline as described above.
+<p><dt><a name="Tcl-M32" id="Tcl-M32">[10] <b>Comments.</b></a><dd>
+If a hash character
+(&ldquo;#&rdquo;)
+appears at a point where Tcl is
+expecting the first character of the first word of a command,
+then the hash character and the characters that follow it, up
+through the next newline, are treated as a comment and ignored.
+The comment character only has significance when it appears
+at the beginning of a command.
+<p><dt><a name="Tcl-M33" id="Tcl-M33">[11] <b>Order of substitution.</b></a><dd>
+Each character is processed exactly once by the Tcl interpreter
+as part of creating the words of a command.
+For example, if variable substitution occurs then no further
+substitutions are performed on the value of the variable;  the
+value is inserted into the word verbatim.
+If command substitution occurs then the nested command is
+processed entirely by the recursive call to the Tcl interpreter;
+no substitutions are performed before making the recursive
+call and no additional substitutions are performed on the result
+of the nested script.
+<p>
+Substitutions take place from left to right, and each substitution is
+evaluated completely before attempting to evaluate the next.  Thus, a
+sequence like
+<p>
+<pre>set y [set x 0][incr x][incr x]</pre>
+<p>will always set the variable <i>y</i> to the value, <i>012</i>.
+<p><dt><a name="Tcl-M34" id="Tcl-M34">[12] <b>Substitution and word boundaries.</b></a><dd>
+Substitutions do not affect the word boundaries of a command,
+except for argument expansion as specified in rule [5].
+For example, during variable substitution the entire value of
+the variable becomes part of a single word, even if the variable's
+value contains spaces.
+<p></ol>
+<p>
+<h4><a name="Tcl-M35" id="Tcl-M35">TCL VALUES</a></h4>
+Conceptually, all values in Tcl are strings, or to be precise, sequences of
+Unicode code points. This characteristic of all values being strings is
+commonly referred to as the <i>Everything Is A String (EIAS)</i> principle.
+<p>
+For the most part, Tcl strings can be thought of as strings of characters
+instead of sequences of code points and following common usage, command
+descriptions refer to them as such. However, the distinction is to be noted as
+some characters may have multiple representations as Unicode code point
+sequences and in operations like comparisons, Tcl compares individual
+code points and not individual abstract characters.
+<p>
+While all values are strings, individual commands may treat or
+expect their arguments to be representations of data of a particular type.
+For example, the <b><a href="../TclCmd/incr.html">incr</a></b> command expects its operands to be integers.
+<p>
+The most important consequence of the EIAS principle is that all commands must
+treat arguments that have a particular string representation exactly the same
+irrespective of how that value was produced. Thus the <b><a href="../TclCmd/incr.html">incr</a></b> command
+must treat <b>100</b> produced by appending <b>0</b> to <b>10</b> exactly the
+same as <b>100</b> produced by multiplying 10 by itself.
+<p>
+Note this EIAS principle is only true at a conceptual level and for reasons of
+efficiency the implementation may choose different internal representations
+for a value depending on its usage. For example, arithmetic operations on
+integers may internally store the value as a native machine word. Similarly, a
+<i>binary string</i> is a sequence of Unicode code points in the range U+0000
+to U+00FF and may be stored as an array of bytes. In all cases this internal
+representation is irrelevant at the Tcl language level but exposed in the Tcl
+C API.
+<h3><a name="Tcl-M36" id="Tcl-M36">KEYWORDS</a></h3>
+<a href="../Keywords/B.html#backslash">backslash</a>, <a href="../Keywords/C.html#command">command</a>, <a href="../Keywords/C.html#comment">comment</a>, <a href="../Keywords/S.html#script">script</a>, <a href="../Keywords/S.html#substitution">substitution</a>, <a href="../Keywords/V.html#variable">variable</a>
+<div class="copy">Copyright &copy; 1993 The Regents of the University of California.
+<br>Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+</div>
 
-<a id="s2"></a><span class="b">DESCRIPTION</span>
-   <span class="b">SYNTAX</span>
-       The following rules define the syntax and semantics of the Tcl language:
+</section>
+<section class="manpage" id="subst-M0"><h2>subst(n) &mdash; the <b>subst</b> command</h2><p class="sum">136 new words, 4 changed words.</p>
 
-<a id="s3"></a>       [1] <span class="b">Commands.</span>
-              A  Tcl  script  is  a string containing one or more commands.  Semi-colons and
-              newlines are command separators  unless  quoted  as  described  below.   Close
-              brackets  are  command  terminators  during  command  substitution (see below)
-              unless quoted.
+<h3><a name="subst-M2" id="subst-M2">NAME</a></h3>
+subst &mdash; Perform backslash, command, and variable substitutions
+<h3><a name="subst-M3" id="subst-M3">SYNOPSIS</a></h3>
+<b>subst </b>?<b>-nobackslashes</b>? ?<b>-nocommands</b>? ?<b>-novariables</b>? <span class="mnew">?</span><b><span class="mnew">-noexpressions</span></b><span class="mnew">?</span> <i>string</i><br>
+<b>subst </b>?<b>-backslashes</b>? ?<b>-commands</b>? ?<b>-variables</b><span class="mnew">? ?</span><b><span class="mnew">-expressions</span></b>? <i>string</i><br>
+<h3><a name="subst-M4" id="subst-M4">DESCRIPTION</a></h3>
+This command performs variable substitutions, command substitutions,
+and backslash substitutions on its <i>string</i> argument and
+returns the fully-substituted result.
+The substitutions are performed in exactly the same way as for
+Tcl commands.
+As a result, the <i>string</i> argument is actually substituted twice,
+once by the Tcl parser in the usual fashion for Tcl commands, and
+again by the <i>subst</i> command.
+<p>
+If any of the <b>-nobackslashes</b>, <b>-nocommands</b>,
+<b><span class="mnew">-novariables</span></b><span class="mnew">,</span> <span class="mchg">or</span> <b><span class="mchg">-noexpressions</span></b> are specified, then the corresponding substitutions
+are not performed.
+For example, if <b>-nocommands</b> is specified, command substitution
+is not performed:  open and close brackets are treated as ordinary characters
+with no special interpretation.
+<p>
+If any of the <b>-backslashes</b>, <b>-commands</b>,
+<b><span class="mnew">-variables</span></b><span class="mnew">,</span> <span class="mchg">or</span> <b><span class="mchg">-expressions</span></b> are specified, then only the corresponding
+substitutions are performed. This means that the following lines are
+equivalent:
+<p>
+<pre><b>subst</b> -nobackslashes -nocommands $string
+<b>subst</b> -variables $string</pre>
+<p>
+It is not allowed to combine positive and negated options.
+<p>
+<span class="mnew">The</span> <b><span class="mnew">-expressions</span></b> <span class="mnew">and</span> <b><span class="mnew">-noexpressions</span></b> <span class="mnew">options control the
+expression substitution form of</span> <b><a href="#Tcl-M2"><span class="mnew">Tcl</span></a></b> <span class="mnew">(see the</span> <b><a href="#Tcl-M2"><span class="mnew">Tcl</span></a></b> <span class="mnew">manual page),</span>
+<b><span class="mnew">$((</span></b><i><span class="mnew">expr</span></i><b><span class="mnew">))</span></b><span class="mnew">, which is equivalent to</span> <b><span class="mnew">[expr {</span></b><i><span class="mnew">expr</span></i><b><span class="mnew">}]</span></b><span class="mnew">.
+By default it is performed.  With</span> <b><span class="mnew">-noexpressions</span></b> <span class="mnew">the characters
+are left as ordinary text, which is how</span> <b><span class="mnew">subst</span></b> <span class="mnew">treated them before the
+form existed.</span>  <b><span class="mnew">-novariables</span></b> <span class="mnew">also turns expression substitution
+off, because it is a form of</span> <b><span class="mnew">$</span></b> <span class="mnew">substitution, and so does</span>
+<b><span class="mnew">-nocommands</span></b><span class="mnew">, because the body of an expression can contain command
+substitutions; scripts that use these options to make text safe therefore
+keep working as before.  To get expression substitution without the other
+kinds, or without variables, use the positive form,</span>
+<b><span class="mnew">-expressions</span></b><span class="mnew">, which is an explicit request (commands in the body are
+then run).</span>
+<p>
+Note that the substitution of one kind can include substitution of
+other kinds.  For example, even when the <b>-novariables</b> option
+is specified, command substitution is performed without restriction.
+This means that any variable substitution necessary to complete the
+command substitution will still take place.  Likewise, any command
+substitution necessary to complete a variable substitution will
+take place, even when <b>-nocommands</b> is specified.  See the
+<b><a href="#subst-M5">EXAMPLES</a></b> below.
+<p>
+If an error occurs during substitution, then <b>subst</b> will return
+that error.  If a break exception occurs during command or variable
+substitution, the result of the whole substitution will be the
+string (as substituted) up to the start of the substitution that
+raised the exception.  If a continue exception occurs during the
+evaluation of a command or variable substitution, an empty string
+will be substituted for that entire command or variable substitution
+(as long as it is well-formed Tcl.)  If a return exception occurs,
+or any other return code is returned during command or variable
+substitution, then the returned value is substituted for that
+substitution.  See the <b><a href="#subst-M5">EXAMPLES</a></b> below.  In this way, all exceptional
+return codes are
+&ldquo;caught&rdquo;
+by <b>subst</b>.  The <b>subst</b> command
+itself will either return an error, or will complete successfully.
+<h3><a name="subst-M5" id="subst-M5">EXAMPLES</a></h3>
+When it performs its substitutions, <i>subst</i> does not give any
+special treatment to double quotes or curly braces (except within
+command substitutions) so the script
+<p>
+<pre>set a 44
+<b>subst</b> {xyz {$a}}</pre>
+<p>
+returns
+&ldquo;<b>xyz {44}</b>&rdquo;,
+not
+&ldquo;<b>xyz {$a}</b>&rdquo;
+and the script
+<p>
+<pre>set a &quot;p&#92;} q &#92;{r&quot;
+<b>subst</b> {xyz {$a}}</pre>
+<p>
+returns
+&ldquo;<b>xyz {p} q {r}</b>&rdquo;,
+not
+&ldquo;<b>xyz {p&#92;} q &#92;{r}</b>&rdquo;.
+<p>
+When command substitution is performed, it includes any variable
+substitution necessary to evaluate the script.
+<p>
+<pre>set a 44
+<b>subst</b> -novariables {$a [format $a]}</pre>
+<p>
+returns
+&ldquo;<b>$a 44</b>&rdquo;,
+not
+&ldquo;<b>$a $a</b>&rdquo;.
+Similarly, when
+variable substitution is performed, it includes any command
+substitution necessary to retrieve the value of the variable.
+<p>
+<pre>proc b {} {return c}
+array set a {c c [b] tricky}
+<b>subst</b> -nocommands {[b] $a([b])}</pre>
+<p>
+returns
+&ldquo;<b>[b] c</b>&rdquo;,
+not
+&ldquo;<b>[b] tricky</b>&rdquo;.
+<p>
+The continue and break exceptions allow command substitutions to
+prevent substitution of the rest of the command substitution and the
+rest of <i>string</i> respectively, giving script authors more options
+when processing text using <i>subst</i>.  For example, the script
+<p>
+<pre><b>subst</b> {abc,[break],def}</pre>
+<p>
+returns
+&ldquo;<b>abc,</b>&rdquo;,
+not
+&ldquo;<b>abc,,def</b>&rdquo;
+and the script
+<p>
+<pre><b>subst</b> {abc,[continue;expr {1+2}],def}</pre>
+<p>
+returns
+&ldquo;<b>abc,,def</b>&rdquo;,
+not
+&ldquo;<b>abc,3,def</b>&rdquo;.
+<p>
+Other exceptional return codes substitute the returned value
+<p>
+<pre><b>subst</b> {abc,[return foo;expr {1+2}],def}</pre>
+<p>
+returns
+&ldquo;<b>abc,foo,def</b>&rdquo;,
+not
+&ldquo;<b>abc,3,def</b>&rdquo;
+and
+<p>
+<pre><b>subst</b> {abc,[return -code 10 foo;expr {1+2}],def}</pre>
+<p>
+also returns
+&ldquo;<b>abc,foo,def</b>&rdquo;,
+not
+&ldquo;<b>abc,3,def</b>&rdquo;.
+<h3><a name="subst-M6" id="subst-M6">SEE ALSO</a></h3>
+<b><a href="#Tcl-M2">Tcl</a></b>, <b><a href="../TclCmd/eval.html">eval</a></b>, <b><a href="../TclCmd/break.html">break</a></b>, <b><a href="../TclCmd/continue.html">continue</a></b>
+<h3><a name="subst-M7" id="subst-M7">KEYWORDS</a></h3>
+<a href="../Keywords/B.html#backslash substitution">backslash substitution</a>, <a href="../Keywords/C.html#command substitution">command substitution</a>, <a href="../Keywords/Q.html#quoting">quoting</a>, <a href="../Keywords/S.html#substitution">substitution</a>, <a href="../Keywords/V.html#variable substitution">variable substitution</a>
+<div class="copy">Copyright &copy; 1994 The Regents of the University of California.
+<br>Copyright &copy; 1994-1996 Sun Microsystems, Inc.
+<br>Copyright &copy; 2001 Donal K. Fellows
+</div>
 
-<a id="s4"></a>       [2] <span class="b">Evaluation.</span>
-              A command is evaluated in two steps.  First, the Tcl  interpreter  breaks  the
-              command  into  <span class="i">words</span>  and  performs  substitutions  as described below.  These
-              substitutions are performed in the same way for all commands.   Secondly,  the
-              first  word  is  used  to  locate  a routine to carry out the command, and the
-              remaining words of the command are passed to that  routine.   The  routine  is
-              free  to  interpret each of its words in any way it likes, such as an integer,
-              variable name, list, or Tcl script.  Different commands interpret their  words
-              differently.
+</section>
+<section class="manpage" id="ParseCmd-M0"><h2>Tcl_ParseCmd(3) &mdash; C API: Tcl_ParseVarName and the parse structures</h2><p class="sum">117 new words, 0 changed words.</p>
 
-<a id="s5"></a>       [3] <span class="b">Words.</span>
-              Words  of  a  command are separated by white space (except for newlines, which
-              are command separators).
+<dl>
+<dd><a href="#ParseCmd-M2" name="ParseCmd-L670" id="ParseCmd-L670">NAME</a>
+<dl><dd>Tcl_ParseCommand, Tcl_ParseExpr, Tcl_ParseBraces, Tcl_ParseQuotedString, Tcl_ParseVarName, Tcl_ParseVar, Tcl_FreeParse, Tcl_EvalTokensStandard &mdash; parse Tcl scripts and expressions</dd></dl>
+<dd><a href="#ParseCmd-M3" name="ParseCmd-L671" id="ParseCmd-L671">SYNOPSIS</a>
+<dl>
+<dd><b>#include &lt;tcl.h&gt;</b>
+<dd>int
+<dd><b>Tcl_ParseCommand</b>(<i>interp, start, numBytes, nested, parsePtr</i>)
+<dd>int
+<dd><b>Tcl_ParseExpr</b>(<i>interp, start, numBytes, parsePtr</i>)
+<dd>int
+<dd><b>Tcl_ParseBraces</b>(<i>interp, start, numBytes, parsePtr, append, termPtr</i>)
+<dd>int
+<dd><b>Tcl_ParseQuotedString</b>(<i>interp, start, numBytes, parsePtr, append, termPtr</i>)
+<dd>int
+<dd><b>Tcl_ParseVarName</b>(<i>interp, start, numBytes, parsePtr, append</i>)
+<dd>const char *
+<dd><b>Tcl_ParseVar</b>(<i>interp, start, termPtr</i>)
+<dd><b>Tcl_FreeParse</b>(<i>usedParsePtr</i>)
+<dd>int
+<dd><b>Tcl_EvalTokensStandard</b>(<i>interp, tokenPtr, numTokens</i>)
+</dl>
+<dd><a href="#ParseCmd-M4" name="ParseCmd-L672" id="ParseCmd-L672">ARGUMENTS</a>
+<dl class="arguments">
+</dl>
+<dd><a href="#ParseCmd-M5" name="ParseCmd-L673" id="ParseCmd-L673">DESCRIPTION</a>
+<dd><a href="#ParseCmd-M6" name="ParseCmd-L674" id="ParseCmd-L674">TCL_PARSE STRUCTURE</a>
+<dl class="tcl_parse structure">
+<dd><a href="#ParseCmd-M7" name="ParseCmd-L675" id="ParseCmd-L675"><b>TCL_TOKEN_WORD</b></a>
+<dd><a href="#ParseCmd-M8" name="ParseCmd-L676" id="ParseCmd-L676"><b>TCL_TOKEN_SIMPLE_WORD</b></a>
+<dd><a href="#ParseCmd-M9" name="ParseCmd-L677" id="ParseCmd-L677"><b>TCL_TOKEN_EXPAND_WORD</b></a>
+<dd><a href="#ParseCmd-M10" name="ParseCmd-L678" id="ParseCmd-L678"><b>TCL_TOKEN_TEXT</b></a>
+<dd><a href="#ParseCmd-M11" name="ParseCmd-L679" id="ParseCmd-L679"><b>TCL_TOKEN_BS</b></a>
+<dd><a href="#ParseCmd-M12" name="ParseCmd-L680" id="ParseCmd-L680"><b>TCL_TOKEN_COMMAND</b></a>
+<dd><a href="#ParseCmd-M13" name="ParseCmd-L681" id="ParseCmd-L681"><b>TCL_TOKEN_VARIABLE</b></a>
+<dd><a href="#ParseCmd-M14" name="ParseCmd-L682" id="ParseCmd-L682"><b><span class="mnew">TCL_TOKEN_EXPR_SUBST</span></b></a>
+<dd><a href="#ParseCmd-M15" name="ParseCmd-L683" id="ParseCmd-L683"><b>TCL_TOKEN_SUB_EXPR</b></a>
+<dd><a href="#ParseCmd-M16" name="ParseCmd-L684" id="ParseCmd-L684"><b>TCL_TOKEN_OPERATOR</b></a>
+</dl>
+<dd><a href="#ParseCmd-M17" name="ParseCmd-L685" id="ParseCmd-L685">KEYWORDS</a>
+</dl>
+<h3><a name="ParseCmd-M2" id="ParseCmd-M2">NAME</a></h3>
+Tcl_ParseCommand, Tcl_ParseExpr, Tcl_ParseBraces, Tcl_ParseQuotedString, Tcl_ParseVarName, Tcl_ParseVar, Tcl_FreeParse, Tcl_EvalTokensStandard &mdash; parse Tcl scripts and expressions
+<h3><a name="ParseCmd-M3" id="ParseCmd-M3">SYNOPSIS</a></h3>
+<b>#include &lt;tcl.h&gt;</b><br>
+int<br>
+<b>Tcl_ParseCommand</b>(<i>interp, start, numBytes, nested, parsePtr</i>)<br>
+int<br>
+<b>Tcl_ParseExpr</b>(<i>interp, start, numBytes, parsePtr</i>)<br>
+int<br>
+<b>Tcl_ParseBraces</b>(<i>interp, start, numBytes, parsePtr, append, termPtr</i>)<br>
+int<br>
+<b>Tcl_ParseQuotedString</b>(<i>interp, start, numBytes, parsePtr, append, termPtr</i>)<br>
+int<br>
+<b>Tcl_ParseVarName</b>(<i>interp, start, numBytes, parsePtr, append</i>)<br>
+const char *<br>
+<b>Tcl_ParseVar</b>(<i>interp, start, termPtr</i>)<br>
+<b>Tcl_FreeParse</b>(<i>usedParsePtr</i>)<br>
+int<br>
+<b>Tcl_EvalTokensStandard</b>(<i>interp, tokenPtr, numTokens</i>)<br>
+<h3><a name="ParseCmd-M4" id="ParseCmd-M4">ARGUMENTS</a></h3>
+<dl class="arguments">
+<dt>Tcl_Interp <b>*interp</b> (out)<dd>
+For procedures other than <b>Tcl_FreeParse</b> and
+<b>Tcl_EvalTokensStandard</b>, used only for error reporting;
+if NULL, then no error messages are left after errors.
+For <b>Tcl_EvalTokensStandard</b>, determines the context for evaluating
+the script and also is used for error reporting; must not be NULL.
+<p><dt>const char <b>*start</b> (in)<dd>
+Pointer to first character in string to parse.
+<p><dt>Tcl_Size <b>numBytes</b> (in)<dd>
+Number of bytes in string to parse, not including any terminating null
+character.  If less than 0 then the script consists of all characters
+following <i>start</i> up to the first null character.
+<p><dt>int <b>nested</b> (in)<dd>
+Non-zero means that the script is part of a command substitution so an
+unquoted close bracket should be treated as a command terminator.  If zero,
+close brackets have no special meaning.
+<p><dt>int <b><a href="../TclCmd/append.html">append</a></b> (in)<dd>
+Non-zero means that <i>*parsePtr</i> already contains valid tokens; the new
+tokens should be appended to those already present.  Zero means that
+<i>*parsePtr</i> is uninitialized; any information in it is ignored.
+This argument is normally 0.
+<p><dt>Tcl_Parse <b>*parsePtr</b> (out)<dd>
+Points to structure to fill in with information about the parsed
+command, expression, variable name, etc.
+Any previous information in this structure
+is ignored, unless <i>append</i> is non-zero in a call to
+<b>Tcl_ParseBraces</b>, <b>Tcl_ParseQuotedString</b>,
+or <b>Tcl_ParseVarName</b>.
+<p><dt>const char <b>**termPtr</b> (out)<dd>
+If not NULL, points to a location where
+<b>Tcl_ParseBraces</b>, <b>Tcl_ParseQuotedString</b>, and
+<b>Tcl_ParseVar</b> will store a pointer to the character
+just after the terminating character (the close-brace, the last
+character of the variable name, or the close-quote (respectively))
+if the parse was successful.
+<p><dt>Tcl_Parse <b>*usedParsePtr</b> (in)<dd>
+Points to structure that was filled in by a previous call to
+<b>Tcl_ParseCommand</b>, <b>Tcl_ParseExpr</b>, <b>Tcl_ParseVarName</b>, etc.
+<p></dl>
+<h3><a name="ParseCmd-M5" id="ParseCmd-M5">DESCRIPTION</a></h3>
+These procedures parse Tcl commands or portions of Tcl commands such as
+expressions or references to variables.
+Each procedure takes a pointer to a script (or portion thereof)
+and fills in the structure pointed to by <i>parsePtr</i>
+with a collection of tokens describing the information that was parsed.
+The procedures normally return <b><a href="../TclCmd/catch.html">TCL_OK</a></b>.
+However, if an error occurs then they return <b><a href="../TclCmd/catch.html">TCL_ERROR</a></b>,
+leave an error message in <i>interp</i>'s result
+(if <i>interp</i> is not NULL),
+and leave nothing in <i>parsePtr</i>.
+<p>
+<b>Tcl_ParseCommand</b> is a procedure that parses Tcl
+scripts.  Given a pointer to a script, it
+parses the first command from the script.  If the command was parsed
+successfully, <b>Tcl_ParseCommand</b> returns <b><a href="../TclCmd/catch.html">TCL_OK</a></b> and fills in the
+structure pointed to by <i>parsePtr</i> with information about the
+structure of the command (see below for details).
+If an error occurred in parsing the command then
+<b><a href="../TclCmd/catch.html">TCL_ERROR</a></b> is returned, an error message is left in <i>interp</i>'s
+result, and no information is left at <i>*parsePtr</i>.
+<p>
+<b>Tcl_ParseExpr</b> parses Tcl expressions.
+Given a pointer to a script containing an expression,
+<b>Tcl_ParseExpr</b> parses the expression.
+If the expression was parsed successfully,
+<b>Tcl_ParseExpr</b> returns <b><a href="../TclCmd/catch.html">TCL_OK</a></b> and fills in the
+structure pointed to by <i>parsePtr</i> with information about the
+structure of the expression (see below for details).
+If an error occurred in parsing the command then
+<b><a href="../TclCmd/catch.html">TCL_ERROR</a></b> is returned, an error message is left in <i>interp</i>'s
+result, and no information is left at <i>*parsePtr</i>.
+<p>
+<b>Tcl_ParseBraces</b> parses a string or command argument
+enclosed in braces such as
+<b>{hello}</b> or <b>{string &#92;t with &#92;t tabs}</b>
+from the beginning of its argument <i>start</i>.
+The first character of <i>start</i> must be <b>{</b>.
+If the braced string was parsed successfully,
+<b>Tcl_ParseBraces</b> returns <b><a href="../TclCmd/catch.html">TCL_OK</a></b>,
+fills in the structure pointed to by <i>parsePtr</i>
+with information about the structure of the string
+(see below for details),
+and stores a pointer to the character just after the terminating <b>}</b>
+in the location given by <i>*termPtr</i>.
+If an error occurs while parsing the string
+then <b><a href="../TclCmd/catch.html">TCL_ERROR</a></b> is returned,
+an error message is left in <i>interp</i>'s result,
+and no information is left at <i>*parsePtr</i> or <i>*termPtr</i>.
+<p>
+<b>Tcl_ParseQuotedString</b> parses a double-quoted string such as
+<b>&quot;sum is [expr {$a+$b}]&quot;</b>
+from the beginning of the argument <i>start</i>.
+The first character of <i>start</i> must be <b>&#34;</b>.
+If the double-quoted string was parsed successfully,
+<b>Tcl_ParseQuotedString</b> returns <b><a href="../TclCmd/catch.html">TCL_OK</a></b>,
+fills in the structure pointed to by <i>parsePtr</i>
+with information about the structure of the string
+(see below for details),
+and stores a pointer to the character just after the terminating <b>&#34;</b>
+in the location given by <i>*termPtr</i>.
+If an error occurs while parsing the string
+then <b><a href="../TclCmd/catch.html">TCL_ERROR</a></b> is returned,
+an error message is left in <i>interp</i>'s result,
+and no information is left at <i>*parsePtr</i> or <i>*termPtr</i>.
+<p>
+<b>Tcl_ParseVarName</b> parses a Tcl variable reference such as
+<b>$abc</b> or <b>$x([expr {$index + 1}])</b> from the beginning of its
+<i>start</i> argument.
+The first character of <i>start</i> must be <b>$</b>.
+If a variable name was parsed successfully, <b>Tcl_ParseVarName</b>
+returns <b><a href="../TclCmd/catch.html">TCL_OK</a></b> and fills in the structure pointed to by
+<i>parsePtr</i> with information about the structure of the variable name
+(see below for details).  If an error
+occurs while parsing the command then <b><a href="../TclCmd/catch.html">TCL_ERROR</a></b> is returned, an
+error message is left in <i>interp</i>'s result (if <i>interp</i> is not
+NULL), and no information is left at <i>*parsePtr</i>.
+<p>
+<b>Tcl_ParseVar</b> parses a Tcl variable reference such as <b>$abc</b>
+or <b>$x([expr {$index + 1}])</b> from the beginning of its <i>start</i>
+argument.  The first character of <i>start</i> must be <b>$</b>.  If
+the variable name is parsed successfully, <b>Tcl_ParseVar</b> returns a
+pointer to the string value of the variable.  If an error occurs while
+parsing, then NULL is returned and an error message is left in
+<i>interp</i>'s result.
+<p>
+The information left at <i>*parsePtr</i>
+by <b>Tcl_ParseCommand</b>, <b>Tcl_ParseExpr</b>, <b>Tcl_ParseBraces</b>,
+<b>Tcl_ParseQuotedString</b>, and <b>Tcl_ParseVarName</b>
+may include dynamically allocated memory.
+If these five parsing procedures return <b><a href="../TclCmd/catch.html">TCL_OK</a></b>
+then the caller must invoke <b>Tcl_FreeParse</b> to release
+the storage at <i>*parsePtr</i>.
+These procedures ignore any existing information in
+<i>*parsePtr</i> (unless <i>append</i> is non-zero),
+so if repeated calls are being made to any of them
+then <b>Tcl_FreeParse</b> must be invoked once after each call.
+<p>
+<b>Tcl_EvalTokensStandard</b> evaluates a sequence of parse tokens from
+a Tcl_Parse structure.  The tokens typically consist
+of all the tokens in a word or all the tokens that make up the index for
+a reference to an array variable.  <b>Tcl_EvalTokensStandard</b> performs the
+substitutions requested by the tokens and concatenates the
+resulting values.
+The return value from <b>Tcl_EvalTokensStandard</b> is a Tcl completion
+code with one of the values <b><a href="../TclCmd/catch.html">TCL_OK</a></b>, <b><a href="../TclCmd/catch.html">TCL_ERROR</a></b>,
+<b><a href="../TclCmd/catch.html">TCL_RETURN</a></b>, <b><a href="../TclCmd/catch.html">TCL_BREAK</a></b>, or <b><a href="../TclCmd/catch.html">TCL_CONTINUE</a></b>, or possibly
+some other integer value originating in an extension.
+In addition, a result value or error message is left in <i>interp</i>'s
+result; it can be retrieved using <b><a href="../TclLib/SetResult.html">Tcl_GetObjResult</a></b>.
+<h3><a name="ParseCmd-M6" id="ParseCmd-M6">TCL_PARSE STRUCTURE</a></h3>
+<b>Tcl_ParseCommand</b>, <b>Tcl_ParseExpr</b>, <b>Tcl_ParseBraces</b>,
+<b>Tcl_ParseQuotedString</b>, and <b>Tcl_ParseVarName</b>
+return parse information in two data structures, Tcl_Parse and Tcl_Token:
+<p>
+<pre>typedef struct {
+    const char *<i>commentStart</i>;
+    Tcl_Size <i>commentSize</i>;
+    const char *<i>commandStart</i>;
+    Tcl_Size <i>commandSize</i>;
+    Tcl_Size <i>numWords</i>;
+    Tcl_Token *<i>tokenPtr</i>;
+    Tcl_Size <i>numTokens</i>;
+    ...
+} <b>Tcl_Parse</b>;
 
-<a id="s6"></a>       [4] <span class="b">Double quotes.</span>
-              If the first character of a word  is  double-quote  (“&quot;”)  then  the  word  is
-              terminated   by  the  next  double-quote  character.   If  semi-colons,  close
-              brackets, or white space characters (including newlines)  appear  between  the
-              quotes  then they are treated as ordinary characters and included in the word.
-              Command substitution, variable substitution, and  backslash  substitution  are
-              performed  on  the  characters  between  the  quotes  as described below.  The
-              double-quotes are not retained as part of the word.
+typedef struct {
+    int <i>type</i>;
+    const char *<i>start</i>;
+    Tcl_Size <i>size</i>;
+    Tcl_Size <i>numComponents</i>;
+} <b>Tcl_Token</b>;</pre>
+<p>
+The first five fields of a Tcl_Parse structure
+are filled in only by <b>Tcl_ParseCommand</b>.
+These fields are not used by the other parsing procedures.
+<p>
+<b>Tcl_ParseCommand</b> fills in a Tcl_Parse structure
+with information that describes one Tcl command and any comments that
+precede the command. If there are comments,
+the <i>commentStart</i> field points to the <b>#</b> character that begins
+the first comment and <i>commentSize</i> indicates the number of bytes
+in all of the comments preceding the command, including the newline
+character that terminates the last comment.
+If the command is not preceded by any comments, <i>commentSize</i> is 0.
+<b>Tcl_ParseCommand</b> also sets the <i>commandStart</i> field
+to point to the first character of the first
+word in the command (skipping any comments and leading space) and
+<i>commandSize</i> gives the total number of bytes in the command,
+including the character pointed to by <i>commandStart</i> up to and
+including the newline, close bracket, or semicolon character that
+terminates the command.  The <i>numWords</i> field gives the
+total number of words in the command.
+<p>
+All parsing procedures set the remaining fields,
+<i>tokenPtr</i> and <i>numTokens</i>.
+The <i>tokenPtr</i> field points to the first in an array of Tcl_Token
+structures that describe the components of the entity being parsed.
+The <i>numTokens</i> field gives the total number of tokens
+present in the array.
+Each token contains four fields.
+The <i>type</i> field selects one of several token types
+that are described below.  The <i>start</i> field
+points to the first character in the token and the <i>size</i> field
+gives the total number of characters in the token.  Some token types,
+such as <b>TCL_TOKEN_WORD</b> and <b>TCL_TOKEN_VARIABLE</b>, consist of
+several component tokens, which immediately follow the parent token;
+the <i>numComponents</i> field describes how many of these there are.
+The <i>type</i> field has one of the following values:
+<p>
+<dl class="tcl_parse structure">
+<dt><a name="ParseCmd-M7" id="ParseCmd-M7"><b>TCL_TOKEN_WORD</b></a><dd>
+This token ordinarily describes one word of a command
+but it may also describe a quoted or braced string in an expression.
+The token describes a component of the script that is
+the result of concatenating together a sequence of subcomponents,
+each described by a separate subtoken.
+The token starts with the first non-blank
+character of the component (which may be a double-quote or open brace)
+and includes all characters in the component up to but not including the
+space, semicolon, close bracket, close quote, or close brace that
+terminates the component.  The <i>numComponents</i> field counts the total
+number of sub-tokens that make up the word, including sub-tokens
+of <b>TCL_TOKEN_VARIABLE</b> and <b>TCL_TOKEN_BS</b> tokens.
+<p><dt><a name="ParseCmd-M8" id="ParseCmd-M8"><b>TCL_TOKEN_SIMPLE_WORD</b></a><dd>
+This token has the same meaning as <b>TCL_TOKEN_WORD</b>, except that
+the word is guaranteed to consist of a single <b>TCL_TOKEN_TEXT</b>
+sub-token.  The <i>numComponents</i> field is always 1.
+<p><dt><a name="ParseCmd-M9" id="ParseCmd-M9"><b>TCL_TOKEN_EXPAND_WORD</b></a><dd>
+This token has the same meaning as <b>TCL_TOKEN_WORD</b>, except that
+the command parser notes this word began with the expansion
+prefix <b>{*}</b>, indicating that after substitution,
+the list value of this word should be expanded to form multiple
+arguments in command evaluation.  This
+token type can only be created by Tcl_ParseCommand.
+<p><dt><a name="ParseCmd-M10" id="ParseCmd-M10"><b>TCL_TOKEN_TEXT</b></a><dd>
+The token describes a range of literal text that is part of a word.
+The <i>numComponents</i> field is always 0.
+<p><dt><a name="ParseCmd-M11" id="ParseCmd-M11"><b>TCL_TOKEN_BS</b></a><dd>
+The token describes a backslash sequence such as <b>&#92;n</b> or <b>&#92;0xA3</b>.
+The <i>numComponents</i> field is always 0.
+<p><dt><a name="ParseCmd-M12" id="ParseCmd-M12"><b>TCL_TOKEN_COMMAND</b></a><dd>
+The token describes a command whose result must be substituted into
+the word.  The token includes the square brackets that surround the
+command.  The <i>numComponents</i> field is always 0 (the nested command
+is not parsed; call <b>Tcl_ParseCommand</b> recursively if you want to
+see its tokens).
+<p><dt><a name="ParseCmd-M13" id="ParseCmd-M13"><b>TCL_TOKEN_VARIABLE</b></a><dd>
+The token describes a variable substitution, including the
+<b>$</b>, variable name, and array index (if there is one) up through the
+close parenthesis that terminates the index.  This token is followed
+by one or more additional tokens that describe the variable name and
+array index.  If <i>numComponents</i>  is 1 then the variable is a
+scalar and the next token is a <b>TCL_TOKEN_TEXT</b> token that gives the
+variable name.  If <i>numComponents</i> is greater than 1 then the
+variable is an array: the first sub-token is a <b>TCL_TOKEN_TEXT</b>
+token giving the array name and the remaining sub-tokens are
+<b>TCL_TOKEN_TEXT</b>, <b>TCL_TOKEN_BS</b>, <b>TCL_TOKEN_COMMAND</b>, and
+<b>TCL_TOKEN_VARIABLE</b> tokens that must be concatenated to produce the
+array index. The <i>numComponents</i> field includes nested sub-tokens
+that are part of <b>TCL_TOKEN_VARIABLE</b> tokens in the array index.
+<p><dt><a name="ParseCmd-M14" id="ParseCmd-M14"><b><span class="mnew">TCL_TOKEN_EXPR_SUBST</span></b></a><dd>
+<span class="mnew">The token describes an expression substitution, written</span> <b><span class="mnew">$((</span></b><i><span class="mnew">expr</span></i><b><span class="mnew">))</span></b><span class="mnew">,
+which is equivalent to</span> <b><span class="mnew">[expr {</span></b><i><span class="mnew">expr</span></i><b><span class="mnew">}]</span></b><span class="mnew">.
+The token includes the</span> <b><span class="mnew">$</span></b> <span class="mnew">through the matching close parenthesis.
+The</span> <i><span class="mnew">numComponents</span></i> <span class="mnew">field is always 1, and the next token is a</span>
+<b><span class="mnew">TCL_TOKEN_TEXT</span></b> <span class="mnew">token that gives the body of the expression (the
+text between the</span> <b><span class="mnew">$((</span></b> <span class="mnew">and</span> <b><span class="mnew">))</span></b><span class="mnew">, without them).
+The body is not parsed or substituted any further; it is to be passed
+to the expression parser as if it had been enclosed in braces.
+Like</span> <b><span class="mnew">TCL_TOKEN_VARIABLE</span></b><span class="mnew">, this token may appear wherever a variable
+substitution is allowed, including inside the index of an array variable and
+as an operand in an expression.</span>
+<p><dt><a name="ParseCmd-M15" id="ParseCmd-M15"><b>TCL_TOKEN_SUB_EXPR</b></a><dd>
+The token describes one subexpression of an expression
+(or an entire expression).
+A subexpression may consist of a value
+such as an integer literal, variable substitution,
+or parenthesized subexpression;
+it may also consist of an operator and its operands.
+The token starts with the first non-blank character of the subexpression
+up to but not including the space, brace, close-paren, or bracket
+that terminates the subexpression.
+This token is followed by one or more additional tokens
+that describe the subexpression.
+If the first sub-token after the <b>TCL_TOKEN_SUB_EXPR</b> token
+is a <b>TCL_TOKEN_OPERATOR</b> token,
+the subexpression consists of an operator and its token operands.
+If the operator has no operands, the subexpression consists of
+just the <b>TCL_TOKEN_OPERATOR</b> token.
+Each operand is described by a <b>TCL_TOKEN_SUB_EXPR</b> token.
+Otherwise, the subexpression is a value described by
+one of the token types <b>TCL_TOKEN_WORD</b>, <b>TCL_TOKEN_TEXT</b>,
+<b>TCL_TOKEN_BS</b>, <b>TCL_TOKEN_COMMAND</b>,
+<b>TCL_TOKEN_VARIABLE</b>, and <b>TCL_TOKEN_SUB_EXPR</b>.
+The <i>numComponents</i> field
+counts the total number of sub-tokens that make up the subexpression;
+this includes the sub-tokens for any nested <b>TCL_TOKEN_SUB_EXPR</b> tokens.
+<p><dt><a name="ParseCmd-M16" id="ParseCmd-M16"><b>TCL_TOKEN_OPERATOR</b></a><dd>
+The token describes one operator of an expression
+such as <b>&amp;&amp;</b> or <b>hypot</b>.
+A <b>TCL_TOKEN_OPERATOR</b> token is always preceded by a
+<b>TCL_TOKEN_SUB_EXPR</b> token
+that describes the operator and its operands;
+the <b>TCL_TOKEN_SUB_EXPR</b> token's <i>numComponents</i> field
+can be used to determine the number of operands.
+A binary operator such as <b>*</b>
+is followed by two <b>TCL_TOKEN_SUB_EXPR</b> tokens
+that describe its operands.
+A unary operator like <b>-</b>
+is followed by a single <b>TCL_TOKEN_SUB_EXPR</b> token
+for its operand.
+If the operator is a math function such as <b>log10</b>,
+the <b>TCL_TOKEN_OPERATOR</b> token will give its name and
+the following <b>TCL_TOKEN_SUB_EXPR</b> tokens will describe
+its operands;
+if there are no operands (as with <b>rand</b>),
+no <b>TCL_TOKEN_SUB_EXPR</b> tokens follow.
+There is one trinary operator, <b>?</b>,
+that appears in if-then-else subexpressions
+such as <i>x</i><b>?</b><i>y</i><b>:</b><i>z</i>;
+in this case, the <b>?</b> <b>TCL_TOKEN_OPERATOR</b> token
+is followed by three <b>TCL_TOKEN_SUB_EXPR</b> tokens for the operands
+<i>x</i>, <i>y</i>, and <i>z</i>.
+The <i>numComponents</i> field for a <b>TCL_TOKEN_OPERATOR</b> token
+is always 0.
+<p></dl>
+<p>
+After <b>Tcl_ParseCommand</b> returns, the first token pointed to by
+the <i>tokenPtr</i> field of the
+Tcl_Parse structure always has type <b>TCL_TOKEN_WORD</b> or
+<b>TCL_TOKEN_SIMPLE_WORD</b> or <b>TCL_TOKEN_EXPAND_WORD</b>.
+It is followed by the sub-tokens
+that must be concatenated to produce the value of that word.
+The next token is the <b>TCL_TOKEN_WORD</b> or <b>TCL_TOKEN_SIMPLE_WORD</b>
+of <b>TCL_TOKEN_EXPAND_WORD</b> token for the second word,
+followed by sub-tokens for that
+word, and so on until all <i>numWords</i> have been accounted
+for.
+<p>
+After <b>Tcl_ParseExpr</b> returns, the first token pointed to by
+the <i>tokenPtr</i> field of the
+Tcl_Parse structure always has type <b>TCL_TOKEN_SUB_EXPR</b>.
+It is followed by the sub-tokens that must be evaluated
+to produce the value of the expression.
+Only the token information in the Tcl_Parse structure
+is modified: the <i>commentStart</i>, <i>commentSize</i>,
+<i>commandStart</i>, and <i>commandSize</i> fields are not modified
+by <b>Tcl_ParseExpr</b>.
+<p>
+After <b>Tcl_ParseBraces</b> returns,
+the array of tokens pointed to by the <i>tokenPtr</i> field of the
+Tcl_Parse structure will contain a single <b>TCL_TOKEN_TEXT</b> token
+if the braced string does not contain any backslash-newlines.
+If the string does contain backslash-newlines,
+the array of tokens will contain one or more
+<b>TCL_TOKEN_TEXT</b> or <b>TCL_TOKEN_BS</b> sub-tokens
+that must be concatenated to produce the value of the string.
+If the braced string was just <b>{}</b>
+(that is, the string was empty),
+the single <b>TCL_TOKEN_TEXT</b> token will have a <i>size</i> field
+containing zero;
+this ensures that at least one token appears
+to describe the braced string.
+Only the token information in the Tcl_Parse structure
+is modified: the <i>commentStart</i>, <i>commentSize</i>,
+<i>commandStart</i>, and <i>commandSize</i> fields are not modified
+by <b>Tcl_ParseBraces</b>.
+<p>
+After <b>Tcl_ParseQuotedString</b> returns,
+the array of tokens pointed to by the <i>tokenPtr</i> field of the
+Tcl_Parse structure depends on the contents of the quoted string.
+It will consist of one or more <b>TCL_TOKEN_TEXT</b>, <b>TCL_TOKEN_BS</b>,
+<b>TCL_TOKEN_COMMAND</b>, and <b>TCL_TOKEN_VARIABLE</b> sub-tokens.
+The array always contains at least one token;
+for example, if the argument <i>start</i> is empty,
+the array returned consists of a single <b>TCL_TOKEN_TEXT</b> token
+with a zero <i>size</i> field.
+Only the token information in the Tcl_Parse structure
+is modified: the <i>commentStart</i>, <i>commentSize</i>,
+<i>commandStart</i>, and <i>commandSize</i> fields are not modified.
+<p>
+After <b>Tcl_ParseVarName</b> returns, the first token pointed to by
+the <i>tokenPtr</i> field of the
+Tcl_Parse structure always has type <b>TCL_TOKEN_VARIABLE</b>.  It
+is followed by the sub-tokens that make up the variable name as
+described above.  The total length of the variable name is
+contained in the <i>size</i> field of the first token.
+As in <b>Tcl_ParseExpr</b>,
+only the token information in the Tcl_Parse structure
+is modified by <b>Tcl_ParseVarName</b>:
+the <i>commentStart</i>, <i>commentSize</i>,
+<i>commandStart</i>, and <i>commandSize</i> fields are not modified.
+<p>
+All of the character pointers in the
+Tcl_Parse and Tcl_Token structures refer
+to characters in the <i>start</i> argument passed to
+<b>Tcl_ParseCommand</b>, <b>Tcl_ParseExpr</b>, <b>Tcl_ParseBraces</b>,
+<b>Tcl_ParseQuotedString</b>, and <b>Tcl_ParseVarName</b>.
+<p>
+There are additional fields in the Tcl_Parse structure after the
+<i>numTokens</i> field, but these are for the private use of
+<b>Tcl_ParseCommand</b>, <b>Tcl_ParseExpr</b>, <b>Tcl_ParseBraces</b>,
+<b>Tcl_ParseQuotedString</b>, and <b>Tcl_ParseVarName</b>; they should not be
+referenced by code outside of these procedures.
+<h3><a name="ParseCmd-M17" id="ParseCmd-M17">KEYWORDS</a></h3>
+<a href="../Keywords/B.html#backslash substitution">backslash substitution</a>, <a href="../Keywords/B.html#braces">braces</a>, <a href="../Keywords/C.html#command">command</a>, <a href="../Keywords/E.html#expression">expression</a>, <a href="../Keywords/P.html#parse">parse</a>, <a href="../Keywords/T.html#token">token</a>, <a href="../Keywords/V.html#variable substitution">variable substitution</a>
+<div class="copy">Copyright &copy; 1997 Sun Microsystems, Inc.
+</div>
 
-<a id="s7"></a>       [5] <span class="b">Argument expansion.</span>
-              If a word starts with the string “{*}” followed by a non-whitespace character,
-              then the leading “{*}” is removed and the rest  of  the  word  is  parsed  and
-              substituted  as  any  other  word. After substitution, the word is parsed as a
-              list (without command or variable substitutions; backslash  substitutions  are
-              performed  as  is  normal  for  a  list  and  individual internal words may be
-              surrounded by either braces or double-quote characters),  and  its  words  are
-              added  to  the  command  being  substituted. For instance, “cmd a {*}{b [c]} d
-              {*}{$e f {g h}}” is equivalent to “cmd a b {[c]} d {$e} f {g h}”.
+</section>
+<section class="manpage" id="SubstObj-M0"><h2>Tcl_SubstObj(3) &mdash; C API: Tcl_SubstObj and the TCL_SUBST_* flags</h2><p class="sum">47 new words, 2 changed words.</p>
 
-<a id="s8"></a>       [6] <span class="b">Braces.</span>
-              If the first character of a word is an open brace (“{”) and rule [5] does  not
-              apply,  then the word is terminated by the matching close brace (“}”).  Braces
-              nest within the word:  for  each  additional  open  brace  there  must  be  an
-              additional  close  brace  (however, if an open brace or close brace within the
-              word is quoted with a backslash  then  it  is  not  counted  in  locating  the
-              matching  close  brace).   No  substitutions  are  performed on the characters
-              between the braces except for backslash-newline substitutions described below,
-              nor do semi-colons, newlines, close  brackets,  or  white  space  receive  any
-              special  interpretation.   The  word  will  consist  of exactly the characters
-              between the outer braces, not including the braces themselves.
+<dl>
+<dd><a href="#SubstObj-M2" name="SubstObj-L852" id="SubstObj-L852">NAME</a>
+<dl><dd>Tcl_SubstObj &mdash; perform substitutions on Tcl values</dd></dl>
+<dd><a href="#SubstObj-M3" name="SubstObj-L853" id="SubstObj-L853">SYNOPSIS</a>
+<dl>
+<dd><b>#include &lt;tcl.h&gt;</b>
+<dd>Tcl_Obj *
+<dd><b>Tcl_SubstObj</b>(<i>interp, objPtr, flags</i>)
+</dl>
+<dd><a href="#SubstObj-M4" name="SubstObj-L854" id="SubstObj-L854">ARGUMENTS</a>
+<dl class="arguments">
+</dl>
+<dd><a href="#SubstObj-M5" name="SubstObj-L855" id="SubstObj-L855">DESCRIPTION</a>
+<dd><a href="#SubstObj-M6" name="SubstObj-L856" id="SubstObj-L856">REFERENCE COUNT MANAGEMENT</a>
+<dd><a href="#SubstObj-M7" name="SubstObj-L857" id="SubstObj-L857">SEE ALSO</a>
+<dd><a href="#SubstObj-M8" name="SubstObj-L858" id="SubstObj-L858">KEYWORDS</a>
+</dl>
+<h3><a name="SubstObj-M2" id="SubstObj-M2">NAME</a></h3>
+Tcl_SubstObj &mdash; perform substitutions on Tcl values
+<h3><a name="SubstObj-M3" id="SubstObj-M3">SYNOPSIS</a></h3>
+<b>#include &lt;tcl.h&gt;</b><br>
+<a href="../TclLib/Object.html">Tcl_Obj</a> *<br>
+<b>Tcl_SubstObj</b>(<i>interp, objPtr, flags</i>)<br>
+<h3><a name="SubstObj-M4" id="SubstObj-M4">ARGUMENTS</a></h3>
+<dl class="arguments">
+<dt>Tcl_Interp <b>*interp</b> (in)<dd>
+Interpreter in which to execute Tcl scripts and lookup variables.  If
+an error occurs, the interpreter's result is modified to hold an error
+message.
+<p><dt><a href="../TclLib/Object.html">Tcl_Obj</a> <b>*objPtr</b> (in)<dd>
+A Tcl value containing the string to perform substitutions on.
+<p><dt>int <b>flags</b> (in)<dd>
+OR'ed combination of flag bits that specify which substitutions to
+perform.  The flags <b>TCL_SUBST_COMMANDS</b>,
+<b>TCL_SUBST_VARIABLES</b><span class="mnew">,</span> <b><span class="mnew">TCL_SUBST_BACKSLASHES</span></b> <span class="mchg">and</span>
+<b><span class="mchg">TCL_SUBST_EXPRESSIONS</span></b> are currently supported, and
+<b>TCL_SUBST_ALL</b> is provided as a convenience for the common case where all substitutions are desired.
+<p></dl>
+<h3><a name="SubstObj-M5" id="SubstObj-M5">DESCRIPTION</a></h3>
+The <b>Tcl_SubstObj</b> function is used to perform substitutions on
+strings in the fashion of the <b><a href="#subst-M2">subst</a></b> command.  It gets the value
+of the string contained in <i>objPtr</i> and scans it, copying
+characters and performing the chosen substitutions as it goes to an
+output value which is returned as the result of the function.  In the
+event of an error occurring during the execution of a command or
+variable substitution, the function returns NULL and an error message
+is left in <i>interp</i>'s result.
+<p>
+Three kinds of substitutions are supported.  When the
+<b>TCL_SUBST_BACKSLASHES</b> bit is set in <i>flags</i>, sequences that
+look like backslash substitutions for Tcl commands are replaced by
+their corresponding character.
+<p>
+When the <b>TCL_SUBST_VARIABLES</b> bit is set in <i>flags</i>,
+sequences that look like variable substitutions for Tcl commands are
+replaced by the contents of the named variable.
+<p>
+<span class="mnew">When the</span> <b><span class="mnew">TCL_SUBST_EXPRESSIONS</span></b> <span class="mnew">bit is set in</span> <i><span class="mnew">flags</span></i><span class="mnew">, the
+expression substitution form (</span><b><span class="mnew">$((</span></b><i><span class="mnew">expr</span></i><b><span class="mnew">))</span></b><span class="mnew">) is replaced by the
+value of the expression.  If the bit is clear, that text is left as it is.
+Note that</span> <b><span class="mnew">TCL_SUBST_ALL</span></b> <span class="mnew">now includes this bit.</span>
+<p>
+When the <b>TCL_SUBST_COMMANDS</b> bit is set in <i>flags</i>, sequences
+that look like command substitutions for Tcl commands are replaced by
+the result of evaluating that script.  Where an uncaught
+&ldquo;continue exception&rdquo;
+occurs during the evaluation of a command substitution, an
+empty string is substituted for the command.  Where an uncaught
+&ldquo;break exception&rdquo;
+occurs during the evaluation of a command substitution, the
+result of the whole substitution on <i>objPtr</i> will be truncated at
+the point immediately before the start of the command substitution,
+and no characters will be added to the result or substitutions
+performed after that point.
+<h3><a name="SubstObj-M6" id="SubstObj-M6">REFERENCE COUNT MANAGEMENT</a></h3>
+The <i>objPtr</i> argument to <b>Tcl_SubstObj</b> must not have a reference
+count of zero. This function modifies the interpreter result, both on success
+and on failure; the result of this function on success is exactly the current
+interpreter result. Successful results should have their reference count
+incremented if they are to be retained.
+<h3><a name="SubstObj-M7" id="SubstObj-M7">SEE ALSO</a></h3>
+<b><a href="#subst-M2">subst</a></b>
+<h3><a name="SubstObj-M8" id="SubstObj-M8">KEYWORDS</a></h3>
+<a href="../Keywords/B.html#backslash substitution">backslash substitution</a>, <a href="../Keywords/C.html#command substitution">command substitution</a>, <a href="../Keywords/V.html#variable substitution">variable substitution</a>
+<div class="copy">Copyright &copy; 2001 Donal K. Fellows
+</div>
 
-<a id="s9"></a>       [7] <span class="b">Command substitution.</span>
-              If  a  word  contains  an  open  bracket  (“[”)  then  Tcl  performs   <span class="i">command</span>
-              <span class="i">substitution</span>.   To  do  this  it  invokes  the  Tcl interpreter recursively to
-              process the characters following the open bracket as a Tcl script.  The script
-              may contain any number of commands and must be terminated by a  close  bracket
-              (“]”).   The  result  of  the  script (i.e. the result of its last command) is
-              substituted into the word in place of the brackets and all of  the  characters
-              between  them.   There  may be any number of command substitutions in a single
-              word.  Command substitution is not performed on words enclosed in braces.
-
-<a id="s10"></a>       <span class="chg">[8] <span class="b">Variable and expression substitution.</span></span>
-              If a word contains a dollar-sign (“$”) followed by one of the forms  described
-              <span class="chg">below,  then  Tcl  performs  <span class="i">variable</span> <span class="i">substitution</span> or <span class="i">expression</span> <span class="i">substitution</span>:</span>
-              <span class="chg">the dollar-sign and the following characters are replaced in the word  by  the</span>
-              <span class="chg">value  of  a variable or of an expression.  Variable substitution may take any</span>
-              <span class="chg">of the following three forms; the fourth form is expression substitution:</span>
-
-<a id="s11"></a>              <span class="b">$</span><span class="i">name</span>          <span class="i">Name</span> is the name of a scalar variable;  the name is a  sequence
-                             of one or more characters that are a letter, digit, underscore,
-                             or  namespace  separators  (two  or  more colons).  Letters and
-                             digits are <span class="i">only</span> the standard ASCII ones (<span class="b">0</span>–<span class="b">9</span>, <span class="b">A</span>–<span class="b">Z </span>and <span class="b">a</span>–<span class="b">z</span>).
-
-<a id="s12"></a>              <span class="b">$</span><span class="i">name</span><span class="b">(</span><span class="i">index</span><span class="b">)   </span><span class="i">Name</span> gives the name of an array variable and  <span class="i">index</span>  gives  the
-                             name  of  an element within that array.  <span class="i">Name</span> must contain only
-                             letters, digits, underscores, and namespace separators, and may
-                             be an empty string.  Letters and digits are <span class="i">only</span>  the  standard
-                             ASCII ones (<span class="b">0</span>–<span class="b">9</span>, <span class="b">A</span>–<span class="b">Z </span>and <span class="b">a</span>–<span class="b">z</span>).  Command substitutions, variable
-                             substitutions, and backslash substitutions are performed on the
-                             characters of <span class="i">index</span>.
-
-<a id="s13"></a>              <span class="b">${</span><span class="i">name</span><span class="b">}        </span><span class="i">Name</span> is the name of a scalar variable or array element.  It may
-                             contain  any characters whatsoever except for close braces.  It
-                             indicates  an  array  element  if   <span class="i">name</span>   is   in   the   form
-                             “<span class="i">arrayName</span><span class="b">(</span><span class="i">index</span><span class="b">)</span>”  where  <span class="i">arrayName</span>  does not contain any open
-                             parenthesis characters, “<span class="b">(</span>”, or close  brace  characters,  “<span class="b">}</span>”,
-                             and  <span class="i">index</span>  can  be any sequence of characters except for close
-                             brace  characters.   No  further  substitutions  are  performed
-                             during the parsing of <span class="i">name</span>.
-<a id="new"></a>
-<a id="s14"></a>              <span class="add"><span class="b">$((</span><span class="i">expression</span><span class="b">))</span></span>
-                             <span class="add">A  dollar-sign  followed by two open parentheses, “<span class="b">$((</span>”, begins</span>
-                             <span class="add">an <span class="i">expression</span> <span class="i">substitution</span>, and two close  parentheses  written</span>
-                             <span class="add">together  with  no  space  between them, “<span class="b">))</span>”, end it.  It is a</span>
-                             <span class="add">shortcut for “<span class="b">[expr {</span><span class="i">expression</span><span class="b">}]</span>”.  The  expression  does  not</span>
-                             <span class="add">include the opening <span class="b">(( </span>or the closing <span class="b">))</span>, which delimit it.  If</span>
-                             <span class="add">the   expression  itself  contains  parentheses  they  must  be</span>
-                             <span class="add">balanced.   Parentheses  inside  braces,   double   quotes   or</span>
-                             <span class="add">bracketed commands are not counted.</span>
-
-                             <span class="add">A  <span class="b">$((  </span>that  is  not  closed  by  a  matching  <span class="b">)) </span>is an error:</span>
-                             <span class="add"><span class="b">$((1+2)*3) </span>is rejected, and should be written <span class="b">$(((1+2)*3))  </span>or,</span>
-                             <span class="add">with  spaces,  <span class="b">$(( (1+2)*3 ))</span>.  Any other form that begins with</span>
-                             <span class="add"><span class="b">$(</span>, such as <span class="b">$( (1+2))</span>, is not an  expression  substitution;  as</span>
-                             <span class="add">before it is an array reference with an empty name.</span>
-
-                             <span class="add">The  text  is  passed to <span class="b">expr </span>as if it were enclosed in braces:</span>
-                             <span class="add">the  Tcl  parser  performs  no  substitution  on  it,  so  that</span>
-                             <span class="add">variable,   command  and  backslash  substitutions  in  it  are</span>
-                             <span class="add">performed once, by <span class="b">expr</span>, and the result of  the  expression  is</span>
-                             <span class="add">never substituted a second time.</span>
-
-                             <span class="add">For  example,  “<span class="b">set  area $(( $width * $height ))</span>” sets <span class="b">area </span>to</span>
-                             <span class="add">the product of the two variables, and “<span class="b">puts &quot;n=$(( 2**10  ))!&quot;</span>”</span>
-                             <span class="add">prints “<span class="b">n=1024!</span>”.  Extra parentheses around the expression make</span>
-                             <span class="add">no  difference:  <span class="b">$((  $a+$b )) </span>and <span class="b">$(( ($a+$b) )) </span>have the same</span>
-                             <span class="add">value.</span>
-
-              There may be any number of variable substitutions in a single word.   Variable
-              substitution is not performed on words enclosed in braces.
-
-              Note  that  variables  may contain character sequences other than those listed
-              above, but in that case other mechanisms must be used to  access  them  (e.g.,
-              via the <span class="b">set </span>command&#x27;s single-argument form).
-
-<a id="s15"></a>       [9] <span class="b">Backslash substitution.</span>
-              If a backslash (“\”) appears within a word then <span class="i">backslash</span> <span class="i">substitution</span> occurs.
-              In  all  cases  but  those  described  below  the backslash is dropped and the
-              following character is treated as an ordinary character and  included  in  the
-              word.   This  allows  characters  such  as  double quotes, close brackets, and
-              dollar signs to be included in words without  triggering  special  processing.
-              The  following table lists the backslash sequences that are handled specially,
-              along with the value that replaces each sequence.
-
-<a id="s16"></a>                            \<span class="b">a     </span>Audible alert (bell) (Unicode U+000007).
-
-<a id="s17"></a>                            \<span class="b">b     </span>Backspace (Unicode U+000008).
-
-<a id="s18"></a>                            \<span class="b">f     </span>Form feed (Unicode U+00000C).
-
-<a id="s19"></a>                            \<span class="b">n     </span>Newline (Unicode U+00000A).
-
-<a id="s20"></a>                            \<span class="b">r     </span>Carriage-return (Unicode U+00000D).
-
-<a id="s21"></a>                            \<span class="b">t     </span>Tab (Unicode U+000009).
-
-<a id="s22"></a>                            \<span class="b">v     </span>Vertical tab (Unicode U+00000B).
-
-<a id="s23"></a>                            \<span class="b">&lt;newline&gt;</span><span class="i">whiteSpace</span>
-                                   A single space character replaces the backslash, newline,
-                                   and  all  spaces  and  tabs  after  the  newline.    This
-                                   backslash  sequence is unique in that it is replaced in a
-                                   separate pre-pass before the command is actually  parsed.
-                                   This  means  that it will be replaced even when it occurs
-                                   between braces, and the resulting space will  be  treated
-                                   as a word separator if it is not in braces or quotes.
-
-<a id="s24"></a>                            \\     Backslash (“\”).
-
-<a id="s25"></a>                            \<span class="i">ooo</span>   The digits <span class="i">ooo</span> (one, two, or three of them) give a eight-
-                                   bit  octal  value  for the Unicode character that will be
-                                   inserted,  in  the  range  <span class="i">000</span>–<span class="i">377</span>   (i.e.,   the   range
-                                   U+000000–U+0000FF).   The  parser  will  stop just before
-                                   this range overflows, or when the maximum of three digits
-                                   is reached.  The upper bits of the Unicode character will
-                                   be 0.
-
-<a id="s26"></a>                            \<span class="b">x</span><span class="i">hh</span>   The hexadecimal digits <span class="i">hh</span> (one or two of  them)  give  an
-                                   eight-bit  hexadecimal  value  for  the Unicode character
-                                   that will be inserted.  The upper  bits  of  the  Unicode
-                                   character  will  be 0 (i.e., the character will be in the
-                                   range U+000000–U+0000FF).
-
-<a id="s27"></a>                            \<span class="b">u</span><span class="i">hhhh</span> The hexadecimal digits <span class="i">hhhh</span> (one, two, three, or four  of
-                                   them)  give  a  sixteen-bit  hexadecimal  value  for  the
-                                   Unicode character that will be inserted.  The upper  bits
-                                   of  the  Unicode character will be 0 (i.e., the character
-                                   will be in the range U+000000–U+00FFFF).
-
-<a id="s28"></a>                            \<span class="b">U</span><span class="i">hhhhhhhh</span>
-                                   The hexadecimal digits <span class="i">hhhhhhhh</span> (one up to eight of them)
-                                   give a twenty-one-bit hexadecimal value for  the  Unicode
-                                   character   that   will   be   inserted,   in  the  range
-                                   U+000000–U+10FFFF.  The parser will stop just before this
-                                   range overflows, or when the maximum of eight  digits  is
-                                   reached.  The upper bits of the Unicode character will be
-                                   0.
-
-              Backslash  substitution  is  not performed on words enclosed in braces, except
-              for backslash-newline as described above.
-
-<a id="s29"></a>       [10] <span class="b">Comments.</span>
-              If a hash character (“#”) appears at a point where Tcl is expecting the  first
-              character  of  the  first  word  of a command, then the hash character and the
-              characters that follow it, up through the  next  newline,  are  treated  as  a
-              comment  and  ignored.   The  comment  character only has significance when it
-              appears at the beginning of a command.
-
-<a id="s30"></a>       [11] <span class="b">Order of substitution.</span>
-              Each character is processed exactly once by the Tcl  interpreter  as  part  of
-              creating the words of a command.  For example, if variable substitution occurs
-              then no further substitutions are performed on the value of the variable;  the
-              value is inserted into the word verbatim.  If command substitution occurs then
-              the  nested  command  is  processed  entirely by the recursive call to the Tcl
-              interpreter; no substitutions are performed before making the  recursive  call
-              and  no  additional  substitutions  are  performed on the result of the nested
-              script.
-
-              Substitutions take  place  from  left  to  right,  and  each  substitution  is
-              evaluated completely before attempting to evaluate the next.  Thus, a sequence
-              like
-
-                     set y [set x 0][incr x][incr x]
-
-              will always set the variable <span class="i">y</span> to the value, <span class="i">012</span>.
-
-<a id="s31"></a>       [12] <span class="b">Substitution and word boundaries.</span>
-              Substitutions  do  not  affect  the  word  boundaries of a command, except for
-              argument expansion as specified in rule [5].   For  example,  during  variable
-              substitution  the  entire value of the variable becomes part of a single word,
-              even if the variable&#x27;s value contains spaces.
-
-   <span class="b">TCL VALUES</span>
-       Conceptually, all values in Tcl are strings, or to be precise, sequences  of  Unicode
-       code  points. This characteristic of all values being strings is commonly referred to
-       as the <span class="i">Everything</span> <span class="i">Is</span> <span class="i">A</span> <span class="i">String</span> <span class="i">(EIAS)</span> principle.
-
-       For the most part, Tcl strings can be thought of as strings of characters instead  of
-       sequences  of  code  points and following common usage, command descriptions refer to
-       them as such. However, the distinction is to be noted as  some  characters  may  have
-       multiple  representations  as  Unicode  code  point  sequences and in operations like
-       comparisons,  Tcl  compares  individual  code  points  and  not  individual  abstract
-       characters.
-
-       While all values are strings, individual commands may treat or expect their arguments
-       to  be  representations  of data of a particular type.  For example, the <span class="b">incr </span>command
-       expects its operands to be integers.
-
-       The most important consequence of the EIAS principle is that all commands must  treat
-       arguments  that have a particular string representation exactly the same irrespective
-       of how that value was produced. Thus the <span class="b">incr </span>command  must  treat  <span class="b">100  </span>produced  by
-       appending <span class="b">0 </span>to <span class="b">10 </span>exactly the same as <span class="b">100 </span>produced by multiplying 10 by itself.
-
-       Note  this  EIAS  principle  is  only  true  at a conceptual level and for reasons of
-       efficiency the implementation may choose different  internal  representations  for  a
-       value  depending  on  its  usage.  For example, arithmetic operations on integers may
-       internally store the value as a native machine word. Similarly, a <span class="i">binary</span> <span class="i">string</span> is  a
-       sequence of Unicode code points in the range U+0000 to U+00FF and may be stored as an
-       array  of  bytes.  In all cases this internal representation is irrelevant at the Tcl
-       language level but exposed in the Tcl C API.
-
-<a id="s32"></a><span class="b">KEYWORDS</span>
-       backslash, command, comment, script, substitution, variable
-
-Tcl                                          8.6                                      <span class="i">Tcl</span>(n)
-</pre></div></body></html>
+</section>
+</body></html>
