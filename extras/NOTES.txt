@@ -306,3 +306,10 @@ FOSSIL PUSH (Oct 31, 2026): the reworded opening paragraph of the $((expression)
 rule [8], committed on tip-672-v2 in D:\repos\tcl-672 and pushed to core.tcl-lang.org/tcl.
 Check-in cfaf484bdb7a0d3e59ed619be97945c931d562411eba57db038df6d51c13133c; parent b5136123e7 (the Oct 30 Tcl.n
 check-in). Only doc/Tcl.n changed. The branch agrees with extras/expr-subst.patch again.
+
+Oct 31, 2026: extras2/tcl_n_manual_page/Tcl_n_with_672.html (same file name, so its URL is unchanged) now holds the doc
+changes of TIP 672 for all four manual pages (Tcl(n), subst(n), Tcl_ParseCmd(3), Tcl_SubstObj(3)) in one page, red for
+added text and red underlined for changed text, in the layout of the TIP 759 doc-diff page. It replaces the earlier
+Tcl(n)-only groff rendering. The subst(n) section documents a question for reviewers: -nocommands and -novariables
+also turn off $(( ... )) in TIP 672 (new -expressions and -noexpressions options), while in the TIP 759 build with
+-noexpr the expression form is controlled by -noexpr only.
