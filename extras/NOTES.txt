@@ -290,3 +290,14 @@ FOSSIL PUSH (Oct 30, 2026): doc/Tcl.n (the new rule [8] heading and intro, the f
 entry, the spaced examples) committed on tip-672-v2 in D:\repos\tcl-672 and pushed to core.tcl-lang.org/tcl.
 Check-in b5136123e7d84c5f69797be96c787f4772d681b2c8a1dc197d2e36a187d74271; parent d14b0f9b75 (the Oct 27 scanner
 depth limit). Only doc/Tcl.n changed. The branch now agrees with extras/expr-subst.patch.
+
+Oct 31, 2026: Tcl.n entry: the opening paragraph of the $((expression)) entry is reworded. It now shows the
+delimiters themselves ("$((" begins the substitution, and two close parentheses written together with no space
+between them, "))", end it), says the expression does not include the opening (( or the closing )), and says that
+any parentheses inside the expression must be balanced, instead of the earlier "first close parenthesis that
+balances the parentheses inside the text". The wording was proposed on the email thread; this tree carries it
+so that it is ready if it is approved. One over-long source line in rule [8] (99 characters) was also rewrapped.
+extras/expr-subst.patch, new/doc/Tcl.n and extras2/tcl_n_manual_page/ were regenerated (41 insertions,
+4 deletions in doc/Tcl.n; the patch still applies cleanly to trunk 77ac0bb). extras/changes_made.md has the new
+counts. The C scanner, the tests and the stepper explanations describe the same rule in implementation terms
+and are unchanged. The Fossil branch tip-672-v2 still has the Oct 30 wording until the commit below is made.
