@@ -21,7 +21,7 @@ The examples are written with spaces inside the delimiters, $(( $width * $height
 shows $(((1+2)*3)) and, with spaces, $(( (1+2)*3 )) as the two ways to write the corrected form.
 
 extras/expr-subst.patch and new/doc/Tcl.n were regenerated with this wording, so the package agrees with itself.
-The Fossil branch tip-672-v2 carries the Oct 30 wording (check-in b5136123e7); the Oct 31 opening paragraph is a later commit.
+The Fossil branch tip-672-v2 carries the Oct 30 wording (check-in b5136123e7); the Oct 31 opening paragraph is in check-in cfaf484bdb.
 The other manual pages the patch touches (subst.n, ParseCmd.3, SubstObj.3) are unchanged.
 
 The HTML was rendered with groff from the nroff source, left-aligned, so line breaks can
