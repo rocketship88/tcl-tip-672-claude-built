@@ -18,12 +18,14 @@ What changes in rule [8] (there is no new rule):
     form is expression substitution
   - a fourth entry, $((expression)), after $name, $name(index) and ${name}, in four short
     paragraphs
-Against the current page: 37 added source lines and 4 changed lines (41 insertions, 4 deletions in the diff).
+Against the current page: 42 added source lines and 4 changed lines (46 insertions, 4 deletions in the diff).
 The examples are written with spaces inside the delimiters, $(( $width * $height )), and the error paragraph
 shows $(((1+2)*3)) and, with spaces, $(( (1+2)*3 )) as the two ways to write the corrected form.
 
 extras/expr-subst.patch and new/doc/Tcl.n were regenerated with this wording, so the package agrees with itself.
-The Fossil branch tip-672-v2 carries the Oct 30 wording (check-in b5136123e7); the Oct 31 opening paragraph is in check-in cfaf484bdb.
+The opening paragraph of the $((expression)) entry is now the wording proposed by Marc on the email thread (Nov 4):
+it says what the expression is, shows the delimiters, and gives the example with ")" and $close. The Fossil branch
+tip-672-v2 carries it from check-in 30e51dac2f (the Oct 31 wording was in cfaf484bdb).
 The other manual pages the patch touches (subst.n, ParseCmd.3, SubstObj.3) are in Tcl_n_with_672.html too;
 their wording did not change in the Oct 31 round.
 

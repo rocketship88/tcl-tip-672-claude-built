@@ -92,7 +92,7 @@ nav{margin:1em 0}
 <h1>TIP 672: changes to Tcl(n), subst(n), Tcl_ParseCmd(3), Tcl_SubstObj(3)</h1>
 <div class="legend"><span class="mnew">Red text</span>: added. <span class="mchg">Underlined in red</span>: changed text. Removed text is not shown. Compared with the unmodified 9.1 trunk (77ac0bb), branch tip-672-v2. The pages describe the default build, <b>$((</b>.</div>
 <nav><a href="#Tcl-M0">Tcl(n)</a> &middot; <a href="#subst-M0">subst(n)</a> &middot; <a href="#ParseCmd-M0">Tcl_ParseCmd(3)</a> &middot; <a href="#SubstObj-M0">Tcl_SubstObj(3)</a></nav>
-<section class="manpage" id="Tcl-M0"><h2>Tcl(n) &mdash; The Tcl language: the 12 rules</h2><p class="sum">247 new words, 13 changed words.</p>
+<section class="manpage" id="Tcl-M0"><h2>Tcl(n) &mdash; The Tcl language: the 12 rules</h2><p class="sum">262 new words, 13 changed words.</p>
 
 <dl>
 <dd><a href="#Tcl-M2" name="Tcl-L2310" id="Tcl-L2310">NAME</a>
@@ -266,18 +266,23 @@ and <i>index</i> can be any sequence of characters except for close brace
 characters.  No further
 substitutions are performed during the parsing of <i>name</i>.
 <p><dt><a name="Tcl-M17" id="Tcl-M17"><b><span class="mnew">$((</span></b><i><span class="mnew">expression</span></i><b><span class="mnew">))</span></b></a><dd>
-<span class="mnew">A dollar-sign followed by two open parentheses,
+<span class="mnew">An expression substitution of the form
+&ldquo;</span><b><span class="mnew">$((</span></b><i><span class="mnew">expression</span></i><b><span class="mnew">))</span></b><span class="mnew">&rdquo;
+is a shorthand for</span> <b><a href="../TclCmd/expr.html"><span class="mnew">expr</span></a></b> <span class="mnew">commands of the form
+&ldquo;</span><b><span class="mnew">[expr {</span></b><i><span class="mnew">expression</span></i><b><span class="mnew">}]</span></b><span class="mnew">&rdquo;
+where</span> <i><span class="mnew">expression</span></i> <span class="mnew">is any valid Tcl expression.
+Formally, an expression substitution begins with a dollar-sign followed by
+two open parentheses,
 &ldquo;</span><b><span class="mnew">$((</span></b><span class="mnew">&rdquo;,
-begins an</span> <i><span class="mnew">expression substitution</span></i><span class="mnew">, and two close parentheses written
-together with no space between them,
+then the expression itself, and finally two close parentheses,
 &ldquo;</span><b><span class="mnew">))</span></b><span class="mnew">&rdquo;,
-end it.
-It is a shortcut for
-&ldquo;</span><b><span class="mnew">[expr {</span></b><i><span class="mnew">expression</span></i><b><span class="mnew">}]</span></b><span class="mnew">&rdquo;.
-The expression does not include the opening</span> <b><span class="mnew">((</span></b> <span class="mnew">or the closing</span>
-<b><span class="mnew">))</span></b><span class="mnew">, which delimit it.
-If the expression itself contains parentheses they must be balanced.
-Parentheses inside braces, double quotes or bracketed commands are not counted.</span>
+to mark the end.
+If the expression contains parentheses they must be
+balanced&mdash;unless they appear inside braces, double quotes or bracketed
+commands.
+For example,
+&ldquo;</span><b><span class="mnew">$(( &#34;)&#34; eq $close ))</span></b><span class="mnew">&rdquo;
+is valid.</span>
 <p>
 <span class="mnew">A</span> <b><span class="mnew">$((</span></b> <span class="mnew">that is not closed by a matching</span> <b><span class="mnew">))</span></b> <span class="mnew">is an error:</span>
 <b><span class="mnew">$((1+2)*3)</span></b> <span class="mnew">is rejected, and should be written</span> <b><span class="mnew">$(((1+2)*3))</span></b>
