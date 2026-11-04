@@ -51,7 +51,7 @@ index 2867df87e..3423274ef 100644
  that look like command substitutions for Tcl commands are replaced by
  the result of evaluating that script.  Where an uncaught
 diff --git a/doc/Tcl.n b/doc/Tcl.n
-index df4472ae4..a714af750 100644
+index df4472ae4..3f040d0a4 100644
 --- a/doc/Tcl.n
 +++ b/doc/Tcl.n
 @@ -94,14 +94,16 @@ substituted into the word in place of the brackets and all of the
@@ -75,25 +75,30 @@ index df4472ae4..a714af750 100644
  .RS
  .TP 15
  \fB$\fIname\fR
-@@ -136,6 +138,41 @@ or close brace characters,
+@@ -136,6 +138,46 @@ or close brace characters,
  and \fIindex\fR can be any sequence of characters except for close brace
  characters.  No further
  substitutions are performed during the parsing of \fIname\fR.
 +.TP 15
 +\fB$((\fIexpression\fB))\fR
 +.
-+A dollar-sign followed by two open parentheses,
++An expression substitution of the form
++.QW "\fB$((\fIexpression\fB))\fR"
++is a shorthand for \fBexpr\fR commands of the form
++.QW "\fB[expr {\fIexpression\fB}]\fR"
++where \fIexpression\fR is any valid Tcl expression.
++Formally, an expression substitution begins with a dollar-sign followed by
++two open parentheses,
 +.QW \fB$((\fR ,
-+begins an \fIexpression substitution\fR, and two close parentheses written
-+together with no space between them,
++then the expression itself, and finally two close parentheses,
 +.QW \fB))\fR ,
-+end it.
-+It is a shortcut for
-+.QW "\fB[expr {\fIexpression\fB}]\fR" .
-+The expression does not include the opening \fB((\fR or the closing
-+\fB))\fR, which delimit it.
-+If the expression itself contains parentheses they must be balanced.
-+Parentheses inside braces, double quotes or bracketed commands are not counted.
++to mark the end.
++If the expression contains parentheses they must be
++balanced\(emunless they appear inside braces, double quotes or bracketed
++commands.
++For example,
++.QW "\fB$(( \N'34')\N'34' eq $close ))\fR"
++is valid.
 +.sp
 +A \fB$((\fR that is not closed by a matching \fB))\fR is an error:
 +\fB$((1+2)*3)\fR is rejected, and should be written \fB$(((1+2)*3))\fR
