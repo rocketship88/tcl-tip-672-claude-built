@@ -18,7 +18,7 @@ What changes in rule [8] (there is no new rule):
     form is expression substitution
   - a fourth entry, $((expression)), after $name, $name(index) and ${name}, in four short
     paragraphs
-Against the current page: 57 insertions, 12 deletions in the diff.
+Against the current page: 58 insertions, 13 deletions in the diff.
 The examples are written with spaces inside the delimiters, $(( $width * $height )), and the error paragraph
 shows $(((1+2)*3)) and, with spaces, $(( (1+2)*3 )) as the two ways to write the corrected form.
 

@@ -191,8 +191,8 @@ is removed and the rest of the word is parsed and substituted as any other
 word. After substitution, the word is parsed as a list (without <span class="mchg">command,
 variable, or expression</span> substitutions; backslash substitutions are performed
 as is normal for a list and individual internal words may be surrounded by
-either braces or double-quote characters), and its words are added to the command being
-substituted. For instance,
+either braces or double-quote characters), and its words are added to the
+command being substituted. For instance,
 &ldquo;cmd a {*}{b [c]} d {*}{$e f {g h}}&rdquo;
 is equivalent to
 &ldquo;cmd a b {[c]} d {$e} f {g h}&rdquo;.

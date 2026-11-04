@@ -1,5 +1,5 @@
 diff --git a/doc/Tcl.n b/doc/Tcl.n
-index df4472ae4..6f6ad4539 100644
+index df4472ae4..767aad289 100644
 --- a/doc/Tcl.n
 +++ b/doc/Tcl.n
 @@ -46,8 +46,9 @@ then the word is terminated by the next double-quote character.
@@ -14,7 +14,7 @@ index df4472ae4..6f6ad4539 100644
  The double-quotes are not retained as part of the word.
  .IP "[5] \fBArgument expansion.\fR"
  If a word starts with the string
-@@ -55,10 +56,10 @@ If a word starts with the string
+@@ -55,11 +56,11 @@ If a word starts with the string
  followed by a non-whitespace character, then the leading
  .QW {*}
  is removed and the rest of the word is parsed and substituted as any other
@@ -22,13 +22,15 @@ index df4472ae4..6f6ad4539 100644
 -variable substitutions; backslash substitutions are performed as is normal for
 -a list and individual internal words may be surrounded by either braces or
 -double-quote characters), and its words are added to the command being
+-substituted. For instance,
 +word. After substitution, the word is parsed as a list (without command,
 +variable, or expression substitutions; backslash substitutions are performed
 +as is normal for a list and individual internal words may be surrounded by
-+either braces or double-quote characters), and its words are added to the command being
- substituted. For instance,
++either braces or double-quote characters), and its words are added to the
++command being substituted. For instance,
  .QW "cmd a {*}{b [c]} d {*}{$e f {g h}}"
  is equivalent to
+ .QW "cmd a b {[c]} d {$e} f {g h}" .
 @@ -94,14 +95,16 @@ substituted into the word in place of the brackets and all of the
  characters between them.
  There may be any number of command substitutions in a single word.
