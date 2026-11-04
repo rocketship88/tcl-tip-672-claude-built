@@ -335,3 +335,8 @@ variable, or expression substitutions". The paragraph after the $((expression)) 
 variable and expression substitutions in a single word. Variable and expression substitution is not performed on words
 enclosed in braces." Rules [11] and [12] are unchanged: they say "substitutions" in general and use variable
 substitution only as their example. doc/Tcl.n is now 58 insertions, 13 deletions; changes_made.md has the new counts.
+
+FOSSIL PUSH (Nov 4, 2026, later): the rule [4], rule [5] and rule [8] wording change above, committed on tip-672-v2 in
+D:\repos\tcl-672 and pushed to core.tcl-lang.org/tcl. Check-in ee3c2b94af70430e44a380968605dae2d9a9e5414ee57ebb168d58d95b2a1d35;
+parent 30e51dac2f (Marc's paragraph). Only doc/Tcl.n changed (58 insertions, 13 deletions against trunk). The branch agrees
+with extras/expr-subst.patch.
