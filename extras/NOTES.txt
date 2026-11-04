@@ -334,4 +334,4 @@ substitution, and backslash substitution". Rule [5] (argument expansion) says th
 variable, or expression substitutions". The paragraph after the $((expression)) entry reads "There may be any number of
 variable and expression substitutions in a single word. Variable and expression substitution is not performed on words
 enclosed in braces." Rules [11] and [12] are unchanged: they say "substitutions" in general and use variable
-substitution only as their example. doc/Tcl.n is now 57 insertions, 12 deletions; changes_made.md has the new counts.
+substitution only as their example. doc/Tcl.n is now 58 insertions, 13 deletions; changes_made.md has the new counts.
