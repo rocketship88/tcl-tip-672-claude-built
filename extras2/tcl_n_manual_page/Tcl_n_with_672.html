@@ -92,7 +92,7 @@ nav{margin:1em 0}
 <h1>TIP 672: changes to Tcl(n), subst(n), Tcl_ParseCmd(3), Tcl_SubstObj(3)</h1>
 <div class="legend"><span class="mnew">Red text</span>: added. <span class="mchg">Underlined in red</span>: changed text. Removed text is not shown. Compared with the unmodified 9.1 trunk (77ac0bb), branch tip-672-v2. The pages describe the default build, <b>$((</b>.</div>
 <nav><a href="#Tcl-M0">Tcl(n)</a> &middot; <a href="#subst-M0">subst(n)</a> &middot; <a href="#ParseCmd-M0">Tcl_ParseCmd(3)</a> &middot; <a href="#SubstObj-M0">Tcl_SubstObj(3)</a></nav>
-<section class="manpage" id="Tcl-M0"><h2>Tcl(n) &mdash; The Tcl language: the 12 rules</h2><p class="sum">262 new words, 13 changed words.</p>
+<section class="manpage" id="Tcl-M0"><h2>Tcl(n) &mdash; The Tcl language: the 12 rules</h2><p class="sum">268 new words, 17 changed words.</p>
 
 <dl>
 <dd><a href="#Tcl-M2" name="Tcl-L2310" id="Tcl-L2310">NAME</a>
@@ -178,8 +178,9 @@ then the word is terminated by the next double-quote character.
 If semi-colons, close brackets, or white space characters
 (including newlines) appear between the quotes then they are treated
 as ordinary characters and included in the word.
-Command substitution, variable substitution, and backslash substitution
-are performed on the characters between the quotes as described below.
+Command substitution, variable substitution, <span class="mnew">expression substitution,</span> and
+backslash substitution are performed on the characters between the quotes
+as described below.
 The double-quotes are not retained as part of the word.
 <p><dt><a name="Tcl-M10" id="Tcl-M10">[5] <b>Argument expansion.</b></a><dd>
 If a word starts with the string
@@ -187,10 +188,10 @@ If a word starts with the string
 followed by a non-whitespace character, then the leading
 &ldquo;{*}&rdquo;
 is removed and the rest of the word is parsed and substituted as any other
-word. After substitution, the word is parsed as a list (without command or
-variable substitutions; backslash substitutions are performed as is normal for
-a list and individual internal words may be surrounded by either braces or
-double-quote characters), and its words are added to the command being
+word. After substitution, the word is parsed as a list (without <span class="mchg">command,
+variable, or expression</span> substitutions; backslash substitutions are performed
+as is normal for a list and individual internal words may be surrounded by
+either braces or double-quote characters), and its words are added to the command being
 substituted. For instance,
 &ldquo;cmd a {*}{b [c]} d {*}{$e f {g h}}&rdquo;
 is equivalent to
@@ -306,8 +307,10 @@ Extra parentheses around the expression make no difference:</span>
 <p></dl>
 <dl><dd>
 <p>
-There may be any number of variable substitutions in a single word.
-Variable substitution is not performed on words enclosed in braces.
+There may be any number of variable <span class="mnew">and expression</span> substitutions in a single
+word.
+Variable <span class="mnew">and expression</span> substitution is not performed on words enclosed in
+braces.
 <p>
 Note that variables may contain character sequences other than those listed
 above, but in that case other mechanisms must be used to access them (e.g.,

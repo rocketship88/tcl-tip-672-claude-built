@@ -18,7 +18,7 @@ What changes in rule [8] (there is no new rule):
     form is expression substitution
   - a fourth entry, $((expression)), after $name, $name(index) and ${name}, in four short
     paragraphs
-Against the current page: 42 added source lines and 4 changed lines (46 insertions, 4 deletions in the diff).
+Against the current page: 57 insertions, 12 deletions in the diff.
 The examples are written with spaces inside the delimiters, $(( $width * $height )), and the error paragraph
 shows $(((1+2)*3)) and, with spaces, $(( (1+2)*3 )) as the two ways to write the corrected form.
 
@@ -32,3 +32,5 @@ their wording did not change in the Oct 31 round.
 Tcl_n_with_672.html was rendered from the nroff source with the tcltk-man2html tool of the Tcl source tree, and
 compared word by word with the same tool's output for the unmodified trunk (77ac0bb). Line breaks and fonts
 follow the Tcl documentation style sheet, so it looks like the pages on the Tcl web site.
+
+Nov 4 (later): also changed rule [4], rule [5] and the paragraph after the $((expression)) entry so that they mention expression substitution (see NOTES.txt).
