@@ -328,3 +328,10 @@ FOSSIL PUSH (Nov 4, 2026): Marc's paragraph for the $((expression)) entry, commi
 pushed to core.tcl-lang.org/tcl. Check-in 30e51dac2f881824a3a5a79e6915c6ddae775db703fc15f1f21f5e2dc9082129; parent
 cfaf484bdb (the Oct 31 Tcl.n check-in). Only doc/Tcl.n changed. The branch agrees with extras/expr-subst.patch again.
 
+Nov 4, 2026 (later): Tcl.n rule [8] and the two rules that list the kinds of substitution now agree that expression
+substitution exists. Rule [4] (double quotes) now lists "command substitution, variable substitution, expression
+substitution, and backslash substitution". Rule [5] (argument expansion) says the list is parsed "without command,
+variable, or expression substitutions". The paragraph after the $((expression)) entry reads "There may be any number of
+variable and expression substitutions in a single word. Variable and expression substitution is not performed on words
+enclosed in braces." Rules [11] and [12] are unchanged: they say "substitutions" in general and use variable
+substitution only as their example. doc/Tcl.n is now 57 insertions, 12 deletions; changes_made.md has the new counts.
