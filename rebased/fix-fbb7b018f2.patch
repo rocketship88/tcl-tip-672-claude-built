@@ -1,0 +1,338 @@
+Index: doc/ParseCmd.3
+==================================================================
+--- doc/ParseCmd.3	
++++ doc/ParseCmd.3	
+@@ -310,10 +310,15 @@
+ The body is not parsed or substituted any further; it is to be passed
+ to the expression parser as if it had been enclosed in braces.
+ Like \fBTCL_TOKEN_VARIABLE\fR, this token may appear wherever a variable
+ substitution is allowed, including inside the index of an array variable and
+ as an operand in an expression.
++This token is returned by \fBTcl_ParseCommand\fR, \fBTcl_ParseExpr\fR and the
++other procedures that parse a whole word or expression. It is never returned
++by \fBTcl_ParseVarName\fR, and \fBTcl_ParseVar\fR does not evaluate an
++expression substitution: these two procedures handle only variable references,
++so that the string \fBTcl_ParseVar\fR returns is always the value of a variable.
+ .IP \fBTCL_TOKEN_SUB_EXPR\fR
+ The token describes one subexpression of an expression
+ (or an entire expression).
+ A subexpression may consist of a value
+ such as an integer literal, variable substitution,
+
+Index: generic/tclCompExpr.c
+==================================================================
+--- generic/tclCompExpr.c	
++++ generic/tclCompExpr.c	
+@@ -925,11 +925,11 @@
+ 			parsePtr, 1, &end);
+ 		scanned = end - start;
+ 		break;
+ 
+ 	    case VARIABLE:
+-		code = Tcl_ParseVarName(NULL, start, numBytes, parsePtr, 1);
++		code = TclParseVarName(NULL, start, numBytes, parsePtr, 1, 1);
+ 
+ 		/*
+ 		 * Handle the quirk that Tcl_ParseVarName reports a successful
+ 		 * parse even when it gets only a "$" with no variable name.
+ 		 */
+
+Index: generic/tclInt.h
+==================================================================
+--- generic/tclInt.h	
++++ generic/tclInt.h	
+@@ -3637,10 +3637,13 @@
+ MODULE_SCOPE Tcl_Size	TclParseBackslash(const char *src,
+ 			    Tcl_Size numBytes, Tcl_Size *readPtr, char *dst);
+ MODULE_SCOPE int	TclParseNumber(Tcl_Interp *interp, Tcl_Obj *objPtr,
+ 			    const char *expected, const char *bytes,
+ 			    Tcl_Size numBytes, const char **endPtrPtr, int flags);
++MODULE_SCOPE int	TclParseVarName(Tcl_Interp *interp, const char *start,
++			    Tcl_Size numBytes, Tcl_Parse *parsePtr, int append,
++			    int exprSubst);
+ MODULE_SCOPE void	TclParseInit(Tcl_Interp *interp, const char *string,
+ 			    Tcl_Size numBytes, Tcl_Parse *parsePtr);
+ MODULE_SCOPE Tcl_Size	TclParseAllWhiteSpace(const char *src, Tcl_Size numBytes);
+ MODULE_SCOPE int	TclProcessReturn(Tcl_Interp *interp,
+ 			    int code, int level, Tcl_Obj *returnOpts);
+
+Index: generic/tclParse.c
+==================================================================
+--- generic/tclParse.c	
++++ generic/tclParse.c	
+@@ -1163,12 +1163,12 @@
+ 	     * This is a variable reference. Call Tcl_ParseVarName to do all
+ 	     * the dirty work of parsing the name.
+ 	     */
+ 
+ 	    varToken = parsePtr->numTokens;
+-	    if (Tcl_ParseVarName(parsePtr->interp, src, numBytes, parsePtr,
+-		    1) != TCL_OK) {
++	    if (TclParseVarName(parsePtr->interp, src, numBytes, parsePtr,
++		    1, 1) != TCL_OK) {
+ 		return TCL_ERROR;
+ 	    }
+ 	    src += parsePtr->tokenPtr[varToken].size;
+ 	    numBytes -= parsePtr->tokenPtr[varToken].size;
+ 	} else if (*src == '[') {
+@@ -1545,15 +1545,23 @@
+ }
+ 
+ /*
+  *----------------------------------------------------------------------
+  *
+- * Tcl_ParseVarName --
++ * Tcl_ParseVarName, TclParseVarName --
+  *
+  *	Given a string starting with a $ sign, parse off a variable name and
+  *	return information about the parse. No more than numBytes bytes will
+  *	be scanned.
++ *
++ *	Tcl_ParseVarName is the public function. It parses a variable name
++ *	only, as it always has: "$((" is not recognized as an expression
++ *	substitution there, so its result is always a TCL_TOKEN_VARIABLE
++ *	(or a lone "$"). TclParseVarName is the internal function, used by
++ *	the parser and the expression parser, which also accepts an
++ *	expression substitution when exprSubst is non-zero; the first token
++ *	is then of type TCL_TOKEN_EXPR_SUBST.
+  *
+  * Results:
+  *	The return value is TCL_OK if the command was parsed successfully and
+  *	TCL_ERROR otherwise. If an error occurs and interp isn't NULL then an
+  *	error message is left in its result. On a successful return, tokenPtr
+@@ -1584,10 +1592,34 @@
+ 				 * the variable name. */
+     int append)			/* Non-zero means append tokens to existing
+ 				 * information in parsePtr; zero means ignore
+ 				 * existing tokens in parsePtr and
+ 				 * reinitialize it. */
++{
++    return TclParseVarName(interp, start, numBytes, parsePtr, append, 0);
++}
++
++int
++TclParseVarName(
++    Tcl_Interp *interp,		/* Interpreter to use for error reporting; if
++				 * NULL, then no error message is provided. */
++    const char *start,		/* Start of variable substitution string.
++				 * First character must be "$". */
++    Tcl_Size numBytes,		/* Total number of bytes in string. If -1,
++				 * the string consists of all bytes up to the
++				 * first null character. */
++    Tcl_Parse *parsePtr,	/* Structure to fill in with information about
++				 * the variable name. */
++    int append,			/* Non-zero means append tokens to existing
++				 * information in parsePtr; zero means ignore
++				 * existing tokens in parsePtr and
++				 * reinitialize it. */
++    int exprSubst)		/* Non-zero means "$((" (or "$(" in the build
++				 * that selects that spelling) starts an
++				 * expression substitution. Zero means it
++				 * does not: the name is then parsed as it is
++				 * in stock Tcl. */
+ {
+     Tcl_Token *tokenPtr;
+     const char *src;
+     Tcl_Size varIndex;
+     unsigned array;
+@@ -1682,11 +1714,11 @@
+ 	}
+ 	tokenPtr->size = src - tokenPtr->start;
+ 	tokenPtr[-1].size = src - tokenPtr[-1].start;
+ 	parsePtr->numTokens++;
+ 	src++;
+-    } else if ((*src == '(') && ((TCL_EXPR_SUBST_PARENS == 1)
++    } else if (exprSubst && (*src == '(') && ((TCL_EXPR_SUBST_PARENS == 1)
+ 	    || ((numBytes > 1) && (src[1] == '(')))) {
+ 	/*
+ 	 * Expression substitution: $(expr) when TCL_EXPR_SUBST_PARENS is 1,
+ 	 * or $((expr)) when it is 2. Equivalent to [expr {expr}]. The body is
+ 	 * deliberately left unparsed here: it is handed to the expression
+@@ -1868,11 +1900,10 @@
+ 				 * character just after last one in the
+ 				 * variable specifier. */
+ {
+     Tcl_Obj *objPtr;
+     int code;
+-    bool isExprSubst;
+     Tcl_Parse *parsePtr = (Tcl_Parse *)TclStackAlloc(interp, sizeof(Tcl_Parse));
+ 
+     if (Tcl_ParseVarName(interp, start, TCL_INDEX_NONE, parsePtr, 0) != TCL_OK) {
+ 	TclStackFree(interp, parsePtr);
+ 	return NULL;
+@@ -1888,31 +1919,19 @@
+ 
+ 	TclStackFree(interp, parsePtr);
+ 	return "$";
+     }
+ 
+-    isExprSubst = (parsePtr->tokenPtr->type == TCL_TOKEN_EXPR_SUBST);
+     code = TclSubstTokens(interp, parsePtr->tokenPtr, parsePtr->numTokens,
+ 	    NULL, 1, NULL, NULL);
+     Tcl_FreeParse(parsePtr);
+     TclStackFree(interp, parsePtr);
+     if (code != TCL_OK) {
+ 	return NULL;
+     }
+     objPtr = Tcl_GetObjResult(interp);
+ 
+-    if (isExprSubst) {
+-	/*
+-	 * The value of an expression substitution is not held by any
+-	 * variable; the interp result is the only reference to it. Leave it
+-	 * there (rather than resetting the result as below) so the returned
+-	 * string stays valid until the interp result is next changed.
+-	 */
+-
+-	return TclGetString(objPtr);
+-    }
+-
+     /*
+      * At this point we should have an object containing the value of a
+      * variable. Just return the string from that object.
+      *
+      * Since TclSubstTokens above returned TCL_OK, we know that objPtr
+
+Index: generic/tclTest.c
+==================================================================
+--- generic/tclTest.c	
++++ generic/tclTest.c	
+@@ -4776,22 +4776,38 @@
+     Tcl_Interp *interp,		/* Current interpreter. */
+     Tcl_Size objc,		/* Number of arguments. */
+     Tcl_Obj *const *objv)	/* The argument objects. */
+ {
+     const char *value, *name, *termPtr;
++    const char *value2 = NULL;
+ 
+-    if (objc != 2) {
+-	Tcl_WrongNumArgs(interp, 1, objv, "varName");
++    if (objc != 2 && objc != 3) {
++	Tcl_WrongNumArgs(interp, 1, objv, "varName ?varName2?");
+ 	return TCL_ERROR;
+     }
+     name = Tcl_GetString(objv[1]);
+     value = Tcl_ParseVar(interp, name, &termPtr);
+     if (value == NULL) {
+ 	return TCL_ERROR;
+     }
++    if (objc == 3) {
++	/*
++	 * Parse a second reference while still holding the first value, and
++	 * only then use both: this is what callers of Tcl_ParseVar may rely
++	 * on.
++	 */
++
++	value2 = Tcl_ParseVar(interp, Tcl_GetString(objv[2]), NULL);
++	if (value2 == NULL) {
++	    return TCL_ERROR;
++	}
++    }
+ 
+     Tcl_AppendElement(interp, value);
++    if (value2 != NULL) {
++	Tcl_AppendElement(interp, value2);
++    }
+     Tcl_AppendElement(interp, termPtr);
+     return TCL_OK;
+ }
+ 
+ /*
+
+Index: tests/parse.test
+==================================================================
+--- tests/parse.test	
++++ tests/parse.test	
+@@ -1160,16 +1160,46 @@
+     testparser {x "a$(((1+2)*3))b"} 0
+ } -result [string map [list %L $lp %R $rp] {- {x "a$(((1+2)*3))b"} 2 simple x 1 text x 0 word {"a$(((1+2)*3))b"} 4 text a 0 exprsubst {$(((1+2)*3))} 1 text %L(1+2)*3%R 0 text b 0 {}}]
+ test parse-22.3 {expression substitution: inner parentheses are part of the body} -constraints testparser -body {
+     testparser {$(((1+2)*3))} 0
+ } -result [string map [list %L $lp %R $rp] {- {$(((1+2)*3))} 1 word {$(((1+2)*3))} 2 exprsubst {$(((1+2)*3))} 1 text %L(1+2)*3%R 0 {}}]
+-test parse-22.4 {expression substitution: Tcl_ParseVarName} -constraints testparsevarname -body {
++# Tcl_ParseVarName and Tcl_ParseVar only parse variable references. They do not
++# recognize an expression substitution, so their behaviour is what it always
++# was and a value that is only held by the interp result never reaches a C
++# caller (which could not tell how long it stays valid). The parser, the
++# compiler and "subst" do handle the expression substitution (tests above and
++# below), through an internal function.
++test parse-22.4 {expression substitution: Tcl_ParseVarName does not parse it} -constraints testparsevarname -body {
+     testparsevarname {$((1+(2*3)))z} 20 0
+-} -result [string map [list %L $lp %R $rp] {- {} 0 exprsubst {$((1+(2*3)))} 1 text %L1+(2*3)%R 0 z}]
+-test parse-22.5 {expression substitution: Tcl_ParseVar result stays valid} testparsevar {
+-    lindex [testparsevar {$((7*6))z}] 0
+-} 42
++} -returnCodes error -result {invalid character in array index}
++test parse-22.5 {expression substitution: Tcl_ParseVar does not evaluate it} -constraints testparsevar -body {
++    testparsevar {$((7*6))z}
++} -returnCodes error -result {invalid character in array index}
++test parse-22.5.1 {Tcl_ParseVar: two values stay valid together} -constraints testparsevar -setup {
++    set x 10
++    set y 20
++} -body {
++    testparsevar {$x} {$y}
++} -cleanup {
++    unset x y
++} -result {10 20 {}}
++test parse-22.5.2 {Tcl_ParseVar: a second reference does not invalidate the first, array elements} -constraints testparsevar -setup {
++    array set arr {a 1002 b 2003}
++} -body {
++    testparsevar {$arr(a)} {$arr(b)}
++} -cleanup {
++    unset arr
++} -result {1002 2003 {}}
++test parse-22.5.3 {Tcl_ParseVar: the interp result is reset after a variable} -constraints testparsevar -setup {
++    set x 10
++} -body {
++    testparsevar {$x}
++    set ::tcl_testresult [testparsevar {$x}]
++} -cleanup {
++    unset x
++    unset -nocomplain ::tcl_testresult
++} -result {10 {}}
+ test parse-22.6 {expression substitution: body is not substituted by the parser} -constraints testparser -body {
+     testparser {$(($x [y] \n))} 0
+ } -result [string map [list %L $lp %R $rp] {- {$(($x [y] \n))} 1 word {$(($x [y] \n))} 2 exprsubst {$(($x [y] \n))} 1 text {%L$x [y] \n%R} 0 {}}]
+ 
+ test parse-22.10 {expression substitution: bare word} {
+@@ -1382,24 +1412,24 @@
+     set v $(({a {b} ) c} eq {a {b} ) c}))
+ } 1
+ 
+ # Parsing is limited to numBytes bytes: no truncated prefix of a valid
+ # substitution may be accepted as one, whatever follows the cut.
+-test parse-22.93 {expression substitution: truncated input is never accepted} -constraints testparsevarname -body {
++test parse-22.93 {expression substitution: truncated input is never accepted} -constraints testparser -body {
+     set bad {}
+     foreach s [list \
+ 	    {$((1+2))} {$(([llength {a b}]))} {$(({a {b )} c} eq {a {b )} c}))} \
+ 	    {$(("a)b" eq "a)b"))} {$(("a\")" eq "a\")"))} {$(([string length a)(]))} \
+ 	    {$(("x[string length ")"]y" eq "x1y"))} {$(({\} )} eq {\} )}))} \
+ 	    {$((1\)+2))}] {
+ 	set n [string length $s]
+ 	for {set L 2} {$L < $n} {incr L} {
+-	    if {![catch {testparsevarname $s $L 0} r] && [string match *exprsubst* $r]} {
++	    if {![catch {testparser $s $L} r] && [string match *exprsubst* $r]} {
+ 		lappend bad [list $s $L $r]
+ 	    }
+ 	}
+-	if {[catch {testparsevarname $s $n 0} r] || ![string match *exprsubst* $r]} {
++	if {[catch {testparser $s $n} r] || ![string match *exprsubst* $r]} {
+ 	    lappend bad [list $s full $r]
+ 	}
+     }
+     set bad
+ } -result {}
+@@ -1461,11 +1491,11 @@
+ } -body {
+     set end [getbytes]
+     for {set i 0} {$i < 5} {incr i} {
+ 	set r1 [subst $s]
+ 	set r2 [testevalex {set v a$((1+1))b}]
+-	set r3 [testparsevar {$((7*6))z}]
++	set r3 [catch {testparsevar {$((7*6))z}}]
+ 	catch {subst $bad}
+ 	catch {testevalex {set v $((1+))}}
+ 	catch {subst $rc}
+ 	set tmp $end
+ 	set end [getbytes]
