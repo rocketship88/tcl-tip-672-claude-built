@@ -1,0 +1,50 @@
+[
+{
+"id": 1,
+"file": "generic/tclParse.c",
+"line": 1598,
+"op": "wrapper flag 0->1",
+"orig": "    return TclParseVarName(interp, start, numBytes, parsePtr, append, 0);",
+"new": "    return TclParseVarName(interp, start, numBytes, parsePtr, append, 1);"
+},
+{
+"id": 2,
+"file": "generic/tclParse.c",
+"line": 1719,
+"op": "drop exprSubst &&",
+"orig": "    } else if (exprSubst && (*src == '(') && ((TCL_EXPR_SUBST_PARENS == 1)",
+"new": "    } else if ((*src == '(') && ((TCL_EXPR_SUBST_PARENS == 1)"
+},
+{
+"id": 3,
+"file": "generic/tclParse.c",
+"line": 1719,
+"op": "negate exprSubst",
+"orig": "    } else if (exprSubst && (*src == '(') && ((TCL_EXPR_SUBST_PARENS == 1)",
+"new": "    } else if (!exprSubst && (*src == '(') && ((TCL_EXPR_SUBST_PARENS == 1)"
+},
+{
+"id": 4,
+"file": "generic/tclParse.c",
+"line": 1719,
+"op": "exprSubst && -> ||",
+"orig": "    } else if (exprSubst && (*src == '(') && ((TCL_EXPR_SUBST_PARENS == 1)",
+"new": "    } else if (exprSubst || (*src == '(') && ((TCL_EXPR_SUBST_PARENS == 1)"
+},
+{
+"id": 5,
+"file": "generic/tclParse.c",
+"line": 1169,
+"op": "ParseTokens caller flag 1->0",
+"orig": "\t\t    1, 1) != TCL_OK) {",
+"new": "\t\t    1, 0) != TCL_OK) {"
+},
+{
+"id": 6,
+"file": "generic/tclCompExpr.c",
+"line": 930,
+"op": "CompExpr caller flag 1->0",
+"orig": "\t\tcode = TclParseVarName(NULL, start, numBytes, parsePtr, 1, 1);",
+"new": "\t\tcode = TclParseVarName(NULL, start, numBytes, parsePtr, 1, 0);"
+}
+]
