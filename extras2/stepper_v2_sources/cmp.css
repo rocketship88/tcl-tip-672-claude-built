@@ -1,0 +1,14 @@
+.cmp { display:grid; grid-template-columns:1fr 1fr; gap:14px; }
+@media (max-width:760px) { .cmp { grid-template-columns:1fr; } }
+.cmpcol { background:var(--panel); border:1px solid var(--line); border-radius:8px; padding:12px; min-width:0; }
+.cmpcol h2 { margin-bottom:6px; }
+.cmpcol .scr { font-family:var(--mono); font-size:.85rem; overflow-x:auto; white-space:pre; padding:4px 0; }
+.cmpcol ol { margin:6px 0 0; padding-left:1.4em; font-size:.88rem; }
+.cmpcol .kvs { display:flex; gap:16px; flex-wrap:wrap; font-size:.85rem; color:var(--muted); margin-top:6px; }
+.cmpcol .kvs b { color:var(--fg); font-family:var(--mono); }
+.badges { display:flex; gap:10px; flex-wrap:wrap; margin-top:10px; }
+.badge { border-radius:6px; padding:5px 10px; font-size:.88rem; border:1px solid var(--line); background:var(--panel); }
+.badge.yes { border-color:var(--ok); color:var(--ok); font-weight:600; }
+.badge.no { border-color:var(--hot); color:var(--hot); font-weight:600; }
+.diffs { margin-top:10px; font-size:.9rem; }
+.diffs h2 { font-size:1rem; }
