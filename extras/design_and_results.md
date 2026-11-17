@@ -1,3 +1,6 @@
+> NOTE (Nov 17, 2026): the Tcl_ParseVar items in this file describe the first fix (keep the interp result alive). That was superseded: the public
+> Tcl_ParseVarName / Tcl_ParseVar no longer produce or evaluate an expression substitution. See rebased/FIX_Tcl_ParseVar.md.
+
 # Expression substitution `$((expr))` / `$(expr)`: design decisions and results
 
 Base: Tcl trunk 77ac0bb (9.1). Everything below was measured on Linux (gcc, x86-64); Windows (MSVC, static, Win10 1903) was verified by you for both spellings before the last bug fix.

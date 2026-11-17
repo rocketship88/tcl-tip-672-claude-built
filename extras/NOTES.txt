@@ -1,3 +1,17 @@
+NOV 17, 2026 (newest first section). The code is now on the Fossil branch tip-672-v2 (leaf fbb7b018f2); see ../rebased/README.md.
+ * Jan Nijtmans rebased the branch onto trunk (715e7cce27, Nov 12). Changes of his own: subst options in alphabetical order; the
+   default spelling becomes $( when TCL_NO_DEPRECATED is defined (not set in a normal build, so a normal build still uses $((.
+ * Full write-up of the Tcl_ParseVar defect and fix: rebased/FIX_Tcl_ParseVar.md (repro, lineage, code changes, tests, alternatives).
+ * Florent Merlet's vote-time report: Tcl_ParseVar (and Tcl_ParseVarName) could return an expression value, a pointer valid only
+   until the interp result changed. Fix (Eric Taylor, committed by Jan as fbb7b018f2): internal TclParseVarName(..., exprSubst);
+   the public Tcl_ParseVarName is a one-line wrapper passing 0 and Tcl_ParseVar is back to stock. Tests parse-22.4, 22.5 changed,
+   22.5.1 to 22.5.3 new (testparsevar now takes two references). Full suite on that tree: 509601 tests, 0 failed.
+ * The results in the older sections (mutation 86 to 88 percent, gcov 99.3 percent, fuzz, Valgrind) were measured on the pre-rebase
+   code and were not rerun. On fbb7b018f2 (extras2/fbb7b018f2_checks/): gcov of all new or changed lines 98.3 percent on the default build
+   (176 of 179), mutation of only the lines the fix changed 6 of 6 killed in both builds, TIP672-examples.html procedures checked.
+ * Line counts of the whole change (added lines): core C and headers 508 (302 code, 172 comments, 34 blank), tests 765, docs 107.
+ * Stepper v2 (extras2/parser_stepper_v2.html, version 3.0, sources in extras2/stepper_v2_sources/) is built on fbb7b018f2; v1 is pre-rebase.
+
 
 UPDATE after mutation testing (see mutation_testing.md):
  - tclParse.c changed: TclSubstTokens now substitutes the result for non-OK return codes (a bug in the

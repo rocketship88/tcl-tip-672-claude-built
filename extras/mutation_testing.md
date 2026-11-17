@@ -1,3 +1,6 @@
+> NOTE (Nov 17, 2026): the Tcl_ParseVar items in this file describe the first fix (keep the interp result alive). That was superseded: the public
+> Tcl_ParseVarName / Tcl_ParseVar no longer produce or evaluate an expression substitution. See rebased/FIX_Tcl_ParseVar.md.
+
 # Mutation testing
 
 Mutants were generated only for lines this change added in `tclParse.c`, `tclCompile.c`, `tclCompCmdsSZ.c` and `tclCompExpr.c`:
